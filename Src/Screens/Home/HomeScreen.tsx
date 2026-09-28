@@ -21,14 +21,12 @@ import MainPageWithYouTube from '../../Components/Youtube/Youtube';
 import { ScreenWrapper } from '../../Components/ui/appcomponents';
 import GoldParticles from '../Auth/Login/components/GoldParticles';
 import HomeHeader from './components/HomeHeader';
+import { useCompany } from '../../api/hooks/Company/useCompany';
 
 const { COLORS, FONTS, SIZES, moderateScale } = theme;
 const { width, height } = Dimensions.get('window');
 
 const BG_GRADIENT = COLORS.gradient.accentWash as [string, string, string];
-
-const CONTACT_PHONE = '9600972227';
-const CONTACT_EMAIL = 'sandiyafoundationchennaillp@gmail.com';
 
 /** Premium section header with a gold accent bar. */
 const SectionHeader = ({ title }: { title: string }) => (
@@ -39,8 +37,12 @@ const SectionHeader = ({ title }: { title: string }) => (
 );
 
 const NeedHelpCard = () => {
-  const callPhone = () => Linking.openURL(`tel:${CONTACT_PHONE}`);
-  const openEmail = () => Linking.openURL(`mailto:${CONTACT_EMAIL}`);
+  const { company } = useCompany();
+  const phone = company?.PHONE || '';
+  const email = company?.EMAIL || '';
+
+  const callPhone = () => phone && Linking.openURL(`tel:${phone}`);
+  const openEmail = () => email && Linking.openURL(`mailto:${email}`);
 
   return (
     <View style={styles.helpCard}>
@@ -52,13 +54,13 @@ const NeedHelpCard = () => {
           <Text style={styles.helpTitle}>Need Help?</Text>
           <Text style={styles.helpSubtitle}>
             We're here to help anytime. Reach us at{' '}
-            <Text onPress={callPhone} style={styles.helpLink}>
-              {CONTACT_PHONE}
-            </Text>{' '}
-            or{' '}
-            <Text onPress={openEmail} style={styles.helpLink}>
-              {CONTACT_EMAIL}
-            </Text>
+            {phone ? (
+              <Text onPress={callPhone} style={styles.helpLink}>{phone}</Text>
+            ) : null}
+            {phone && email ? ' or ' : null}
+            {email ? (
+              <Text onPress={openEmail} style={styles.helpLink}>{email}</Text>
+            ) : null}
           </Text>
         </View>
       </View>
@@ -151,32 +153,7 @@ const HomeScreen = () => {
     }
   };
 
-  const renderNotificationBanner = () => {
-    if (notificationStatus === 'registered' || notificationStatus === 'skipped') return null;
-    const isLoading = notificationStatus === 'checking' || notificationStatus === 'registering';
-    const isFailed = notificationStatus === 'failed';
-    return (
-      <TouchableOpacity
-        style={[styles.banner, isFailed ? styles.bannerError : styles.bannerLoading]}
-        onPress={isFailed ? handlePushNotificationRegistration : undefined}
-        disabled={isLoading}
-        activeOpacity={0.8}
-      >
-        {isLoading ? (
-          <>
-            <ActivityIndicator size="small" color={COLORS.contentOnBrand} />
-            <Text style={styles.bannerText}>Setting up notifications…</Text>
-          </>
-        ) : (
-          <>
-            <Icon name="notifications-off" size={SIZES.icon.md} color={COLORS.contentOnBrand} />
-            <Text style={styles.bannerText}>Enable notifications to receive updates</Text>
-            <Text style={styles.bannerAction}>Tap to retry</Text>
-          </>
-        )}
-      </TouchableOpacity>
-    );
-  };
+
 
   return (
     <View style={styles.root}>

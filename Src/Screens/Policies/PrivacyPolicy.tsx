@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import theme from '../../Utills/AppTheme';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
 import PremiumBackground from '../../Components/PremiumBackground/PremiumBackground';
+import { useCompany } from '../../api/hooks/Company/useCompany';
 
 export interface PrivacyPolicyProps {
   navigation: { goBack: () => void };
@@ -12,14 +13,14 @@ export interface PrivacyPolicyProps {
 
 const PrivacyPolicy = ({ navigation }: PrivacyPolicyProps) => {
   const { COLORS, SIZES, FONTS, ELEVATION, STYLES, moderateScale } = theme;
+  const { company } = useCompany();
 
-  const openEmail = () => {
-    Linking.openURL('mailto:sandiyafoundationschennaillp@gmail.com');
-  };
+  const companyName = company?.COMPANYNAME || 'Jaiguru Jewellers';
+  const email = company?.EMAIL || '';
+  const website = company?.BASEURL || '';
 
-  const openWebsite = () => {
-    Linking.openURL('https://jaigurujewellers.com/');
-  };
+  const openEmail = () => email && Linking.openURL(`mailto:${email}`);
+  const openWebsite = () => website && Linking.openURL(website);
 
   const PolicySection = ({ title, children, isLast = false }: { title: string; children: React.ReactNode; isLast?: boolean }) => (
     <View style={{ marginBottom: isLast ? 0 : SIZES.space.xl }}>
@@ -105,7 +106,7 @@ const PrivacyPolicy = ({ navigation }: PrivacyPolicyProps) => {
               SF
             </Text>
           </View>
-          <Text style={{ ...FONTS.heading, color: COLORS.contentBrand, textAlign: 'center' }}>SANDIYA FOUNDATIONS CHENNAI LLP</Text>
+          <Text style={{ ...FONTS.heading, color: COLORS.contentBrand, textAlign: 'center' }}>{companyName}</Text>
           <Text
             style={{
               ...FONTS.bodySm,
@@ -127,7 +128,7 @@ const PrivacyPolicy = ({ navigation }: PrivacyPolicyProps) => {
               marginBottom: SIZES.space.sm,
             }}
           >
-            At SANDIYA FOUNDATIONS CHENNAI LLP, we prioritize your privacy. This policy details how we collect, use, and protect your
+            At {companyName}, we prioritize your privacy. This policy details how we collect, use, and protect your
             information when you engage with our services.
           </Text>
         </PolicySection>
@@ -387,29 +388,33 @@ const PrivacyPolicy = ({ navigation }: PrivacyPolicyProps) => {
           >
             For privacy-related inquiries:
           </Text>
-          <TouchableOpacity onPress={openEmail}>
-            <Text
-              style={{
-                ...FONTS.body,
-                color: COLORS.contentBrand,
-                textDecorationLine: 'underline',
-                marginBottom: SIZES.space.md,
-              }}
-            >
-              sandiyafoundationschennaillp@gmail.com
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={openWebsite}>
-            <Text
-              style={{
-                ...FONTS.bodySm,
-                color: COLORS.contentSecondary,
-                textDecorationLine: 'underline',
-              }}
-            >
-              https://jaigurujewellers.com
-            </Text>
-          </TouchableOpacity>
+          {email ? (
+            <TouchableOpacity onPress={openEmail}>
+              <Text
+                style={{
+                  ...FONTS.body,
+                  color: COLORS.contentBrand,
+                  textDecorationLine: 'underline',
+                  marginBottom: SIZES.space.md,
+                }}
+              >
+                {email}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+          {website ? (
+            <TouchableOpacity onPress={openWebsite}>
+              <Text
+                style={{
+                  ...FONTS.bodySm,
+                  color: COLORS.contentSecondary,
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {website}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
