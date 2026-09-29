@@ -66,6 +66,10 @@ export const COMPANY = {
   ALL: '/company/all',
 };
 
+export const APP_CONTENT = {
+  BY_ID: (contentId: string) => `/app-content/${encodeURIComponent(contentId)}`,
+};
+
 export const LOGIN_CHECK = {
   REGISTER: '/logincheck/register',
   LIST: (date: string) => `/logincheck/get?date=${date}`,

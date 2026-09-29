@@ -79,9 +79,9 @@ export default function App() {
     };
   }, []);
 
-  if (isMaintenance) {
-    return <MaintenanceScreen message={maintenanceMsg} />;
-  }
+  // if (isMaintenance) {
+  //   return <MaintenanceScreen message={maintenanceMsg} />;
+  // }
 
   if (forceUpdate) {
     return (
