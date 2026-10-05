@@ -46,7 +46,7 @@ const SchemeTermsAcceptance = () => {
   return (
     <AppContentScreen
       contentId={scheme.SchemeSName}
-      title="Scheme Terms & Conditions"
+      title="Plan Terms & Conditions"
       navigation={navigation}
       footer={(language) => (
         <View
@@ -80,10 +80,10 @@ const SchemeTermsAcceptance = () => {
             >
               {accepted ? <Ionicons name="checkmark" size={18} color={COLORS.contentOnBrand} /> : null}
             </View>
-            <Text style={{ ...FONTS.bodySm, color: COLORS.contentSecondary, flex: 1 }}>
+            <Text style={{ ...FONTS.bodyStrong, color: COLORS.contentSecondary, flex: 1 }}>
               {language === 'ta'
                 ? 'திட்டத்தின் விதிமுறைகள் மற்றும் நிபந்தனைகளைப் படித்து ஏற்றுக்கொள்கிறேன்.'
-                : 'I have read and accept the scheme terms and conditions.'}
+                : 'I Have Read And Accept The Plan Terms And Conditions.'}
             </Text>
           </TouchableOpacity>
           <AppButton label={language === 'ta' ? 'திட்டத்தில் சேரவும்' : 'Join Scheme'} onPress={joinScheme} loading={isJoining} disabled={!accepted || isJoining} />

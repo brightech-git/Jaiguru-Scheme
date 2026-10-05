@@ -8,8 +8,8 @@ import {
   Modal,
   TouchableOpacity,
   FlatList,
-  TextInput,
   Pressable,
+  TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,7 +21,9 @@ import { AppText, AppCard } from '../../Components/ui/appcomponents';
 import theme from '../../Utills/AppTheme';
 import EmployeePickerModal, { DEFAULT_EMPLOYEE_ID, SelectedEmployee } from './EmployeePickerModal';
 
-const { COLORS, SIZES, FONTS, ELEVATION, moderateScale } = theme;
+import InstallmentAmountInput, { isValidInstallmentAmount } from './installment-amount-input';
+
+const { COLORS, SIZES, ELEVATION, moderateScale } = theme;
 
 // NOTE: All payments in this flow are collected online via Razorpay
 // (see MemberCreation.tsx's startPayment/schemeCollectInsert payload, which
@@ -51,6 +53,7 @@ export interface SchemeJoiningFormData {
   schemeCode?: string;
   /** Referring employee, sent as iEmp. DEFAULT_EMPLOYEE_ID when none was picked. */
   employeeId: string;
+  nickname?: string;
 }
 
 export interface SchemeJoiningFormRef {
@@ -91,14 +94,6 @@ const formatINR = (value?: number | null): string => {
   } catch {
     return String(n);
   }
-};
-
-// Keeps a single decimal point and at most two decimal places.
-const sanitizeAmount = (value: string): string => {
-  const cleaned = value.replace(/[^0-9.]/g, '');
-  const [whole, ...rest] = cleaned.split('.');
-  if (rest.length === 0) return whole;
-  return `${whole}.${rest.join('').slice(0, 2)}`;
 };
 
 const getInitials = (name?: string): string => {
@@ -148,15 +143,25 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
     const [selectedPayment] = useState('00001');
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [customAmount, setCustomAmount] = useState('');
-    const [amountFocused, setAmountFocused] = useState(false);
     const [employee, setEmployee] = useState<SelectedEmployee>({ id: DEFAULT_EMPLOYEE_ID });
     const [employeePickerVisible, setEmployeePickerVisible] = useState(false);
-    const amountInputRef = useRef<TextInput>(null);
+    const [employeeFieldVisible, setEmployeeFieldVisible] = useState(false);
+    const [nickname, setNickname] = useState('');
+    const nameTapCount = useRef(0);
+
+    const handleNamePress = () => {
+      nameTapCount.current += 1;
+      if (nameTapCount.current === 3) {
+        setEmployeeFieldVisible((visible) => !visible);
+        setEmployeePickerVisible(false);
+        nameTapCount.current = 0;
+      }
+    };
 
     // When installments are not fixed, customers enter their own amount.
     // WeightLedger does not change this rule; FixedIns is the source of truth.
     const isUserAmountScheme = scheme?.FixedIns === 'N' && Number(scheme?.Instalment) > 1;
-    const effectiveAmount = isUserAmountScheme ? Number(customAmount) || null : getAmount(selectedScheme);
+    const effectiveAmount = isUserAmountScheme ? (isValidInstallmentAmount(customAmount) ? Number(customAmount) : null) : getAmount(selectedScheme);
     const showInlineTiles = schemes.length <= MAX_INLINE_AMOUNT_TILES;
 
     useEffect(() => {
@@ -205,6 +210,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
         metalType: scheme?.MetalType,
         schemeCode: scheme?.SchemeSName,
         employeeId: employee.id || DEFAULT_EMPLOYEE_ID,
+        nickname: nickname.trim() || undefined,
       };
     };
 
@@ -262,7 +268,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
         >
           <View style={styles.heroGlow} />
           <AppText variant="labelUppercase" color={COLORS.whiteAlpha80}>
-            You're joining
+            You're joining Jaiguru
           </AppText>
           <AppText variant="h4" color={COLORS.contentOnBrand} numberOfLines={2} style={styles.heroTitle}>
             {scheme?.schemeName || 'Scheme'}
@@ -271,21 +277,21 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
             {scheme?.SchemeSName ? (
               <View style={styles.heroPill}>
                 <Icon name="pricetag-outline" size={SIZES.icon.xs} color={COLORS.contentOnBrand} />
-                <AppText variant="caption" color={COLORS.contentOnBrand}>
+                <AppText variant="captionBold" color={COLORS.contentOnBrand}>
                   {scheme.SchemeSName}
                 </AppText>
               </View>
             ) : null}
             <View style={styles.heroPill}>
               <View style={[styles.metalDot, { backgroundColor: metalColor }]} />
-              <AppText variant="caption" color={COLORS.contentOnBrand}>
+              <AppText variant="captionBold" color={COLORS.contentOnBrand}>
                 {getMetalTypeName(scheme?.MetalType)}
               </AppText>
             </View>
             {Number(scheme?.Instalment) > 0 ? (
               <View style={styles.heroPill}>
                 <Icon name="calendar-outline" size={SIZES.icon.xs} color={COLORS.contentOnBrand} />
-                <AppText variant="caption" color={COLORS.contentOnBrand}>
+                <AppText variant="captionBold" color={COLORS.contentOnBrand}>
                   {scheme?.Instalment} installments
                 </AppText>
               </View>
@@ -302,29 +308,31 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
                   {getInitials(fullName)}
                 </AppText>
               </View>
-              <View style={styles.flex1}>
-                <AppText variant="caption" color={COLORS.contentMuted}>
+              <Pressable style={styles.flex1} onPress={handleNamePress} accessibilityRole="button" accessibilityLabel={fullName || 'Member name'}>
+                {/* <AppText variant="caption" color={COLORS.contentMuted}>
                   Member
-                </AppText>
+                </AppText> */}
                 <AppText variant="h6" numberOfLines={1}>
                   {fullName || 'N/A'}
                 </AppText>
-              </View>
+              </Pressable>
               <Icon name="checkmark-circle" size={SIZES.icon.md} color={COLORS.success} />
             </View>
             <View style={styles.memberDivider} />
             <View style={styles.memberInfoRow}>
               <Icon name="call-outline" size={SIZES.icon.sm} color={COLORS.contentMuted} />
-              <AppText variant="bodySmall" style={styles.flex1} numberOfLines={1}>
+              <AppText variant="button" style={styles.flex1} numberOfLines={1}>
                 {userData?.mobileNumber || 'N/A'}
               </AppText>
             </View>
+            {userData?.emailAddress && (
             <View style={[styles.memberInfoRow, { marginBottom: 0 }]}>
               <Icon name="mail-outline" size={SIZES.icon.sm} color={COLORS.contentMuted} />
-              <AppText variant="bodySmall" style={styles.flex1} numberOfLines={1}>
+              <AppText variant="button" style={styles.flex1} numberOfLines={1}>
                 {userData?.emailAddress || 'N/A'}
               </AppText>
             </View>
+            )}
           </AppCard>
         )}
 
@@ -344,42 +352,11 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
               </AppText>
             </View>
           ) : isUserAmountScheme ? (
-            <>
-              <Pressable
-                onPress={() => amountInputRef.current?.focus()}
-                style={[
-                  styles.amountField,
-                  amountFocused && styles.amountFieldFocused,
-                  !!effectiveAmount && styles.amountFieldFilled,
-                ]}
-              >
-                <AppText variant="h2" color={effectiveAmount ? COLORS.contentBrand : COLORS.contentPlaceholder}>
-                  ₹
-                </AppText>
-                <TextInput
-                  ref={amountInputRef}
-                  value={customAmount}
-                  onChangeText={(value) => setCustomAmount(sanitizeAmount(value))}
-                  onFocus={() => setAmountFocused(true)}
-                  onBlur={() => setAmountFocused(false)}
-                  keyboardType="decimal-pad"
-                  placeholder="0"
-                  placeholderTextColor={COLORS.contentDisabled}
-                  maxLength={10}
-                  selectionColor={COLORS.brand}
-                  style={styles.amountInput}
-                  accessibilityLabel="Installment amount in rupees"
-                />
-              </Pressable>
-              <View style={styles.amountHint}>
-                <Icon name="information-circle-outline" size={SIZES.icon.xs} color={COLORS.contentMuted} />
-                <AppText variant="caption" style={styles.flex1}>
-                  {effectiveAmount
-                    ? `₹${formatINR(effectiveAmount)} per installment · Group ${selectedScheme || 'N/A'}`
-                    : 'Enter the amount you would like to pay for each installment.'}
-                </AppText>
-              </View>
-            </>
+            <InstallmentAmountInput
+              value={customAmount}
+              onChange={setCustomAmount}
+              metalType={scheme?.MetalType}
+            />
           ) : showInlineTiles ? (
             <View style={styles.tileGrid}>
               {schemes.map((item) => {
@@ -484,7 +461,22 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
           </Modal>
         )}
 
-        {/* Employee (sent as iEmp; 999 when none is picked) + payment method (always Online via Razorpay) */}
+        <AppCard style={styles.card}>
+          <AppText variant="label" style={styles.fieldLabel}>Nickname (optional)</AppText>
+          <TextInput
+            value={nickname}
+            onChangeText={setNickname}
+            placeholder="Enter nickname"
+            placeholderTextColor={COLORS.contentPlaceholder}
+            selectionColor={COLORS.brand}
+            autoCapitalize="words"
+            accessibilityLabel="Nickname, optional"
+            style={[styles.inputBox, { color: COLORS.contentPrimary }]}
+          />
+        </AppCard>
+
+        {/* Employee selector is revealed by three taps on the member name. */}
+        {employeeFieldVisible && (
         <AppCard style={styles.card}>
           <AppText variant="label" style={styles.fieldLabel}>
             Employee
@@ -502,16 +494,9 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
             <Icon name="chevron-down" size={SIZES.icon.sm} color={COLORS.contentMuted} />
           </TouchableOpacity>
 
-          <AppText variant="label" style={[styles.fieldLabel, { marginTop: SIZES.space.lg }]}>
-            Payment Method
-          </AppText>
-          <View style={[styles.inputBox, styles.inputBoxReadOnly]}>
-            <AppText variant="body" style={styles.flex1} numberOfLines={1}>
-              {paymentLabel}
-            </AppText>
-            <Icon name="lock-closed" size={SIZES.icon.sm} color={COLORS.contentMuted} />
-          </View>
+         
         </AppCard>
+        )}
 
         <EmployeePickerModal
           visible={employeePickerVisible}
@@ -527,8 +512,6 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
             <SummaryRow label="Scheme" value={scheme?.schemeName} />
             <SummaryRow label="Group Code" value={selectedScheme} />
             <SummaryRow label="Metal" value={getMetalTypeName(scheme?.MetalType)} />
-            <SummaryRow label="Payment" value={paymentLabel} />
-            <SummaryRow label="Employee" value={employee.name ? `${employee.name} (${employee.id})` : employee.id} />
             <View style={styles.dashedDivider} />
             <View style={styles.totalRow}>
               <View>
@@ -544,7 +527,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
 
         <View style={styles.trustRow}>
           <Icon name="lock-closed" size={SIZES.icon.xs} color={COLORS.contentMuted} />
-          <AppText variant="caption">Payments are encrypted and processed securely by Razorpay</AppText>
+          <AppText variant="captionBold">Payments are encrypted and processed securely by Razorpay</AppText>
         </View>
       </ScrollView>
     );
@@ -690,27 +673,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.fieldBorder,
     backgroundColor: COLORS.fieldBackground,
   },
-  amountFieldFocused: {
-    borderColor: COLORS.fieldBorderFocused,
-    backgroundColor: COLORS.surface,
-  },
   amountFieldFilled: {
     backgroundColor: COLORS.brandTint,
     borderColor: COLORS.brandAlpha32,
-  },
-  amountInput: {
-    flex: 1,
-    fontFamily: FONTS.family.bold,
-    fontSize: SIZES.text.display2,
-    color: COLORS.contentPrimary,
-    paddingVertical: SIZES.space.md,
-    includeFontPadding: false,
-  },
-  amountHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SIZES.space.xs,
-    marginTop: SIZES.space.sm,
   },
   amountPicker: {
     paddingVertical: SIZES.space.md,

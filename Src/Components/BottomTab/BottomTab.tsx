@@ -51,13 +51,13 @@ const TABS: TabDef[] = [
     iconLib: 'MaterialIcons',
     iconName: 'savings',
   },
-  // {
-  //   key: 'SUPPORT',
-  //   label: 'Support',
-  //   screen: 'HelpCenter',
-  //   iconLib: 'MaterialCommunityIcons',
-  //   iconName: 'headset',
-  // },
+  {
+    key: 'WastageCard',
+    label: 'Wastage Card',
+    screen: 'WastageCard',
+    iconLib: 'MaterialCommunityIcons',
+    iconName: 'card-account-details',
+  },
   
   {
     key: 'ALERTS',

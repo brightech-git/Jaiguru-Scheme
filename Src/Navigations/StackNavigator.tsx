@@ -36,6 +36,7 @@ import ProfileScreen from '../Screens/Profile/Profile';
 import RegisterInfoScreen from '../Screens/Auth/RegisterInfo/RegisterInfo';
 import RegistrationWelcomeScreen from '../Screens/Auth/RegisterInfo/registration-welcome';
 import SplashScreen from '../Screens/Splash/SplashScreen';
+import WastageCardScreen from '../Screens/WastageCard/WastageCardScreen';
 import { navigationRef } from './navigationRef';
 
 const Stack = createNativeStackNavigator();
@@ -47,7 +48,7 @@ export default function StackNavigator() {
   useEffect(() => {
     const init = async () => {
       try {
-        AsyncStorage.clear();
+        // AsyncStorage.clear();
         const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
         const token = await AsyncStorage.getItem('authToken');
         const hasMpin = await AsyncStorage.getItem('hasMpin');
@@ -123,6 +124,7 @@ export default function StackNavigator() {
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="RegisterInfo" component={RegisterInfoScreen} />
         <Stack.Screen name="RegistrationWelcome" component={RegistrationWelcomeScreen} />
+        <Stack.Screen name="WastageCard" component={WastageCardScreen} />
 
         {/* Drawer after MPIN success */}
         <Stack.Screen name="MainDrawer" component={MainDrawerNavigator} />

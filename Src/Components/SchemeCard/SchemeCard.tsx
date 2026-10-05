@@ -34,12 +34,12 @@ export default function SchemeCardSlider() {
           <ImageBackground
             source={typeof imageUri === 'string' ? { uri: imageUri } : imageUri}
             style={[styles.imageBackground, { height: IMAGE_HEIGHT }]}
-            resizeMode="cover"
+            resizeMode="contain"
           />
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={[styles.actionButton, styles.joinButton]} onPress={() => handleJoinScheme(item)}>
-              <Text style={styles.joinButtonText}>View terms &amp; join</Text>
+              <Text style={styles.joinButtonText}>View terms &amp; join now</Text>
               <Ionicons name="arrow-forward" size={moderateScale(18)} color={COLORS.contentBrand} />
             </TouchableOpacity>
           </View>
@@ -99,8 +99,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.borderSubtle,
   },
   joinButtonText: {
-    ...FONTS.bodySm,
+    ...FONTS.bodyStrong,
     color: COLORS.contentBrand,
     fontFamily: FONTS.family.semiBold,
+    textTransform: 'capitalize',
   },
 });

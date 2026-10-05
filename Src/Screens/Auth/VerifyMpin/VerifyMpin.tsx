@@ -79,7 +79,7 @@ const MpinVerifyScreen = () => {
         setBlockAutoSubmit(false);
 
         showToast({
-          message: 'MPIN verified successfully!',
+          message: 'G-PIN verified successfully!',
           type: ToastTypes.SUCCESS,
           duration: 2000,
           position: ToastPositions.TOP,
@@ -112,9 +112,9 @@ const MpinVerifyScreen = () => {
           setAttempts(0);
           setBlockAutoSubmit(false);
           Alert.alert(
-            'MPIN Not Created',
-            "You don't have an MPIN for this account. Please create one to continue.",
-            [{ text: 'Create MPIN', onPress: () => navigation.navigate('MpinCreate') }],
+            'G-PIN Not Created',
+            "You don't have a G-PIN for this account. Please create one to continue.",
+            [{ text: 'Create G-PIN', onPress: () => navigation.navigate('MpinCreate') }],
             { cancelable: false },
           );
           return;
@@ -134,7 +134,7 @@ const MpinVerifyScreen = () => {
           });
         } else {
           showToast({
-            message: `Invalid MPIN! ${MAX_ATTEMPTS - newAttempts} attempts remaining`,
+            message: `Invalid G-PIN! ${MAX_ATTEMPTS - newAttempts} attempts remaining`,
             type: ToastTypes.ERROR,
             duration: 2000,
             position: ToastPositions.TOP,
@@ -166,17 +166,17 @@ const MpinVerifyScreen = () => {
 
   const handleForgotMpin = useCallback(() => {
     if (locked) return;
-    Alert.alert('Forgot MPIN?', 'Do you want to reset your MPIN?', [
+    Alert.alert('Forgot G-PIN?', 'Do you want to reset your G-PIN?', [
       {
         text: 'Cancel',
         style: 'cancel',
         onPress: () => { resetMpin(); pinRef.current?.focus(); },
       },
       {
-        text: 'Reset MPIN',
+        text: 'Reset G-PIN',
         style: 'destructive',
         onPress: () => {
-          showToast({ message: 'Redirecting to MPIN reset...', type: ToastTypes.INFO, duration: 2000, position: ToastPositions.TOP });
+          showToast({ message: 'Redirecting to G-PIN reset...', type: ToastTypes.INFO, duration: 2000, position: ToastPositions.TOP });
           resetMpin();
           setAttempts(0);
           setTimeout(() => navigation.navigate('ForgotMpin'), 500);
@@ -190,10 +190,10 @@ const MpinVerifyScreen = () => {
   return (
     <View style={styles.root}>
       <MpinScaffold
-        headerTitle="Verify MPIN"
+        // headerTitle="Verify MPIN"
         icon="shield-key-outline"
-        heading="Verify MPIN"
-        subtitle="Enter your 4-digit security PIN to access your account"
+        heading="Verify G-PIN"
+        subtitle="Enter your 4-digit security G-PIN to access your account"
         showBack={false}
       >
         {locked && (
@@ -244,7 +244,7 @@ const MpinVerifyScreen = () => {
           hitSlop={8}
         >
           <MaterialCommunityIcons name="key-outline" size={SIZES.icon.sm} color={COLORS.contentBrand} />
-          <Text style={styles.forgotText}>Forgot MPIN?</Text>
+          <Text style={styles.forgotText}>Forgot G-PIN?</Text>
         </Pressable>
 
         <View style={styles.footer}>
@@ -259,7 +259,7 @@ const MpinVerifyScreen = () => {
 
         <View style={styles.secureRow}>
           <MaterialCommunityIcons name="shield-check" size={SIZES.icon.xs} color={COLORS.success} />
-          <Text style={styles.secureText}>Your MPIN is stored securely on your device</Text>
+          <Text style={styles.secureText}>Your G-PIN is stored securely on your device</Text>
         </View>
       </MpinScaffold>
 
