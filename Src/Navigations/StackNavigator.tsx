@@ -45,7 +45,7 @@ export default function StackNavigator() {
   useEffect(() => {
     const init = async () => {
       try {
-        // AsyncStorage.clear();
+        AsyncStorage.clear();
         const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
         const token = await AsyncStorage.getItem('authToken');
         const hasMpin = await AsyncStorage.getItem('hasMpin');

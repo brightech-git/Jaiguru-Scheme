@@ -1,12 +1,14 @@
 // Src/Screens/MemberCreation/MemberCreation.tsx
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useRoute, useNavigation, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import UserRegistrationForm, { UserRegistrationFormData, UserRegistrationFormRef } from './UserRegistrationForm';
 import SchemeJoiningForm, { SchemeJoiningFormRef } from './SchemeJoiningForm';
 import { useRazorpayPayment } from '../../api/hooks/Razorpay/useRazorpay';
 import PaymentModal, { SuccessDetails } from './PaymentModal';
+import { DEFAULT_EMPLOYEE_ID } from './EmployeePickerModal';
 import RazorpayWebView from '../../Components/RazorpayWebView';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
 import PremiumBackground from '../../Components/PremiumBackground/PremiumBackground';
@@ -44,12 +46,12 @@ const MemberCreation = () => {
   const [currentUserId, setCurrentUserId] = useState<string | number | null>(null);
   const [currentReferralCode, setCurrentReferralCode] = useState('');
   const [loggedInUser, setLoggedInUser] = useState<Record<string, any>>({});
-  const [employeeId, setEmployeeId] = useState('');
   // Until the server control resolves, keep the safer flow that collects KYC.
   const [requiresKyc, setRequiresKyc] = useState(routeRequiresKyc ?? true);
   const [kycControlLoading, setKycControlLoading] = useState(!hasResolvedKycRoute);
 
   const [successDetails, setSuccessDetails] = useState<SuccessDetails | null>(null);
+  const [payableAmount, setPayableAmount] = useState<number | null>(null);
 
   // Refs
   const registrationFormRef = useRef<UserRegistrationFormRef>(null);
@@ -87,16 +89,14 @@ const MemberCreation = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [uid, refCode, storedUser, storedEmployeeId] = await Promise.all([
+        const [uid, refCode, storedUser] = await Promise.all([
           getUserId(),
           getUserField('referralCode'),
           getUserData(),
-          getUserField('empId'),
         ]);
         if (uid) setCurrentUserId(uid);
         if (refCode) setCurrentReferralCode(refCode);
         if (storedUser) setLoggedInUser(storedUser);
-        if (storedEmployeeId) setEmployeeId(String(storedEmployeeId));
       } catch (e) {
         console.log('Failed to load logged-in user details', e);
       }
@@ -250,11 +250,12 @@ const MemberCreation = () => {
           updateTime: nowDateTime,
           openingDate: nowDateTime,
           userId: PAYMENT_CONSTANTS.USER_ID,
+          iEmp: formData.employeeId || DEFAULT_EMPLOYEE_ID,
         },
         schemeCollectInsert: {
           amount: formData.amount || 0,
           modePay: onlinePayMode?.modePay ?? 'R',
-          accCode: onlinePayMode?.accCode ?? '0000018',
+          accCode: onlinePayMode?.accCode ?? '',
           chqBankCode: onlinePayMode?.chqBankCode ?? 4,
           // Payment/order id aren't known yet — this payload is built and
           // parked server-side BEFORE the Razorpay order (and therefore the
@@ -278,7 +279,7 @@ const MemberCreation = () => {
       const loginMobile = String(
         loggedInUser?.contactNumber || loggedInUser?.mobileNumber || loggedInUser?.mobile || loggedInUser?.phone || ''
       ).trim();
-      const iEmp = employeeId.trim() || '999';
+      const iEmp = String(formData.employeeId || '').trim() || DEFAULT_EMPLOYEE_ID;
 
       return {
         newMember: {
@@ -298,7 +299,7 @@ const MemberCreation = () => {
         },
       } as any;
     },
-    [employeeId, loggedInUser]
+    [loggedInUser]
   );
 
   // The backend returns the parked-payload outcome as a stringified map,
@@ -418,6 +419,7 @@ const MemberCreation = () => {
             ref={schemeFormRef}
             scheme={scheme}
             initialData={schemeJoiningData}
+            onAmountChange={setPayableAmount}
             userData={requiresKyc ? userRegistrationData : {
               userName: loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name,
               mobileNumber: loggedInUser?.contactNumber || loggedInUser?.mobileNumber || loggedInUser?.mobile || loggedInUser?.phone,
@@ -446,7 +448,14 @@ const MemberCreation = () => {
 
       {/* Navigation Buttons */}
       {!kycControlLoading && (
-        <NavigationButtons currentStep={currentStep} onBack={handleBack} onNext={handleNext} onSubmit={handleSubmit} isLoading={isLoading} />
+        <NavigationButtons
+          currentStep={currentStep}
+          onBack={handleBack}
+          onNext={handleNext}
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+          payableAmount={payableAmount}
+        />
       )}
     </KeyboardAvoidingView>
   );
@@ -493,42 +502,66 @@ interface NavigationButtonsProps {
   onNext: () => void;
   onSubmit: () => void;
   isLoading: boolean;
+  payableAmount?: number | null;
 }
 
-const NavigationButtons = ({ currentStep, onBack, onNext, onSubmit, isLoading }: NavigationButtonsProps) => {
-  const insets = useSafeAreaInsets();
-  return (
-  <View style={[styles.navigationContainer, { paddingBottom: Math.max(insets.bottom, SIZES.space.md) }]}>
-    <AppButton
-      label={currentStep === 1 ? 'Cancel' : 'Back'}
-      variant="outline"
-      onPress={onBack}
-      disabled={isLoading}
-      fullWidth={false}
-      style={styles.navButtonFlex}
-    />
+const formatINR = (value: number): string => {
+  try {
+    return value.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  } catch {
+    return String(value);
+  }
+};
 
-    {currentStep === 1 ? (
+const NavigationButtons = ({ currentStep, onBack, onNext, onSubmit, isLoading, payableAmount }: NavigationButtonsProps) => {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = { paddingBottom: Math.max(insets.bottom, SIZES.space.md) };
+
+  if (currentStep === STEPS.SCHEME_JOINING) {
+    return (
+      <View style={[styles.navigationContainer, bottomPadding]}>
+        <View style={styles.payableBlock}>
+          <AppText variant="caption" color={COLORS.contentMuted}>
+            Total payable
+          </AppText>
+          <AppText variant="h4" color={payableAmount ? COLORS.contentBrand : COLORS.contentDisabled} numberOfLines={1}>
+            ₹{payableAmount ? formatINR(payableAmount) : '0'}
+          </AppText>
+        </View>
+        <AppButton
+          label="Pay Now"
+          variant="primary"
+          size="lg"
+          rightIcon="arrow-forward"
+          onPress={onSubmit}
+          loading={isLoading}
+          disabled={isLoading || !payableAmount}
+          fullWidth={false}
+          style={styles.payButton}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.navigationContainer, bottomPadding]}>
+      <TouchableOpacity onPress={onBack} disabled={isLoading} style={styles.cancelButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <Icon name="close" size={SIZES.icon.sm} color={COLORS.contentSecondary} />
+        <AppText variant="bodyMedium" color={COLORS.contentSecondary}>
+          Cancel
+        </AppText>
+      </TouchableOpacity>
       <AppButton
-        label="Next"
+        label="Continue"
         variant="primary"
+        size="lg"
+        rightIcon="arrow-forward"
         onPress={onNext}
         disabled={isLoading}
         fullWidth={false}
-        style={styles.navButtonFlex}
+        style={styles.payButton}
       />
-    ) : (
-      <AppButton
-        label="Pay & Continue"
-        variant="primary"
-        onPress={onSubmit}
-        loading={isLoading}
-        disabled={isLoading}
-        fullWidth={false}
-        style={styles.navButtonFlex}
-      />
-    )}
-  </View>
+    </View>
   );
 };
 
@@ -590,16 +623,26 @@ const styles = StyleSheet.create({
   },
   navigationContainer: {
     flexDirection: 'row',
-    paddingTop: SIZES.space.xl,
-    paddingHorizontal: SIZES.space.md,
+    alignItems: 'center',
+    paddingTop: SIZES.space.md,
+    paddingHorizontal: SIZES.space.lg,
     backgroundColor: COLORS.surface,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    gap: SIZES.space.sm,
+    borderTopLeftRadius: SIZES.radius.xl,
+    borderTopRightRadius: SIZES.radius.xl,
+    gap: SIZES.space.lg,
+    ...ELEVATION.overlay,
   },
-  navButtonFlex: {
+  payableBlock: {
     flex: 1,
-    paddingBottom:10,
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SIZES.space.xs,
+    paddingHorizontal: SIZES.space.sm,
+  },
+  payButton: {
+    flex: 1.3,
   },
   loadingOverlay: {
     position: 'absolute',

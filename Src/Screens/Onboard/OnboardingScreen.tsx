@@ -1,5 +1,5 @@
 // Src/Screens/Onboard/OnboardingScreen.tsx
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -15,27 +15,23 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Svg, { Path } from 'react-native-svg';
 
 import { IMAGE_BASE_URL } from '../../Config/BaseUrl';
 import { useOnboardBanners } from '../../api/hooks/Onboard/useOnboardingBanners';
-import NextButton from './components/NextButton';
 import Pagination from './components/Pagination';
 import { useSharedValue } from 'react-native-reanimated';
 import { COLORS, FONTS } from '../../Utills/AppTheme';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const OnboardingScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { banners, loading } = useOnboardBanners();
-  const listRef = useRef<FlatList>(null);
   const scrollX = useSharedValue(0);
-  const [index, setIndex] = useState(0);
-
-  const isLast = index === (banners.length || 1) - 1;
+  const [bannerHeight, setBannerHeight] = useState(0);
 
   // Skip if already authenticated
   useEffect(() => {
@@ -61,20 +57,6 @@ const OnboardingScreen: React.FC = () => {
     [navigation],
   );
 
-  const goNext = useCallback(() => {
-    if (isLast) {
-      finish('Register');
-      return;
-    }
-    listRef.current?.scrollToOffset({ offset: (index + 1) * SCREEN_WIDTH, animated: true });
-  }, [finish, index, isLast]);
-
-  const onMomentumEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const newIndex = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-    setIndex(newIndex);
-    scrollX.value = e.nativeEvent.contentOffset.x;
-  }, [scrollX]);
-
   const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollX.value = e.nativeEvent.contentOffset.x;
   }, [scrollX]);
@@ -99,10 +81,13 @@ const OnboardingScreen: React.FC = () => {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
+      <View
+        style={styles.carousel}
+        onLayout={({ nativeEvent }) => setBannerHeight(nativeEvent.layout.height)}
+      >
       <FlatList
         style={styles.list}
-        ref={listRef}
-        data={banners}
+        data={[...banners].reverse()}
         keyExtractor={(item) => String(item.BannerId)}
         horizontal
         pagingEnabled
@@ -110,101 +95,115 @@ const OnboardingScreen: React.FC = () => {
         showsHorizontalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={onScroll}
-        onMomentumScrollEnd={onMomentumEnd}
         decelerationRate="fast"
         renderItem={({ item }) => (
           <Image
             source={{ uri: `${IMAGE_BASE_URL}${item.image_path}` }}
-            style={styles.bannerImage}
+            style={[styles.bannerImage, { height: bannerHeight }]}
             resizeMode="cover"
           />
         )}
       />
 
-      {/* Bottom overlay */}
-      <LinearGradient
-        colors={[COLORS.transparent, COLORS.scrimHeavy]}
-        style={[styles.overlay, { paddingBottom: insets.bottom + 24 }]}
-        pointerEvents="box-none"
-      >
+      <View style={styles.curve} pointerEvents="none">
+        <Svg width="100%" height="100%" viewBox="0 0 400 90" preserveAspectRatio="none">
+          <Path
+            d="M 0 14 C 90 -10 205 106 400 66 L 400 90 L 0 90 Z"
+            fill={COLORS.white}
+          />
+          <Path
+            d="M 0 14 C 90 -10 205 106 400 66"
+            fill="none"
+            stroke={COLORS.accentDeep}
+            strokeWidth={3}
+          />
+        </Svg>
+      </View>
+      </View>
+
+      {/* Fixed footer outside the image carousel. */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom +24 }]}>
         <Pagination count={banners.length} scrollX={scrollX} width={SCREEN_WIDTH} />
 
-        <View style={styles.ctaWrap}>
-
-
-
-
-          {isLast && (
+          <View style={styles.accountActions}>
             <Pressable
-              onPress={() => finish('Login')}
-              hitSlop={12}
-              style={({ pressed }) => [styles.loginBtn, pressed && { opacity: 0.7 }]}
+              accessibilityRole="button"
+              onPress={() => finish('Register')}
+              style={({ pressed }) => [styles.accountBtn, pressed && styles.pressed]}
             >
-              <Text style={styles.loginBtnText}> Sign In</Text>
+              <Text style={styles.accountTitle}>Register</Text>
+              <Text style={styles.accountSubtitle}>Open a free account</Text>
             </Pressable>
-          )}
-
-          {!isLast && (
             <Pressable
+              accessibilityRole="button"
               onPress={() => finish('Login')}
-              hitSlop={12}
-              style={({ pressed }) => [styles.skipBtn, pressed && { opacity: 0.7 }]}
+              style={({ pressed }) => [styles.accountBtn, styles.loginBtn, pressed && styles.pressed]}
             >
-              <Text style={styles.skipText}>Skip</Text>
+              <Text style={[styles.accountTitle, styles.loginText]}>Login</Text>
+              <Text style={[styles.accountSubtitle, styles.loginText]}>Already have an account</Text>
             </Pressable>
-          )}
-          <NextButton
-            label={isLast ? 'Sign Up' : 'Next'}
-            onPress={goNext}
-            showArrow={!isLast}
-          />
-        </View>
-      </LinearGradient>
+          </View>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.black },
+  root: { flex: 1, backgroundColor: COLORS.white },
   loader: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.white },
-  list: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
-  bannerImage: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
-  overlay: {
+  carousel: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+  },
+  curve: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -1,
     left: 0,
     right: 0,
-    paddingTop: 40,
+    height: 90,
+  },
+  list: { flex: 1, width: SCREEN_WIDTH },
+  bannerImage: { width: SCREEN_WIDTH },
+  footer: {
+    paddingTop: 6,
     paddingHorizontal: 28,
     alignItems: 'center',
+    backgroundColor: COLORS.white,
   },
-  ctaWrap: { marginTop: 10, width: '100%', flexDirection: 'row', alignItems: 'center', gap: 12 },
-  skipBtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 26,
+  accountActions: {
+    marginTop: 18,
+    width: '100%',
+    gap: 12,
+  },
+  accountBtn: {
+    minHeight: 58,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     backgroundColor: COLORS.brandStrong,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
-  skipText: {
-    fontSize: 16,
+  accountTitle: {
+    fontSize: 18,
     color: COLORS.contentOnBrand,
     fontFamily: FONTS.family.semiBold,
+  },
+  accountSubtitle: {
+      fontSize: 15,
+      color: COLORS.contentOnBrand,
+      fontFamily: FONTS.family.semiBold,
+      textAlign: 'center',
   },
   loginBtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 26,
-    backgroundColor: COLORS.brandStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.brandStrong,
   },
-  loginBtnText: {
-    fontSize: 16,
-    color: COLORS.contentOnBrand,
-    fontFamily: FONTS.family.semiBold,
-  },
+  loginText: { color: COLORS.brandStrong ,fontFamily: FONTS.family.semiBold},
+  pressed: { opacity: 0.7 },
 });
 
 export default OnboardingScreen;

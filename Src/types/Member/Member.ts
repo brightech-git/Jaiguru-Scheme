@@ -59,6 +59,8 @@ export interface CreateSchemeSummaryPayload {
   openingDate: string;
   /** Maps to the backend CreateSchemeSummary model's "userId" field — do not rename to "userId2". */
   userId?: string | number;
+  /** Referring employee id; "999" when no employee was picked. */
+  iEmp?: string;
 }
 
 export interface SchemeCollectInsertPayload {

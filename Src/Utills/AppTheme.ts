@@ -1,5 +1,6 @@
 // theme.ts
 import { Dimensions, PixelRatio, Platform } from "react-native";
+import { BOLD, BODY } from "./Fonts";
 
 const { width, height } = Dimensions.get("window");
 
@@ -301,15 +302,15 @@ export const SIZES = {
 };
 
 /* ============================================================
-   TYPOGRAPHY (Poppins)
+   TYPOGRAPHY (Poppins Bold / Inter Display Medium)
    ============================================================ */
 export const FONTS: Record<string, any> = {
   family: {
-    light: "Poppins-Light",
-    regular: "Poppins-Regular",
-    medium: "Poppins-Medium",
-    semiBold: "Poppins-SemiBold",
-    bold: "Poppins-Bold",
+    light: BODY,
+    regular: BODY,
+    medium: BODY,
+    semiBold: BOLD,
+    bold: BOLD,
   },
 
   weight: {
@@ -321,87 +322,87 @@ export const FONTS: Record<string, any> = {
   },
 
   display: {
-    fontFamily: "Poppins-Bold",
+    fontFamily: BOLD,
     fontSize: SIZES.text.display1,
     lineHeight: SIZES.text.display1 * 1.2,
     color: COLORS.contentPrimary,
     letterSpacing: -0.5,
   },
   title: {
-    fontFamily: "Poppins-Bold",
+    fontFamily: BOLD,
     fontSize: SIZES.text.display3,
     lineHeight: SIZES.text.display3 * 1.28,
     color: COLORS.contentPrimary,
     letterSpacing: -0.3,
   },
   heading: {
-    fontFamily: "Poppins-SemiBold",
+    fontFamily: BOLD,
     fontSize: SIZES.text.xxl,
     lineHeight: SIZES.text.xxl * 1.3,
     color: COLORS.contentPrimary,
   },
   subheading: {
-    fontFamily: "Poppins-SemiBold",
+    fontFamily: BOLD,
     fontSize: SIZES.text.lg,
     lineHeight: SIZES.text.lg * 1.4,
     color: COLORS.contentPrimary,
   },
   // Restores the pre-migration h2 / h5 steps of the heading scale.
   display2: {
-    fontFamily: "Poppins-Bold",
+    fontFamily: BOLD,
     fontSize: SIZES.text.display2,
     lineHeight: SIZES.text.display2 * 1.25,
     color: COLORS.contentPrimary,
     letterSpacing: -0.3,
   },
   subheadingLg: {
-    fontFamily: "Poppins-Medium",
+    fontFamily: BODY,
     fontSize: SIZES.text.xl,
     lineHeight: SIZES.text.xl * 1.4,
     color: COLORS.contentPrimary,
   },
 
   bodyLg: {
-    fontFamily: "Poppins-Regular",
+    fontFamily: BODY,
     fontSize: SIZES.text.lg,
     lineHeight: SIZES.text.lg * 1.5,
     color: COLORS.contentPrimary,
   },
   body: {
-    fontFamily: "Poppins-Regular",
+    fontFamily: BODY,
     fontSize: SIZES.text.md,
     lineHeight: SIZES.text.md * 1.5,
     color: COLORS.contentPrimary,
   },
   bodyEmphasis: {
-    fontFamily: "Poppins-Medium",
+    fontFamily: BODY,
     fontSize: SIZES.text.md,
     lineHeight: SIZES.text.md * 1.5,
     color: COLORS.contentPrimary,
   },
   // Genuinely bold body copy — `bodyEmphasis` is only Medium.
   bodyStrong: {
-    fontFamily: "Poppins-Bold",
+    fontFamily: BOLD,
     fontSize: SIZES.text.md,
     lineHeight: SIZES.text.md * 1.5,
     color: COLORS.contentPrimary,
   },
   bodySm: {
-    fontFamily: "Poppins-Regular",
+    fontFamily: BODY,
     fontSize: SIZES.text.sm,
     lineHeight: SIZES.text.sm * 1.5,
     color: COLORS.contentSecondary,
   },
 
   label: {
-    fontFamily: "Poppins-SemiBold",
+    fontFamily: BOLD,
     fontSize: SIZES.text.sm,
     lineHeight: SIZES.text.sm * 1.4,
     color: COLORS.contentPrimary,
     letterSpacing: 0.3,
   },
   eyebrow: {
-    fontFamily: "Poppins-SemiBold",
+    fontFamily: BOLD,
     fontSize: SIZES.text.xs,
     lineHeight: SIZES.text.xs * 1.4,
     color: COLORS.contentAccent,
@@ -409,20 +410,20 @@ export const FONTS: Record<string, any> = {
     letterSpacing: 1.2,
   },
   caption: {
-    fontFamily: "Poppins-Regular",
+    fontFamily: BODY,
     fontSize: SIZES.text.xs,
     lineHeight: SIZES.text.xs * 1.4,
     color: COLORS.contentMuted,
   },
 
   action: {
-    fontFamily: "Poppins-SemiBold",
+    fontFamily: BOLD,
     fontSize: SIZES.text.md,
     lineHeight: SIZES.text.md * 1.3,
     letterSpacing: 0.3,
   },
   actionSm: {
-    fontFamily: "Poppins-Medium",
+    fontFamily: BODY,
     fontSize: SIZES.text.sm,
     lineHeight: SIZES.text.sm * 1.3,
   },

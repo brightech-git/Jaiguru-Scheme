@@ -104,3 +104,7 @@ export const NOTIFICATIONS = {
   DELETE_ONE: (notificationId: number | string) => `/notifications/notification/${notificationId}`,
   DELETE_BY_USER: (userId: number | string) => `/notifications/user/${userId}`,
 };
+
+export const EMPLOYEES = {
+  SEARCH: (empId: string) => `/employees?empId=${encodeURIComponent(empId)}`,
+};

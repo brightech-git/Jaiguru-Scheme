@@ -146,7 +146,7 @@ const PayNow = () => {
 
     try {
       const response = await memberKycService.getKycStatus(personalId);
-      const isKycComplete = String(response?.KYCUPDATION || '').trim().toUpperCase() === 'Y';
+      const isKycComplete = String(response?.KYCUPDATION || '').trim().toUpperCase() === 'N';
 
       if (isKycComplete) {
         setKycCheckState('ready');
@@ -221,7 +221,7 @@ const PayNow = () => {
       rDate: today,
       amount: paymentAmount,
       modePay: onlinePayMode?.modePay ?? 'R',
-      accCode: onlinePayMode?.accCode ?? '0000018',
+      accCode: onlinePayMode?.accCode ?? '',
       updateTime: today,
       installment: nextInstallment,
       weight:

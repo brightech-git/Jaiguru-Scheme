@@ -1,15 +1,12 @@
-// utils/useFonts.ts
 import { useFonts as useExpoFonts } from 'expo-font';
+
+export const BOLD = 'Poppins-Bold';
+export const BODY = 'InterDisplay-Medium';
 
 const useFonts = (): boolean => {
   const [fontsLoaded] = useExpoFonts({
-    'Poppins-Thin': require('../Assets/Fonts/Poppins/Poppins-Thin.ttf'),
-    'Poppins-Light': require('../Assets/Fonts/Poppins/Poppins-Light.ttf'),
-    'Poppins-Regular': require('../Assets/Fonts/Poppins/Poppins-Regular.ttf'),
-    'Poppins-Medium': require('../Assets/Fonts/Poppins/Poppins-Medium.ttf'),
-    'Poppins-SemiBold': require('../Assets/Fonts/Poppins/Poppins-SemiBold.ttf'),
-    'Poppins-Bold': require('../Assets/Fonts/Poppins/Poppins-Bold.ttf'),
-    'Poppins-ExtraBold': require('../Assets/Fonts/Poppins/Poppins-ExtraBold.ttf'),
+    [BOLD]: require('../Assets/Fonts/Poppins/Poppins-Bold.ttf'),
+    [BODY]: require('../Assets/Fonts/InterDisplay-Medium.otf'),
   });
   return fontsLoaded;
 };
