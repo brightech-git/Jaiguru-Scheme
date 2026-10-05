@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useSchemeGroupOptions } from '../../api/hooks/Schemes/useSchemeGroupOptions';
 import { useTransactionTypes } from '../../api/hooks/Account/useTransactionTypes';
 import { Scheme } from '../../types/Scheme/Scheme';
-import { AppText, AppCard, AppBadge, AppSectionHeader } from '../../Components/ui/appcomponents';
+import { AppText, AppCard, AppBadge, AppInput, AppSectionHeader } from '../../Components/ui/appcomponents';
 import theme from '../../Utills/AppTheme';
 
 const { COLORS, SIZES, ELEVATION } = theme;
@@ -80,6 +80,12 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
     const [selectedScheme, setSelectedScheme] = useState('');
     const [selectedPayment] = useState('00001');
     const [dropdownVisible, setDropdownVisible] = useState(false);
+    const [customAmount, setCustomAmount] = useState('');
+
+    // When installments are not fixed, customers enter their own amount.
+    // WeightLedger does not change this rule; FixedIns is the source of truth.
+    const isUserAmountScheme = scheme?.FixedIns === 'N' && Number(scheme?.Instalment) > 1;
+    const effectiveAmount = isUserAmountScheme ? Number(customAmount) || null : getAmount(selectedScheme);
 
     useEffect(() => {
       if (initialData) {
@@ -90,6 +96,10 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [schemes, initialData]);
 
+    useEffect(() => {
+      setCustomAmount('');
+    }, [scheme?.SchemeId]);
+
     const validateForm = (): boolean => {
       if (!selectedScheme) {
         return false;
@@ -97,11 +107,14 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
       if (!selectedPayment) {
         return false;
       }
+      if (!effectiveAmount || effectiveAmount <= 0) {
+        return false;
+      }
       return true;
     };
 
     const prepareSubmissionData = (): SchemeJoiningFormData => {
-      const amount = getAmount(selectedScheme);
+      const amount = effectiveAmount;
       const regNo = getRegNo(selectedScheme);
       const paymentType = 'Online';
 
@@ -202,11 +215,33 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
 
         {/* Scheme Amount Selection */}
         <AppCard style={styles.card}>
-          <AppSectionHeader title="Select Scheme Amount" />
+          <AppSectionHeader title={isUserAmountScheme ? 'Enter Scheme Amount' : 'Select Scheme Amount'} />
           {schemes.length === 0 ? (
             <AppText variant="bodySmall" color={COLORS.contentSecondary}>
               No schemes available
             </AppText>
+          ) : isUserAmountScheme ? (
+            <>
+              <AppInput
+                label="Installment Amount"
+                required
+                value={customAmount}
+                onChangeText={(value) => setCustomAmount(value.replace(/[^0-9.]/g, ''))}
+                keyboardType="decimal-pad"
+                placeholder="Enter amount"
+                leftIcon="cash-outline"
+                hint="Enter the amount you would like to pay for each installment."
+              />
+              <View style={styles.amountContainer}>
+                <View>
+                  <AppText variant="bodySmall" color={COLORS.successText}>Scheme Group</AppText>
+                  <AppText variant="caption" color={COLORS.successText}>Code: {selectedScheme || 'N/A'}</AppText>
+                </View>
+                <AppText variant="h4" color={COLORS.successText}>
+                  {effectiveAmount ? `₹${effectiveAmount}` : 'Enter amount'}
+                </AppText>
+              </View>
+            </>
           ) : (
             <TouchableOpacity
               style={styles.dropdownField}
@@ -222,7 +257,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
             </TouchableOpacity>
           )}
 
-          {selectedScheme && (
+          {!isUserAmountScheme && selectedScheme && (
             <View style={styles.amountContainer}>
               <View>
                 <AppText variant="bodySmall" color={COLORS.successText}>
@@ -240,6 +275,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
         </AppCard>
 
         {/* Scheme Amount Dropdown Modal */}
+        {!isUserAmountScheme && (
         <Modal visible={dropdownVisible} transparent animationType="fade" onRequestClose={() => setDropdownVisible(false)}>
           <TouchableOpacity
             style={styles.dropdownOverlay}
@@ -275,6 +311,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
             </View>
           </TouchableOpacity>
         </Modal>
+        )}
 
         {/* Payment Method (see note above the component: always Online via Razorpay) */}
         <AppCard style={styles.card}>
@@ -290,7 +327,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
         </AppCard>
 
         {/* Summary Card */}
-        {selectedScheme && selectedPayment && (
+        {selectedScheme && selectedPayment && effectiveAmount && (
           <AppCard variant="premium" style={styles.card}>
             <AppText variant="h5" align="center" color={COLORS.contentBrand} style={{ marginBottom: SIZES.space.lg }}>
               Order Summary
@@ -317,7 +354,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
                 Amount
               </AppText>
               <AppText variant="bodyBold" color={COLORS.contentBrand}>
-                ₹{getAmount(selectedScheme)}
+                ₹{effectiveAmount}
               </AppText>
             </View>
             <View style={styles.summaryRow}>

@@ -156,8 +156,14 @@ export const useRazorpayPayment = () => {
       groupCode: string,
       orderExtras: OrderExtras
     ): Promise<PaymentResult> => {
-      if (!amount || amount <= 0) return Promise.resolve({ success: false, message: 'Invalid amount' });
-      if (!regNo || !groupCode) return Promise.resolve({ success: false, message: 'Missing registration details' });
+      if (!amount || amount <= 0) {
+        console.warn('[SCHEME JOIN] Invalid payment amount', { amount, regNo, groupCode });
+        return Promise.resolve({ success: false, message: 'Invalid amount' });
+      }
+      if (!regNo || !groupCode) {
+        console.warn('[SCHEME JOIN] Missing order registration details', { amount, regNo, groupCode, orderExtras });
+        return Promise.resolve({ success: false, message: 'Missing registration details' });
+      }
       if (orderExtras.newJoin && !orderExtras.nmData)
         return Promise.resolve({ success: false, message: 'Missing member registration details' });
       if (!orderExtras.newJoin && !orderExtras.schemeDetails)
@@ -206,6 +212,15 @@ export const useRazorpayPayment = () => {
               theme: { color: COLORS.contentBrand },
             };
 
+            // Checkout is opened from inline WebView HTML, so Razorpay does
+            // not return a redirect/short URL. Log the real script URL and
+            // order used by that WebView for debugging.
+            console.log('[RAZORPAY] WebView checkout launch', {
+              checkoutScriptUrl: 'https://checkout.razorpay.com/v1/checkout.js',
+              orderId: options.order_id,
+              amount: options.amount,
+              currency: options.currency,
+            });
             setRazorpayOptions(options);
             // iOS cannot present a new modal while another is still dismissing.
             // A short delay lets the PaymentModal fully unmount first.

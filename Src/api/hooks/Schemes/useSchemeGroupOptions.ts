@@ -39,7 +39,9 @@ export const useSchemeGroupOptions = (schemeId?: number | string) => {
 
   const getRegNo = (groupCode: string): number => {
     const scheme = schemes.find((s) => s.GROUPCODE === groupCode);
-    return scheme ? scheme.CURRENTREGNO : 1; // Default to 1 if not found
+    // A new group can return CURRENTREGNO: 0. Razorpay requires a truthy
+    // registration number, so the first registration starts at 1.
+    return scheme?.CURRENTREGNO || 1;
   };
 
   return { schemes, loading, error, getAmount, getRegNo };

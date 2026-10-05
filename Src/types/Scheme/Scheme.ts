@@ -14,6 +14,9 @@ export interface Scheme {
   schemeName: string;
   SchemeSName?: string;
   MetalType?: string; // 'G' | 'S' | 'B' | 'C'
+  WeightLedger?: 'Y' | 'N';
+  FixedIns?: 'Y' | 'N';
+  Instalment?: number;
 }
 
 export type SchemeListResponse = Scheme[];

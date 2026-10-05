@@ -118,7 +118,12 @@ const UserRegistrationForm = forwardRef<UserRegistrationFormRef, UserRegistratio
         (Object.keys(initialData) as (keyof UserRegistrationFormData)[]).forEach((key) => {
           if (initialData[key] !== undefined) merged[key] = initialData[key] as string;
         });
-        setFormData(merged);
+        setFormData((previousData) => ({
+          ...merged,
+          // Login details should remain available when restoring a partial form.
+          mobileNumber: merged.mobileNumber || previousData.mobileNumber,
+          emailAddress: merged.emailAddress || previousData.emailAddress,
+        }));
         setHasPreviousData(true);
 
 
@@ -155,48 +160,52 @@ const UserRegistrationForm = forwardRef<UserRegistrationFormRef, UserRegistratio
     // Load user data from AuthStorage
     const loadUserDataFromAuth = async () => {
       try {
-        // First try to load saved form data
-        const savedFormData = await AsyncStorage.getItem(FORM_STORAGE_KEY);
+        const [savedFormData, authSession, userData] = await Promise.all([
+          AsyncStorage.getItem(FORM_STORAGE_KEY),
+          authStorage.getAuthSession(),
+          AsyncStorage.getItem('userData'),
+        ]);
 
-        if (savedFormData !== null) {
-          const parsedData = JSON.parse(savedFormData);
-          setFormData(parsedData);
-          setHasPreviousData(true);
+        const savedData = savedFormData ? JSON.parse(savedFormData) : {};
+        const storedUser = userData ? JSON.parse(userData) : {};
+        const authUser = authSession.isAuthenticated ? authSession.user : undefined;
 
+        // A previous draft must not prevent the current login details from being filled.
+        // This is important for users who saved the form before mobile/email were available.
+        setFormData((previousData) => ({
+          ...EMPTY_FORM,
+          ...savedData,
+          ...previousData,
+          userName:
+            previousData.userName ||
+            savedData.userName ||
+            storedUser.username ||
+            storedUser.name ||
+            authUser?.username ||
+            authUser?.name ||
+            '',
+          mobileNumber:
+            previousData.mobileNumber ||
+            savedData.mobileNumber ||
+            storedUser.contactNumber ||
+            storedUser.mobileNumber ||
+            storedUser.mobile ||
+            storedUser.phone ||
+            authUser?.contactNumber ||
+            authUser?.mobileNumber ||
+            authUser?.phone ||
+            '',
+          emailAddress:
+            previousData.emailAddress ||
+            savedData.emailAddress ||
+            storedUser.email ||
+            storedUser.emailAddress ||
+            authUser?.email ||
+            authUser?.emailAddress ||
+            '',
+        }));
 
-          return;
-        }
-
-        // If no saved form data, load from auth storage
-        const authSession = await authStorage.getAuthSession();
-
-        if (authSession.isAuthenticated && authSession.user) {
-          const user = authSession.user;
-
-          // Map auth user data to form fields
-          const userFields = {
-            userName: user.username || user.name || '',
-            mobileNumber: user.contactNumber || user.mobileNumber || user.phone || '',
-            emailAddress: user.email || '',
-          };
-
-          setFormData((prev) => ({
-            ...prev,
-            ...userFields,
-          }));
-
-          // Also try to load from USER_DATA key directly if needed
-          const userData = await AsyncStorage.getItem('userData');
-          if (userData) {
-            const parsedUserData = JSON.parse(userData);
-            setFormData((prev) => ({
-              ...prev,
-              userName: prev.userName || parsedUserData.username || parsedUserData.name || '',
-              mobileNumber: prev.mobileNumber || parsedUserData.contactNumber || parsedUserData.mobileNumber || '',
-              emailAddress: prev.emailAddress || parsedUserData.email || '',
-            }));
-          }
-        }
+        setHasPreviousData(Boolean(savedFormData));
       } catch (error) {
         console.error('Error loading user data from auth:', error);
       }

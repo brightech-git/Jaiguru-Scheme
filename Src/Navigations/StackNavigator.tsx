@@ -26,6 +26,7 @@ import ResetPasswordScreen from '../Screens/Auth/ResetPassword/ResetPassword';
 import ResetMpinScreen from '../Screens/Auth/ResetMpin/ResetMpin';
 import PayNow from '../Screens/PayNow/PayNow';
 import MemberCreation from '../Screens/MemberCreation/MemberCreation';
+import SchemeTermsAcceptance from '../Screens/SchemeTerms/SchemeTermsAcceptance';
 import WebViewScreen from '../Screens/WebView/WebViewScreen';
 import GoogleContactMobileScreen from '../Screens/Auth/GoogleContactUpdate/GoogleContactMobile';
 import GoogleContactOtpScreen from '../Screens/Auth/GoogleContactUpdate/GoogleContactVerify';
@@ -111,6 +112,7 @@ export default function StackNavigator() {
         <Stack.Screen name="ResetMPIN" component={ResetMpinScreen} />
         <Stack.Screen name="Paynow" component={PayNow} />
         <Stack.Screen name="MemberCreation" component={MemberCreation} />
+        <Stack.Screen name="SchemeTermsAcceptance" component={SchemeTermsAcceptance} />
         <Stack.Screen name="WebViewScreen" component={WebViewScreen} />
         <Stack.Screen name="GoogleContactVerification" component={GoogleContactMobileScreen as any} />
         <Stack.Screen name="GoogleContactVerify" component={GoogleContactOtpScreen as any} />

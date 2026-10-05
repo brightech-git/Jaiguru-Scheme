@@ -62,12 +62,21 @@ export const ACCOUNT = {
   TRANSACTION_TYPES: '/account/getTranType',
 };
 
+export const MEMBER = {
+  KYC_STATUS: (personalId: string | number) => `/member/kyc-status/${encodeURIComponent(String(personalId))}`,
+  DETAILS: (personalId: string | number) => `/member/details/${encodeURIComponent(String(personalId).toLowerCase())}`,
+};
+
 export const COMPANY = {
   ALL: '/company/all',
 };
 
 export const APP_CONTENT = {
   BY_ID: (contentId: string) => `/app-content/${encodeURIComponent(contentId)}`,
+};
+
+export const SOFT_CONTROL = {
+  KYC_UPDATION: '/soft-control/kyc-updation',
 };
 
 export const LOGIN_CHECK = {

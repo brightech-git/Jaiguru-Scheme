@@ -13,6 +13,8 @@ interface AppContentScreenProps {
   contentId: string;
   title: string;
   navigation: { goBack: () => void };
+  /** Optional fixed action area, for flows such as scheme-term acceptance. */
+  footer?: React.ReactNode | ((language: ContentLanguage) => React.ReactNode);
 }
 
 const buildDocument = (content: string, language: ContentLanguage) => `<!doctype html>
@@ -39,7 +41,7 @@ const buildDocument = (content: string, language: ContentLanguage) => `<!doctype
   <body>${content}</body>
 </html>`;
 
-const AppContentScreen = ({ contentId, title, navigation }: AppContentScreenProps) => {
+const AppContentScreen = ({ contentId, title, navigation, footer }: AppContentScreenProps) => {
   const { COLORS, SIZES, FONTS, STYLES } = theme;
   const [language, setLanguage] = useState<ContentLanguage>('en');
   const [content, setContent] = useState<string | null>(null);
@@ -108,6 +110,7 @@ const AppContentScreen = ({ contentId, title, navigation }: AppContentScreenProp
               return request.url === 'about:blank';
             }}
           />
+          {typeof footer === 'function' ? footer(language) : footer}
         </View>
       )}
     </SafeAreaView>

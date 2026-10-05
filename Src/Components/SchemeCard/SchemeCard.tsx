@@ -4,6 +4,7 @@ import { View, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Text, Di
 import { useSchemeCatalog } from '../../api/hooks/Schemes/useSchemeCatalog';
 import { Scheme } from '../../types/Scheme/Scheme';
 import { useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import placeholderImage from '../../Assets/Company/logo.png';
 import { COLORS, SIZES, FONTS, moderateScale, ELEVATION } from '../../Utills/AppTheme';
 import { IMAGE_BASE_URL } from '../../Config/BaseUrl';
@@ -16,38 +17,32 @@ export default function SchemeCardSlider() {
   // if (loading || filtered.length === 0) return null;
 
   const screenWidth = Dimensions.get('window').width;
-  const CARD_WIDTH = screenWidth * 0.85;
-  const CARD_MARGIN = SIZES.space.lg;
-  const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
+  const CARD_WIDTH = screenWidth;
+  const SNAP_INTERVAL = CARD_WIDTH;
   const IMAGE_HEIGHT = CARD_WIDTH * (9 / 16);
 
   const handleJoinScheme = (scheme: Scheme) => {
-    navigation.navigate('MemberCreation', { scheme });
-  };
-
-  const handleKnowMore = (scheme: Scheme) => {
-    navigation.navigate('KnowMore', { scheme });
+    navigation.navigate('SchemeTermsAcceptance', { scheme });
   };
 
   const renderItem = ({ item }: { item: Scheme & { image_path?: string } }) => {
     const imageUri = item.image_path ? `${IMAGE_BASE_URL}${item.image_path}` : placeholderImage;
 
     return (
-      <View style={[styles.cardContainer, { width: CARD_WIDTH, marginRight: CARD_MARGIN }]}>
-        <ImageBackground
-          source={typeof imageUri === 'string' ? { uri: imageUri } : imageUri}
-          style={[styles.imageBackground, { height: IMAGE_HEIGHT }]}
-          resizeMode="cover"
-        />
+      <View style={{ width: CARD_WIDTH, paddingHorizontal: SIZES.space.sm }}>
+        <View style={styles.cardContainer}>
+          <ImageBackground
+            source={typeof imageUri === 'string' ? { uri: imageUri } : imageUri}
+            style={[styles.imageBackground, { height: IMAGE_HEIGHT }]}
+            resizeMode="cover"
+          />
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={[styles.actionButton, styles.knowMoreButton]} onPress={() => handleKnowMore(item)}>
-            <Text style={styles.knowMoreButtonText}>Know More</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.actionButton, styles.joinButton]} onPress={() => handleJoinScheme(item)}>
-            <Text style={styles.joinButtonText}>Join Scheme</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={[styles.actionButton, styles.joinButton]} onPress={() => handleJoinScheme(item)}>
+              <Text style={styles.joinButtonText}>View terms &amp; join</Text>
+              <Ionicons name="arrow-forward" size={moderateScale(18)} color={COLORS.contentBrand} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -65,7 +60,6 @@ export default function SchemeCardSlider() {
       decelerationRate="fast"
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{
-        paddingHorizontal: (screenWidth - CARD_WIDTH) / 2,
         paddingVertical: SIZES.space.lg,
       }}
     />
@@ -95,25 +89,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  knowMoreButton: {
-    backgroundColor: COLORS.brand,
+  joinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SIZES.space.md,
+    backgroundColor: COLORS.accentSoft,
     borderWidth: 1,
     borderColor: COLORS.borderSubtle,
-    marginRight: moderateScale(8),
-  },
-  joinButton: {
-    backgroundColor: COLORS.brand,
-    marginLeft: moderateScale(8),
-    padding: moderateScale(12),
-  },
-  knowMoreButtonText: {
-    ...FONTS.bodySm,
-    color: COLORS.contentOnBrand,
-    fontWeight: 'bold',
   },
   joinButtonText: {
     ...FONTS.bodySm,
-    color: COLORS.contentOnInverse,
-    fontWeight: 'bold',
+    color: COLORS.contentBrand,
+    fontFamily: FONTS.family.semiBold,
   },
 });
