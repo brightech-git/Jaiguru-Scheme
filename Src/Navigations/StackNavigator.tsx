@@ -33,6 +33,8 @@ import GoogleContactOtpScreen from '../Screens/Auth/GoogleContactUpdate/GoogleCo
 import HelpCentre from '../Screens/HelpCenter/HelpCenter';
 import KnowMore from '../Screens/KnowMore/KnowMore'
 import ProfileScreen from '../Screens/Profile/Profile';
+import RegisterInfoScreen from '../Screens/Auth/RegisterInfo/RegisterInfo';
+import RegistrationWelcomeScreen from '../Screens/Auth/RegisterInfo/registration-welcome';
 import SplashScreen from '../Screens/Splash/SplashScreen';
 import { navigationRef } from './navigationRef';
 
@@ -119,6 +121,8 @@ export default function StackNavigator() {
         <Stack.Screen name="HelpCenter" component={HelpCentre} />
         <Stack.Screen name="KnowMore" component={KnowMore} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="RegisterInfo" component={RegisterInfoScreen} />
+        <Stack.Screen name="RegistrationWelcome" component={RegistrationWelcomeScreen} />
 
         {/* Drawer after MPIN success */}
         <Stack.Screen name="MainDrawer" component={MainDrawerNavigator} />

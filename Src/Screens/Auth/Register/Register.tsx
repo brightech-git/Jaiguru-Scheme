@@ -1,16 +1,3 @@
-// Src/Screens/Auth/Register/Register.tsx
-// -----------------------------------------------------------------------------
-// Jaiguru Digi Gold — premium luxury Create Account screen.
-// Full-bleed champagne background + floating gold particles, shimmering logo,
-// glassmorphism form (React Hook Form + Zod), live password strength, terms
-// acceptance, gold-gradient CTA with success animation. Uses the global AppTheme.
-//
-//   components/  RegisterHeader · RegisterForm · PasswordStrength ·
-//                TermsSection · RegisterButton · Footer
-//   hooks/       useRegister
-//   validation/  registerSchema
-// -----------------------------------------------------------------------------
-
 import React, { useEffect } from 'react';
 import {
   Dimensions,
@@ -25,7 +12,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Controller } from 'react-hook-form';
 import Animated, {
   Easing,
   interpolate,
@@ -35,12 +21,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import theme from '../../../Utills/AppTheme';
-import { useCompany } from '../../../api/hooks/Company/useCompany';
 import { useRegister } from './hooks/useRegister';
-import RegisterHeader from './components/RegisterHeader';
 import RegisterForm from './components/RegisterForm';
-import TermsSection from './components/TermsSection';
 import RegisterButton from './components/RegisterButton';
+import RegisterHeader from './components/RegisterHeader';
 import GoldParticles from '../Login/components/GoldParticles';
 import SocialActions from '../Login/components/SocialActions';
 
@@ -51,12 +35,10 @@ const BG_GRADIENT = COLORS.gradient.accentWash as [string, string, string];
 const GLOW_GRADIENT = [COLORS.accentSubtle, COLORS.whiteAlpha10] as [string, string];
 
 const RegisterScreen: React.FC = () => {
-  const { company } = useCompany();
   const reg = useRegister();
   const { control, formState } = reg.form;
   const { errors } = formState;
 
-  // Card slide-up + fade entrance.
   const enter = useSharedValue(0);
   useEffect(() => {
     enter.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) });
@@ -71,7 +53,6 @@ const RegisterScreen: React.FC = () => {
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
-      {/* Full-bleed luxury background + floating particles */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <LinearGradient colors={BG_GRADIENT} style={StyleSheet.absoluteFill} />
         <View style={[styles.glow, styles.glowTop]}>
@@ -88,8 +69,7 @@ const RegisterScreen: React.FC = () => {
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
           style={styles.flex}
-          behavior="padding"
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <ScrollView
@@ -98,51 +78,35 @@ const RegisterScreen: React.FC = () => {
               keyboardShouldPersistTaps="handled"
               bounces={false}
             >
-              <RegisterHeader logoUrl={company?.CompanyLogoUrl ?? null} />
+              <RegisterHeader
+                title="Join Now"
+                subtitle="Enter your contact number to get started."
+              />
 
               <Animated.View style={[styles.body, contentStyle]}>
                 <RegisterForm
                   control={control}
                   errors={errors}
-                  showPassword={reg.showPassword}
-                  showConfirm={reg.showConfirm}
-                  toggleShowPassword={reg.toggleShowPassword}
-                  toggleShowConfirm={reg.toggleShowConfirm}
-                  disabled={reg.loading || reg.success}
-                />
-
-                <Controller
-                  control={control}
-                  name="terms"
-                  render={({ field: { value, onChange } }) => (
-                    <TermsSection
-                      value={!!value}
-                      onToggle={onChange}
-                      onTerms={reg.goToTerms}
-                      onPrivacy={reg.goToPrivacy}
-                      error={errors.terms?.message}
-                      disabled={reg.loading || reg.success}
-                    />
-                  )}
+                  disabled={reg.loading}
                 />
 
                 <View style={styles.buttonWrap}>
                   <RegisterButton
-                    label="Create Account"
+                    label="Joining Now"
                     onPress={reg.submit}
                     loading={reg.loading}
-                    success={reg.success}
+                    success={false}
                   />
                 </View>
 
                 <SocialActions
                   onCreateAccount={reg.goToLogin}
-                  onGoogle={reg.signInWithGoogle}
+                  onGoogle={() => {}}
                   onApple={() => {}}
                   onGuest={() => {}}
-                  googleLoading={reg.googleLoading}
+                  googleLoading={false}
                   appleLoading={false}
-                  disabled={reg.loading || reg.success}
+                  disabled={reg.loading}
                   accountLabel="Already have an account? "
                   accountLinkLabel="Login"
                 />

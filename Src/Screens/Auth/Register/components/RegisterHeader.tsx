@@ -27,8 +27,8 @@ export interface RegisterHeaderProps {
 
 const RegisterHeader: React.FC<RegisterHeaderProps> = ({
   logoUrl,
-  title = 'Create Account',
-  subtitle = 'Start your digital gold savings journey today.',
+  title = 'Join Now',
+  subtitle = 'Start Your Digital Gold Savings Journey Now.',
 }) => {
   const enter = useSharedValue(0);
   useEffect(() => {
@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
     color: COLORS.contentPrimary,
   },
   subtitle: {
-    fontFamily: FONTS.family.regular,
-    fontSize: SIZES.text.md,
+    fontFamily: FONTS.family.semiBold,
+    fontSize: 12.9,
     lineHeight: SIZES.text.md * 1.5,
     textAlign: 'center',
     color: COLORS.contentSecondary,

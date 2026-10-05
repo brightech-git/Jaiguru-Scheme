@@ -1,6 +1,6 @@
 // Src/api/services/authService.ts
 import { callApi } from '../apiClient';
-import { AUTH } from '../endpoints';
+import { AUTH, USER } from '../endpoints';
 import {
   AuthApiResponse,
   RegisterPayload,
@@ -47,6 +47,14 @@ export const authService = {
       method: 'post',
       url: AUTH.RESET_PASSWORD,
       params: payload,
+    }),
+
+  /** PATCH /user/{userId}/update */
+  updateUserInfo: (userId: number | string, payload: Record<string, unknown>) =>
+    callApi<Record<string, unknown>, AuthApiResponse>({
+      method: 'patch',
+      url: USER.UPDATE(userId),
+      data: payload,
     }),
 
   /** POST /google-login */

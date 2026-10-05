@@ -131,7 +131,7 @@ const OnboardingScreen: React.FC = () => {
               onPress={() => finish('Register')}
               style={({ pressed }) => [styles.accountBtn, pressed && styles.pressed]}
             >
-              <Text style={styles.accountTitle}>Register</Text>
+              <Text style={styles.accountTitle}>Register Now</Text>
               <Text style={styles.accountSubtitle}>Open a free account</Text>
             </Pressable>
             <Pressable

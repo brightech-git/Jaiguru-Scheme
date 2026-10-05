@@ -36,8 +36,7 @@ export interface RegisterPayload {
 }
 
 export interface LoginPayload {
-  contactOrEmailOrUsername: string;
-  password: string;
+  contactNumber: string;
 }
 
 export interface VerifyOtpPayload {

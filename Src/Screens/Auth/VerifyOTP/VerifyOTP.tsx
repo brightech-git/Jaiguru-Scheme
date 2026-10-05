@@ -94,7 +94,14 @@ const VerifyOTPScreen = () => {
     };
   }, [startListener, stopListener]);
 
-  const navigateAfterOtp = useCallback(async () => {
+  const navigateAfterOtp = useCallback(async (result?: any) => {
+    if (otpType === 'normal') {
+      navigation.replace('RegisterInfo', {
+        userId: result?.id || result?.userId,
+        contactNumber: mobileNumber,
+      });
+      return;
+    }
     try {
       const hasMpin = await AsyncStorage.getItem('hasMpin');
       if (hasMpin === 'true') navigation.replace('MpinVerify');
@@ -102,7 +109,7 @@ const VerifyOTPScreen = () => {
     } catch {
       navigation.replace('MpinCreate');
     }
-  }, [navigation]);
+  }, [navigation, otpType, mobileNumber]);
 
   const submitOtp = useCallback(
     async (code: string) => {
@@ -140,7 +147,7 @@ const VerifyOTPScreen = () => {
 
         showToast({ message: 'OTP verified successfully!', type: 'success', duration: 2000 });
         stopListener?.();
-        setTimeout(() => navigateAfterOtp(), 600);
+        setTimeout(() => navigateAfterOtp(result), 600);
       } catch (err: any) {
         showToast({ message: err.message || 'Invalid OTP. Please try again.', type: 'error', duration: 3000 });
         setOtp('');

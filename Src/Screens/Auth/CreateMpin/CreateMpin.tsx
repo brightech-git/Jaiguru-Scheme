@@ -30,17 +30,17 @@ const SEQUENTIAL_PATTERNS = new Set([
 ]);
 
 const validateMpinValue = (mpin: string, confirm = ''): string => {
-  if (mpin.length !== 4) return 'Please enter a 4-digit MPIN.';
-  if (WEAK_MPIN_PATTERNS.has(mpin)) return 'This MPIN is too common. Choose a more secure combination.';
+  if (mpin.length !== 4) return 'Please enter a 4-digit G-PIN.';
+  if (WEAK_MPIN_PATTERNS.has(mpin)) return 'This G-PIN is too common. Choose a more secure combination.';
   if (SEQUENTIAL_PATTERNS.has(mpin)) return 'Sequential numbers are not secure. Choose a random combination.';
   if (/^(\d)\1{3}$/.test(mpin)) return 'Repeating digits are not secure. Choose a random combination.';
-  if (confirm.length === 4 && mpin !== confirm) return 'MPINs do not match. Please try again.';
+  if (confirm.length === 4 && mpin !== confirm) return 'G-PINs do not match. Please try again.';
   return '';
 };
 
 const TIPS = [
   'Avoid common patterns (1234, 1111)',
-  'Never share your MPIN with anyone',
+  'Never share your G-PIN with anyone',
   'Choose numbers easy to remember but hard to guess',
 ];
 
@@ -147,7 +147,7 @@ const MpinCreateScreen = () => {
       try {
         await createMpin(mpin);
         await AsyncStorage.setItem('hasMpin', 'true');
-        Alert.alert('Success', 'MPIN created successfully!', [
+        Alert.alert('Success', 'G-PIN created successfully!', [
           {
             text: 'OK',
             onPress: () => {
@@ -160,9 +160,9 @@ const MpinCreateScreen = () => {
         const msg = e?.message || '';
         if (msg.toLowerCase().includes('mpin already exists') || e?.code === 'MPIN_ALREADY_EXISTS') {
           await AsyncStorage.setItem('hasMpin', 'true');
-          Alert.alert('MPIN Already Set', 'You already have an MPIN. Please verify to continue.', [
+          Alert.alert('G-PIN Already Set', 'You already have a G-PIN. Please verify to continue.', [
             {
-              text: 'Verify MPIN',
+              text: 'Verify G-PIN',
               onPress: () => {
                 if (isMounted.current) navigation.reset({ index: 0, routes: [{ name: 'MpinVerify' }] });
               },
@@ -170,7 +170,7 @@ const MpinCreateScreen = () => {
           ]);
           return;
         }
-        setError(msg || 'Failed to create MPIN. Please try again.');
+        setError(msg || 'Failed to create G-PIN. Please try again.');
         setSubmitting(false);
       }
     },
@@ -193,13 +193,13 @@ const MpinCreateScreen = () => {
 
   return (
     <MpinScaffold
-      headerTitle="Create MPIN"
+      
       icon={step === 1 ? 'lock-plus-outline' : 'lock-check-outline'}
-      heading={step === 1 ? 'Create Your MPIN' : 'Confirm Your MPIN'}
+      heading={step === 1 ? 'Create Your G-PIN' : 'Confirm Your G-PIN'}
       subtitle={
         step === 1
           ? "Choose a 4-digit number you'll remember"
-          : 'Re-enter your MPIN to confirm'
+          : 'Re-enter your G-PIN to confirm'
       }
       onBackPress={handleGoBack}
     >
@@ -279,7 +279,7 @@ const MpinCreateScreen = () => {
 
       <Pressable onPress={handleReset} style={styles.resetLink} hitSlop={8} disabled={isCreatingMpin}>
         <MaterialCommunityIcons name="refresh" size={SIZES.icon.xs} color={COLORS.contentSecondary} />
-        <Text style={styles.resetText}>Start over</Text>
+        <Text style={styles.resetText}>Refresh G-PIN</Text>
       </Pressable>
     </MpinScaffold>
   );

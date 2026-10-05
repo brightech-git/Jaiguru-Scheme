@@ -102,24 +102,19 @@ const LoginScreen: React.FC = () => {
                 <View style={styles.welcome}>
                   <Text style={styles.welcomeTitle}>Welcome Back</Text>
                   <Text style={styles.welcomeSubtitle}>
-                    Continue your digital gold savings journey securely.
+                    Continue Your Digital Gold Savings Journey Securely Now.
                   </Text>
                 </View>
 
                 <LoginForm
-                  mobile={form.mobile}
-                  password={form.password}
-                  showPassword={form.showPassword}
+                  contactNumber={form.contactNumber}
                   remember={form.remember}
                   errors={form.errors}
                   loading={form.loading}
                   isBusy={form.isBusy}
-                  onChangeMobile={form.onChangeMobile}
-                  onChangePassword={form.onChangePassword}
+                  onChangeContactNumber={form.onChangeContactNumber}
                   onBlurField={form.onBlurField}
-                  toggleShowPassword={form.toggleShowPassword}
                   toggleRemember={form.toggleRemember}
-                  onForgotPassword={form.goToForgotPassword}
                   onSubmit={form.submit}
                 />
 
@@ -182,12 +177,12 @@ const styles = StyleSheet.create({
     color: COLORS.contentPrimary,
   },
   welcomeSubtitle: {
-    fontFamily: FONTS.family.regular,
-    fontSize: SIZES.text.md,
+   fontFamily: FONTS.family.semiBold,
+    fontSize: 12.9,
     lineHeight: SIZES.text.md * 1.5,
     textAlign: 'center',
     color: COLORS.contentSecondary,
-    marginTop: SIZES.space.sm,
+    marginTop: SIZES.space.xs,
     maxWidth: 300,
   },
 });

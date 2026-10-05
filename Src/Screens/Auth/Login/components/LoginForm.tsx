@@ -19,36 +19,26 @@ import LoginButton from './LoginButton';
 const { COLORS, SIZES, FONTS, ELEVATION, STYLES } = theme;
 
 export interface LoginFormProps {
-  mobile: string;
-  password: string;
-  showPassword: boolean;
+  contactNumber: string;
   remember: boolean;
   errors: LoginErrors;
   loading: boolean;
   isBusy: boolean;
-  onChangeMobile: (v: string) => void;
-  onChangePassword: (v: string) => void;
+  onChangeContactNumber: (v: string) => void;
   onBlurField: (field: keyof LoginValues) => void;
-  toggleShowPassword: () => void;
   toggleRemember: () => void;
-  onForgotPassword: () => void;
   onSubmit: () => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
-  mobile,
-  password,
-  showPassword,
+  contactNumber,
   remember,
   errors,
   loading,
   isBusy,
-  onChangeMobile,
-  onChangePassword,
+  onChangeContactNumber,
   onBlurField,
-  toggleShowPassword,
   toggleRemember,
-  onForgotPassword,
   onSubmit,
 }) => {
   return (
@@ -56,20 +46,21 @@ const LoginForm: React.FC<LoginFormProps> = ({
       <BlurView intensity={30} tint="light" style={styles.card}>
         <LuxuryInput
           icon="cellphone"
-          value={mobile}
-          onChangeText={onChangeMobile}
-          onBlur={() => onBlurField('mobile')}
-          placeholder="Mobile Number"
+          value={contactNumber}
+          onChangeText={onChangeContactNumber}
+          onBlur={() => onBlurField('contactNumber')}
+          placeholder="Contact Number"
           keyboardType="number-pad"
           textContentType="telephoneNumber"
           maxLength={LOGIN_CONSTRAINTS.mobileLength}
           editable={!isBusy}
-          error={errors.mobile}
-          accessibilityLabel="Mobile number"
-          returnKeyType="next"
+          error={errors.contactNumber}
+          accessibilityLabel="Contact number"
+          returnKeyType="done"
+          onSubmitEditing={onSubmit}
         />
 
-        <LuxuryInput
+        {/* <LuxuryInput
           icon="lock-outline"
           value={password}
           onChangeText={onChangePassword}
@@ -85,9 +76,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
           trailingIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
           onTrailingPress={toggleShowPassword}
           trailingAccessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-        />
+        /> */}
 
-        <View style={[STYLES.rowBetween, styles.optionsRow]}>
+        <View style={[ styles.optionsRow]}>
           <Pressable
             onPress={toggleRemember}
             hitSlop={8}
@@ -102,14 +93,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
             <Text style={styles.rememberText}>Remember Me</Text>
           </Pressable>
 
-          <Pressable onPress={onForgotPassword} hitSlop={8} disabled={isBusy} accessibilityRole="button">
+          {/* <Pressable onPress={onForgotPassword} hitSlop={8} disabled={isBusy} accessibilityRole="button">
             <Text style={styles.forgotText}>Forgot Password?</Text>
-          </Pressable>
+          </Pressable> */}
         </View>
 
         <View style={styles.buttonWrap}>
           <LoginButton
             label="Login Securely"
+            
             onPress={onSubmit}
             loading={loading}
             disabled={isBusy}
@@ -139,6 +131,9 @@ const styles = StyleSheet.create({
   optionsRow: {
     marginTop: SIZES.space.xs,
     marginBottom: SIZES.space.sm,
+    alignSelf: 'flex-end',
+    // justifyContent: 'space-between',
+    // flexDirection: 'row',
   },
   checkbox: {
     width: SIZES.icon.md,

@@ -93,6 +93,7 @@ export const RAZORPAY = {
 
 export const USER = {
   DELETE: (userId: number | string) => `/user/delete/${userId}`,
+  UPDATE: (userId: number | string) => `/${userId}/update`,
 };
 
 export const NOTIFICATIONS = {

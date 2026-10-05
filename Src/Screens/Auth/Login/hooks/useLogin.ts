@@ -32,31 +32,22 @@ const GOOGLE_WEB_CLIENT_ID =
 type TouchedMap = Record<keyof LoginValues, boolean>;
 
 export interface UseLogin {
-  // values
-  mobile: string;
-  password: string;
-  showPassword: boolean;
+  contactNumber: string;
   remember: boolean;
   errors: LoginErrors;
-  // status
   loading: boolean;
   googleLoading: boolean;
   appleLoading: boolean;
   isBusy: boolean;
-  // change handlers
-  onChangeMobile: (v: string) => void;
-  onChangePassword: (v: string) => void;
+  onChangeContactNumber: (v: string) => void;
   onBlurField: (field: keyof LoginValues) => void;
-  toggleShowPassword: () => void;
   toggleRemember: () => void;
-  // actions
   submit: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   continueAsGuest: () => void;
   goToForgotPassword: () => void;
   goToRegister: () => void;
-  // toast element to render once
   Toast: React.FC;
 }
 
@@ -65,14 +56,12 @@ export function useLogin(): UseLogin {
   const { login, loginWithGoogle, loginWithApple, loading, error, clearError } = useAuth();
   const { showToast, Toast } = useToast();
 
-  const [mobile, setMobile] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
+  const [contactNumber, setContactNumber] = useState('');
+  const [remember, setRemember] = useState(true);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
-  const [touched, setTouched] = useState<TouchedMap>({ mobile: false, password: false });
+  const [touched, setTouched] = useState<TouchedMap>({ contactNumber: false });
 
   const isBusy = loading || googleLoading || appleLoading;
 
@@ -88,7 +77,7 @@ export function useLogin(): UseLogin {
       try {
         const saved = await AsyncStorage.getItem(REMEMBER_KEY);
         if (saved) {
-          setMobile(saved);
+          setContactNumber(saved);
           setRemember(true);
         }
       } catch {
@@ -110,32 +99,23 @@ export function useLogin(): UseLogin {
     [],
   );
 
-  const onChangeMobile = useCallback(
+  const onChangeContactNumber = useCallback(
     (v: string) => {
       const digits = v.replace(/\D/g, '').slice(0, 10);
-      setMobile(digits);
-      if (touched.mobile) revalidate('mobile', digits);
+      setContactNumber(digits);
+      if (touched.contactNumber) revalidate('contactNumber', digits);
     },
-    [touched.mobile, revalidate],
-  );
-
-  const onChangePassword = useCallback(
-    (v: string) => {
-      setPassword(v);
-      if (touched.password) revalidate('password', v);
-    },
-    [touched.password, revalidate],
+    [touched.contactNumber, revalidate],
   );
 
   const onBlurField = useCallback(
     (field: keyof LoginValues) => {
       setTouched((prev) => ({ ...prev, [field]: true }));
-      revalidate(field, field === 'mobile' ? mobile : password);
+      revalidate(field, contactNumber);
     },
-    [mobile, password, revalidate],
+    [contactNumber, revalidate],
   );
 
-  const toggleShowPassword = useCallback(() => setShowPassword((s) => !s), []);
   const toggleRemember = useCallback(() => setRemember((r) => !r), []);
 
   // ---- Post-auth routing ----------------------------------------------------
@@ -149,11 +129,12 @@ export function useLogin(): UseLogin {
 
   // ---- Credential login -----------------------------------------------------
   const submit = useCallback(async () => {
-    setTouched({ mobile: true, password: true });
-    const result = validateLogin({ mobile, password });
+    setTouched({ contactNumber: true });
+    const result = validateLogin({ contactNumber });
+    console.log('=== LOGIN VALIDATION RESULT ===', JSON.stringify(result, null, 2));
     setErrors(result.errors);
     if (!result.success) {
-      showToast({ message: 'Please fix the highlighted fields', type: 'warning' });
+      showToast({ message: 'Please enter a valid contact number', type: 'warning' });
       return;
     }
 
@@ -161,29 +142,32 @@ export function useLogin(): UseLogin {
       clearError();
       showToast({ message: 'Logging in securely...', type: 'info' });
 
-      if (remember) await AsyncStorage.setItem(REMEMBER_KEY, mobile);
+      if (remember) await AsyncStorage.setItem(REMEMBER_KEY, contactNumber);
       else await AsyncStorage.removeItem(REMEMBER_KEY);
 
-      const res: any = await login({ contactOrEmailOrUsername: mobile, password });
+      const res: any = await login({ contactNumber });
+      console.log('=== LOGIN PAYLOAD ===', { contactNumber, length: contactNumber.length });
       console.log('=== LOGIN RESPONSE ===', JSON.stringify(res, null, 2));
 
       if (res?.success !== false && res?.token) {
-        await saveAuthData({ ...res, contactNumber: res.contactNumber || res.contact || mobile, loginType: 'NORMAL' });
-        // Persist the server-side mpinSet flag so future cold-starts are correct.
+        await saveAuthData({ ...res, contactNumber: res.contactNumber || res.contact || contactNumber, loginType: 'NORMAL' });
         if (res.mpinSet === 'Y') await AsyncStorage.setItem('hasMpin', 'true');
         else await AsyncStorage.setItem('hasMpin', 'false');
         showToast({ message: 'Login successful!', type: 'success' });
         setTimeout(() => routeAfterAuth(res.mpinSet), 1200);
+      } else if (res?.message?.toLowerCase().includes('not registered')) {
+        showToast({ message: 'You are not registered. Redirecting to Register...', type: 'warning' });
+        setTimeout(() => navigation.navigate('Register'), 1500);
       } else {
-        const msg = res?.message || res?.error || 'Invalid credentials';
+        const msg = res?.message || res?.error || 'Invalid contact number';
         showToast({ message: msg, type: 'error' });
-        setErrors((prev) => ({ ...prev, password: 'Invalid mobile number or password' }));
+        setErrors((prev) => ({ ...prev, contactNumber: msg }));
       }
     } catch (err: any) {
       showToast({ message: err?.message || 'Network error. Please try again.', type: 'error' });
-      setErrors((prev) => ({ ...prev, password: 'Network error. Please try again.' }));
+      setErrors((prev) => ({ ...prev, contactNumber: 'Network error. Please try again.' }));
     }
-  }, [mobile, password, remember, login, clearError, showToast, routeAfterAuth]);
+  }, [contactNumber, remember, login, clearError, showToast, routeAfterAuth]);
 
   // ---- Google Sign-In (unchanged logic) -------------------------------------
   const signInWithGoogle = useCallback(async () => {
@@ -382,19 +366,15 @@ export function useLogin(): UseLogin {
 
   return useMemo(
     () => ({
-      mobile,
-      password,
-      showPassword,
+      contactNumber,
       remember,
       errors,
       loading,
       googleLoading,
       appleLoading,
       isBusy,
-      onChangeMobile,
-      onChangePassword,
+      onChangeContactNumber,
       onBlurField,
-      toggleShowPassword,
       toggleRemember,
       submit,
       signInWithGoogle,
@@ -405,19 +385,15 @@ export function useLogin(): UseLogin {
       Toast,
     }),
     [
-      mobile,
-      password,
-      showPassword,
+      contactNumber,
       remember,
       errors,
       loading,
       googleLoading,
       appleLoading,
       isBusy,
-      onChangeMobile,
-      onChangePassword,
+      onChangeContactNumber,
       onBlurField,
-      toggleShowPassword,
       toggleRemember,
       submit,
       signInWithGoogle,
