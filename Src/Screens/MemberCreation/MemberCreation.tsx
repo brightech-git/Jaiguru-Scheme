@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import UserRegistrationForm, { UserRegistrationFormData, UserRegistrationFormRef } from './UserRegistrationForm';
 import SchemeJoiningForm, { SchemeJoiningFormRef } from './SchemeJoiningForm';
 import { useRazorpayPayment } from '../../api/hooks/Razorpay/useRazorpay';
-import PaymentModal, { SuccessDetails } from './PaymentModal';
+import PaymentModal from './PaymentModal';
+import { buildSchemeJoinSuccess } from './schemeJoinSuccess';
 import { DEFAULT_EMPLOYEE_ID } from './EmployeePickerModal';
 import RazorpayWebView from '../../Components/RazorpayWebView';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
@@ -50,7 +51,6 @@ const MemberCreation = () => {
   const [requiresKyc, setRequiresKyc] = useState(routeRequiresKyc ?? true);
   const [kycControlLoading, setKycControlLoading] = useState(!hasResolvedKycRoute);
 
-  const [successDetails, setSuccessDetails] = useState<SuccessDetails | null>(null);
   const [payableAmount, setPayableAmount] = useState<number | null>(null);
 
   // Refs
@@ -302,41 +302,6 @@ const MemberCreation = () => {
     [loggedInUser]
   );
 
-  // The backend returns the parked-payload outcome as a stringified map,
-  // e.g. "PROCESSED: {status=Success, personalId=123, regNo=45, ...}" once
-  // the member has actually been created (either via this /verify-payment
-  // call, or — if the webhook beat it to it — already done by the time we
-  // ask). Parse that instead of calling member/create ourselves.
-  const showMemberCreatedAlert = useCallback(
-    (formData: any, processResult?: string) => {
-      const msgStr = (processResult || '').replace(/^PROCESSED:\s*/, '');
-
-      if (!msgStr) {
-        setSuccessDetails({ schemeName: formData.schemeName || 'the scheme' });
-        return;
-      }
-
-      const parsed: Record<string, string> = {};
-      msgStr
-        .replace(/[{}]/g, '')
-        .split(', ')
-        .forEach((pair: string) => {
-          const [key, ...rest] = pair.split('=');
-          if (key) parsed[key.trim()] = rest.join('=').trim();
-        });
-
-      setSuccessDetails({
-        personalId: parsed.personalId,
-        regNo: parsed.regNo,
-        groupCode: parsed.groupCode,
-        schemeName: formData.schemeName,
-        amount: parsed.amount || String(formData.amount || 0),
-        sno: parsed.sno,
-      });
-    },
-    []
-  );
-
   const handleSubmit = useCallback(async () => {
     // Guard: prevent double-tap / re-entry while payment is already in flight
     if (paymentLoading) return;
@@ -383,13 +348,22 @@ const MemberCreation = () => {
     );
 
     if (result.success) {
-      console.log('[SCHEME JOIN] STEP 8 — Flow complete. Showing success alert.', { processResult: result.processResult });
-      showMemberCreatedAlert(formData, result.processResult);
+      console.log('[SCHEME JOIN] STEP 8 — Flow complete. Opening success screen.', { processResult: result.processResult });
+      const memberName = requiresKyc
+        ? [userRegistrationData.userName, userRegistrationData.lastName].filter(Boolean).join(' ')
+        : String(loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name || 'Member');
+      const details = buildSchemeJoinSuccess(result.processResult, {
+        userName: memberName,
+        schemeName: formData.schemeName,
+        amount: formData.amount,
+        groupCode,
+      });
+      navigation.replace('SchemeJoinSuccess', { details });
     } else if (result.message !== 'Payment cancelled by user') {
       console.log('[SCHEME JOIN] FLOW FAILED —', result.message);
       Alert.alert('Payment Failed', result.message || 'Payment failed');
     }
-  }, [currentStep, userRegistrationData, startPayment, createMemberPayload, createKycSkippedPayload, loggedInUser, requiresKyc, showMemberCreatedAlert]);
+  }, [currentStep, userRegistrationData, startPayment, createMemberPayload, createKycSkippedPayload, loggedInUser, requiresKyc, navigation, paymentLoading]);
 
   const isLoading = paymentLoading;
 
@@ -434,11 +408,9 @@ const MemberCreation = () => {
 
       {/* Payment Status Modal */}
       <PaymentModal
-        visible={paymentStep === PAYMENT_STEPS.CREATING_ORDER || paymentStep === PAYMENT_STEPS.VERIFYING || !!successDetails}
-        step={successDetails ? 'success' : paymentStep}
+        visible={paymentStep === PAYMENT_STEPS.CREATING_ORDER || paymentStep === PAYMENT_STEPS.VERIFYING}
+        step={paymentStep}
         error={paymentError}
-        successDetails={successDetails}
-        onSuccessClose={() => { setSuccessDetails(null); navigation.navigate('MainDrawer'); }}
       />
 
       {/* Loading Overlay */}

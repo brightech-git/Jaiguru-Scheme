@@ -59,6 +59,7 @@ export const SCHEMES = {
 export const ACCOUNT = {
   PHONE_DETAILS: (phoneNo: string) => `/account/phone_details?phoneNo=${phoneNo}`,
   TODAY_RATE: '/account/todayrate',
+  RATE_HISTORY: '/account/rate/history',
   TRANSACTION_TYPES: '/account/getTranType',
 };
 

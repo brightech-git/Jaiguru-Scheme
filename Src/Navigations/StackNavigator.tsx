@@ -38,6 +38,8 @@ import RegistrationWelcomeScreen from '../Screens/Auth/RegisterInfo/registration
 import SplashScreen from '../Screens/Splash/SplashScreen';
 import WastageCardScreen from '../Screens/WastageCard/WastageCardScreen';
 import { navigationRef } from './navigationRef';
+import RatesScreen from '../Screens/Rates/RateScreen';
+import SchemeJoinSuccessScreen from '../Screens/MemberCreation/SchemeJoinSuccessScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -115,6 +117,7 @@ export default function StackNavigator() {
         <Stack.Screen name="ResetMPIN" component={ResetMpinScreen} />
         <Stack.Screen name="Paynow" component={PayNow} />
         <Stack.Screen name="MemberCreation" component={MemberCreation} />
+        <Stack.Screen name="SchemeJoinSuccess" component={SchemeJoinSuccessScreen} options={{ gestureEnabled: false }} />
         <Stack.Screen name="SchemeTermsAcceptance" component={SchemeTermsAcceptance} />
         <Stack.Screen name="WebViewScreen" component={WebViewScreen} />
         <Stack.Screen name="GoogleContactVerification" component={GoogleContactMobileScreen as any} />
@@ -125,6 +128,7 @@ export default function StackNavigator() {
         <Stack.Screen name="RegisterInfo" component={RegisterInfoScreen} />
         <Stack.Screen name="RegistrationWelcome" component={RegistrationWelcomeScreen} />
         <Stack.Screen name="WastageCard" component={WastageCardScreen} />
+        <Stack.Screen name="Rates" component={RatesScreen} />
 
         {/* Drawer after MPIN success */}
         <Stack.Screen name="MainDrawer" component={MainDrawerNavigator} />

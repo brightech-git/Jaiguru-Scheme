@@ -118,12 +118,12 @@ const SectionTitle = ({ icon, title, subtitle }: { icon: string; title: string; 
   </View>
 );
 
-const SummaryRow = ({ label, value }: { label: string; value?: string }) => (
-  <View style={styles.summaryRow}>
-    <AppText variant="bodySmall" color={COLORS.contentMuted}>
+const SummaryRow = ({ label, value, highlight }: { label: string; value?: string; highlight?: boolean }) => (
+  <View style={[styles.summaryRow, highlight && styles.summaryRowHighlight]}>
+    <AppText variant={highlight ? 'bodyMedium' : 'bodySmall'} color={highlight ? COLORS.contentBrand : COLORS.contentMuted}>
       {label}
     </AppText>
-    <AppText variant="bodyMedium" style={styles.summaryValue} numberOfLines={2}>
+    <AppText variant={highlight ? 'h6' : 'bodyMedium'} color={highlight ? COLORS.contentBrand : undefined} style={styles.summaryValue} numberOfLines={2}>
       {value || 'N/A'}
     </AppText>
   </View>
@@ -143,6 +143,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
     const [selectedPayment] = useState('00001');
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [customAmount, setCustomAmount] = useState('');
+    const [estimatedWeight, setEstimatedWeight] = useState<number | null>(null);
     const [employee, setEmployee] = useState<SelectedEmployee>({ id: DEFAULT_EMPLOYEE_ID });
     const [employeePickerVisible, setEmployeePickerVisible] = useState(false);
     const [employeeFieldVisible, setEmployeeFieldVisible] = useState(false);
@@ -356,6 +357,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
               value={customAmount}
               onChange={setCustomAmount}
               metalType={scheme?.MetalType}
+              onWeightChange={setEstimatedWeight}
             />
           ) : showInlineTiles ? (
             <View style={styles.tileGrid}>
@@ -508,12 +510,15 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
         {/* Order summary */}
         {selectedScheme && selectedPayment && effectiveAmount ? (
           <AppCard style={[styles.card, styles.summaryCard]}>
-            <SectionTitle icon="receipt-outline" title="Order Summary" />
+            <SectionTitle icon="receipt-outline" title="Summary" />
             <SummaryRow label="Scheme" value={scheme?.schemeName} />
             <SummaryRow label="Group Code" value={selectedScheme} />
             <SummaryRow label="Metal" value={getMetalTypeName(scheme?.MetalType)} />
+            {estimatedWeight !== null && (
+              <SummaryRow label="Accumulated Weight" value={`${estimatedWeight.toFixed(3)} g`} highlight />
+            )}
             <View style={styles.dashedDivider} />
-            <View style={styles.totalRow}>
+            <View style={styles.totalRow}> 
               <View>
                 <AppText variant="bodyMedium">Total Payable</AppText>
                 <AppText variant="caption">First installment</AppText>
@@ -791,6 +796,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: SIZES.space.lg,
     marginBottom: SIZES.space.sm,
+  },
+  summaryRowHighlight: {
+    backgroundColor: COLORS.brandTint,
+    borderRadius: SIZES.radius.sm,
+    paddingHorizontal: SIZES.space.sm,
+    paddingVertical: SIZES.space.xs,
+    borderLeftWidth: 3,
+    borderRightWidth: 3,
+    borderLeftColor: COLORS.brand,
+    borderRightColor: COLORS.brand,
   },
   summaryValue: {
     flex: 1,

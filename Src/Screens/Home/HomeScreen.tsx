@@ -1,30 +1,39 @@
 // screens/HomeScreen.tsx
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
-import { getUserData } from '../../Utills/AsynchStorageHelper';
-import useNotifications from '../../api/hooks/Notifications/useNotifications';
-import type { CustomerProfile } from './components/homeHeaderData';
-import SchemeDetailsCard from '../../Components/SchemeDetailsCard/SchemeDetailsCard';
-import theme from '../../Utills/AppTheme';
-import { ratesService } from '../../api/services/ratesService';
-import type { Rates } from '../../types/Rates/Rates';
-import SliderComponent from '../../Components/Slider/Slider';
-import SchemesList from '../../Components/SchemeCard/SchemeCard';
-import { deviceService } from '../../api/services/deviceService';
-import { getFCMToken } from '../../Helpers/NotificationHelper';
-import BottomTab from '../../Components/BottomTab/BottomTab';
-import MainPageWithYouTube from '../../Components/Youtube/Youtube';
-import { ScreenWrapper } from '../../Components/ui/appcomponents';
-import GoldParticles from '../Auth/Login/components/GoldParticles';
-import HomeHeader from './components/HomeHeader';
-import { useCompany } from '../../api/hooks/Company/useCompany';
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Linking,
+  Dimensions,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import Icon from "react-native-vector-icons/MaterialIcons";
+import { useNavigation } from "@react-navigation/native";
+import { getUserData } from "../../Utills/AsynchStorageHelper";
+import useNotifications from "../../api/hooks/Notifications/useNotifications";
+import type { CustomerProfile } from "./components/homeHeaderData";
+import SchemeDetailsCard from "../../Components/SchemeDetailsCard/SchemeDetailsCard";
+import theme from "../../Utills/AppTheme";
+import { ratesService } from "../../api/services/ratesService";
+import type { Rates } from "../../types/Rates/Rates";
+import SliderComponent from "../../Components/Slider/Slider";
+import SchemesList from "../../Components/SchemeCard/SchemeCard";
+import { deviceService } from "../../api/services/deviceService";
+import { getFCMToken } from "../../Helpers/NotificationHelper";
+import BottomTab from "../../Components/BottomTab/BottomTab";
+import MainPageWithYouTube from "../../Components/Youtube/Youtube";
+import { ScreenWrapper } from "../../Components/ui/appcomponents";
+import GoldParticles from "../Auth/Login/components/GoldParticles";
+import HomeHeader from "./components/HomeHeader";
+import { useCompany } from "../../api/hooks/Company/useCompany";
 
 const { COLORS, FONTS, SIZES, moderateScale } = theme;
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 const BG_GRADIENT = COLORS.gradient.accentWash as [string, string, string];
 
@@ -38,8 +47,8 @@ const SectionHeader = ({ title }: { title: string }) => (
 
 const NeedHelpCard = () => {
   const { company } = useCompany();
-  const phone = company?.PHONE || '';
-  const email = company?.EMAIL || '';
+  const phone = company?.PHONE || "";
+  const email = company?.EMAIL || "";
 
   const callPhone = () => phone && Linking.openURL(`tel:${phone}`);
   const openEmail = () => email && Linking.openURL(`mailto:${email}`);
@@ -48,18 +57,26 @@ const NeedHelpCard = () => {
     <View style={styles.helpCard}>
       <View style={styles.helpHeader}>
         <View style={styles.helpIconWrap}>
-          <MaterialCommunityIcons name="headset" size={moderateScale(22)} color={COLORS.contentBrand} />
+          <MaterialCommunityIcons
+            name="headset"
+            size={moderateScale(22)}
+            color={COLORS.contentBrand}
+          />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.helpTitle}>Need Help?</Text>
           <Text style={styles.helpSubtitle}>
-            We're here to help anytime. Reach us at{' '}
+            We're here to help anytime. Reach us at{" "}
             {phone ? (
-              <Text onPress={callPhone} style={styles.helpLink}>{phone}</Text>
+              <Text onPress={callPhone} style={styles.helpLink}>
+                {phone}
+              </Text>
             ) : null}
-            {phone && email ? ' or ' : null}
+            {phone && email ? " or " : null}
             {email ? (
-              <Text onPress={openEmail} style={styles.helpLink}>{email}</Text>
+              <Text onPress={openEmail} style={styles.helpLink}>
+                {email}
+              </Text>
             ) : null}
           </Text>
         </View>
@@ -68,22 +85,31 @@ const NeedHelpCard = () => {
   );
 };
 
-type NotificationStatus = 'checking' | 'registering' | 'registered' | 'skipped' | 'failed';
+type NotificationStatus =
+  | "checking"
+  | "registering"
+  | "registered"
+  | "skipped"
+  | "failed";
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const [notificationStatus, setNotificationStatus] = useState<NotificationStatus>('checking');
+  const [notificationStatus, setNotificationStatus] =
+    useState<NotificationStatus>("checking");
   const [userId, setUserId] = useState<string | number | null>(null);
-  const [profile, setProfile] = useState<CustomerProfile>({ name: '', memberId: '' });
+  const [profile, setProfile] = useState<CustomerProfile>({
+    name: "",
+    memberId: "",
+  });
   const { unreadCount } = useNotifications();
 
   // ---- Live gold / silver rates (real API + pull-to-refresh) --------------
   const [rates, setRates] = useState<Rates | null>(null);
   const [ratesLoading, setRatesLoading] = useState(true);
   const [ratesError, setRatesError] = useState<string | null>(null);
-  const [ratesUpdatedAt, setRatesUpdatedAt] = useState('');
+  const [ratesUpdatedAt, setRatesUpdatedAt] = useState("");
 
   const fetchRates = useCallback(async () => {
     try {
@@ -92,10 +118,13 @@ const HomeScreen = () => {
       const data = await ratesService.getTodayRate();
       setRates(data);
       setRatesUpdatedAt(
-        new Date().toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }),
+        new Date().toLocaleTimeString("en-US", {
+          hour: "numeric",
+          hour12: true,
+        }),
       );
     } catch (err: any) {
-      setRatesError(err?.message || 'Failed to fetch rates');
+      setRatesError(err?.message || "Failed to fetch rates");
     } finally {
       setRatesLoading(false);
     }
@@ -118,42 +147,42 @@ const HomeScreen = () => {
       if (user) {
         setUserId(user.userId || user.userid);
         setProfile({
-          name: user.username || user.name || '',
-          memberId: String(user.userId || user.userid || ''),
+          name: user.username || user.name || "",
+          memberId: String(user.userId || user.userid || ""),
           avatarUrl: user.picture || null,
         });
       } else {
-        setNotificationStatus('skipped');
+        setNotificationStatus("skipped");
       }
     } catch {
-      setNotificationStatus('failed');
+      setNotificationStatus("failed");
     }
   };
 
   const handlePushNotificationRegistration = async () => {
     try {
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      setNotificationStatus('registering');
-      await AsyncStorage.multiRemove(['pushToken', 'tokenSentToServer']);
+      const AsyncStorage = (
+        await import("@react-native-async-storage/async-storage")
+      ).default;
+      setNotificationStatus("registering");
+      await AsyncStorage.multiRemove(["pushToken", "tokenSentToServer"]);
       const token = await getFCMToken();
       if (token) await sendTokenToServer(token);
-      else setNotificationStatus('failed');
+      else setNotificationStatus("failed");
     } catch {
-      setNotificationStatus('failed');
+      setNotificationStatus("failed");
     }
   };
 
   const sendTokenToServer = async (token: string) => {
     try {
-      const success = await deviceService.registerDevice(token, userId ?? '');
-      if (success) setNotificationStatus('registered');
-      else setNotificationStatus('failed');
+      const success = await deviceService.registerDevice(token, userId ?? "");
+      if (success) setNotificationStatus("registered");
+      else setNotificationStatus("failed");
     } catch {
-      setNotificationStatus('failed');
+      setNotificationStatus("failed");
     }
   };
-
-
 
   return (
     <View style={styles.root}>
@@ -185,23 +214,21 @@ const HomeScreen = () => {
           ratesUpdatedAt={ratesUpdatedAt}
           refreshingRate={ratesLoading}
           onRefreshRate={fetchRates}
-          onProfilePress={() => navigation.navigate('Profile')}
-          onNotificationsPress={() => navigation.navigate('NotificationScreen')}
-          onSupportPress={() => navigation.navigate('HelpCenter')}
-          onSettingsPress={() => navigation.navigate('Profile')}
+          onProfilePress={() => navigation.navigate("Profile")}
+          onNotificationsPress={() => navigation.navigate("NotificationScreen")}
+          onSupportPress={() => navigation.navigate("HelpCenter")}
+          onSettingsPress={() => navigation.navigate("Profile")}
           onScanPress={() => {}}
         />
 
         {/* {renderNotificationBanner()} */}
 
+        <SectionHeader title="Our Schemes" />
+        <SchemesList />
         <View style={styles.sliderWrap}>
           <SliderComponent />
         </View>
-
         <SchemeDetailsCard />
-
-        <SectionHeader title="Our Schemes" />
-        <SchemesList />
 
         <SectionHeader title="Promotions & Updates" />
         <View style={styles.youtubeWrapper}>
@@ -223,8 +250,8 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.surfacePage },
 
   banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginHorizontal: SIZES.space.gutter,
     marginTop: SIZES.space.md,
     marginBottom: SIZES.space.xs,
@@ -236,14 +263,19 @@ const styles = StyleSheet.create({
   bannerLoading: { backgroundColor: COLORS.warning },
   bannerError: { backgroundColor: COLORS.danger },
   bannerText: { ...FONTS.bodySm, color: COLORS.contentOnBrand, flex: 1 },
-  bannerAction: { ...FONTS.caption, color: COLORS.contentOnBrand, textDecorationLine: 'underline', fontFamily: FONTS.family.semiBold },
+  bannerAction: {
+    ...FONTS.caption,
+    color: COLORS.contentOnBrand,
+    textDecorationLine: "underline",
+    fontFamily: FONTS.family.semiBold,
+  },
 
   sliderWrap: { marginTop: SIZES.space.lg },
 
   // Section header
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: SIZES.space.gutter,
     marginTop: SIZES.space.lg,
     marginBottom: SIZES.space.sm,
@@ -271,14 +303,18 @@ const styles = StyleSheet.create({
     padding: SIZES.space.lg,
     ...theme.ELEVATION.raised,
   },
-  helpHeader: { flexDirection: 'row', alignItems: 'center', gap: SIZES.space.sm },
+  helpHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SIZES.space.sm,
+  },
   helpIconWrap: {
     width: moderateScale(44),
     height: moderateScale(44),
     borderRadius: SIZES.radius.md,
     backgroundColor: COLORS.brandAlpha16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   helpTitle: {
     fontFamily: FONTS.family.semiBold,
@@ -297,7 +333,7 @@ const styles = StyleSheet.create({
   youtubeWrapper: {
     marginHorizontal: SIZES.space.gutter,
     borderRadius: SIZES.radius.card,
-    overflow: 'hidden',
+    overflow: "hidden",
     backgroundColor: COLORS.black,
     ...theme.ELEVATION.floating,
   },

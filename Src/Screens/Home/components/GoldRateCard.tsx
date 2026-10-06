@@ -17,6 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import theme from '../../../Utills/AppTheme';
+import { useNavigation } from '@react-navigation/native';
 
 const { COLORS, SIZES, FONTS, ELEVATION } = theme;
 
@@ -41,6 +42,7 @@ const GoldRateCard: React.FC<GoldRateCardProps> = ({
   onRefresh,
   refreshing = false,
 }) => {
+  const navigation = useNavigation<any>();
   const spin = useSharedValue(0);
   const livePulse = useSharedValue(0);
   const isLive = !loading && !error && gold != null;
@@ -76,6 +78,9 @@ const GoldRateCard: React.FC<GoldRateCardProps> = ({
           </View>
 
           <View style={styles.headerRight}>
+            <Pressable onPress={() => navigation.navigate('Rates')} accessibilityRole="button" accessibilityLabel="View gold and silver rate history" hitSlop={8}>
+              <MaterialCommunityIcons name="chart-line" size={SIZES.icon.md} color={COLORS.contentBrand} />
+            </Pressable>
             {isLive && (
               <View style={styles.liveBadge}>
                 <Animated.View style={[styles.liveDot, liveDotStyle]} />

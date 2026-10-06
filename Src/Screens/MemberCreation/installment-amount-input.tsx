@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, TextInput, Pressable, StyleSheet } from "react-native";
-import Animated, { cubicBezier, useReducedMotion } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing, useReducedMotion } from "react-native-reanimated";
 import { AppText } from "../../Components/ui/appcomponents";
 import { useTodayRate } from "../../api/hooks/Rates/useTodayRate";
 import theme from "../../Utills/AppTheme";
@@ -22,15 +22,32 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   metalType?: string;
+  onWeightChange?: (weight: number | null) => void;
+}
+
+function useBlinkStyle(reducedMotion: boolean) {
+  const opacity = useSharedValue(1);
+  React.useEffect(() => {
+    if (!reducedMotion) {
+      opacity.value = withRepeat(
+        withTiming(0.4, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true,
+      );
+    }
+  }, [reducedMotion]);
+  return useAnimatedStyle(() => ({ opacity: opacity.value }));
 }
 
 export default function InstallmentAmountInput({
   value,
   onChange,
   metalType,
+  onWeightChange,
 }: Props) {
   const [focused, setFocused] = useState(false);
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useReducedMotion() ?? false;
+  const blinkStyle = useBlinkStyle(reducedMotion);
   const { rates, loading, error } = useTodayRate();
   const metal = metalType?.trim().toUpperCase();
   const isGold = metal === "G" || metal === "GOLD";
@@ -49,6 +66,8 @@ export default function InstallmentAmountInput({
   const invalid = value.length > 0 && !valid;
   const weight =
     valid && Number.isFinite(rate) && rate > 0 ? Number(value) / rate : null;
+
+  React.useEffect(() => { onWeightChange?.(weight); }, [weight]);
   const weightHint =
     !isGold && !isSilver
       ? "Weight needs a gold or silver metal type for this scheme."
@@ -58,7 +77,7 @@ export default function InstallmentAmountInput({
           ? "Could not load today’s rate. Weight is unavailable."
           : !Number.isFinite(rate) || rate <= 0
             ? "Today’s rate is unavailable for this metal."
-            : "Weight is estimated at today’s rate.";
+            : `Today’s Live ${metal === "G" || metal === "GOLD" ? "Gold" : "Silver"} rate. ${rate.toFixed(0)} ₹/g.`;
 
   return (
     <View>
@@ -109,6 +128,11 @@ export default function InstallmentAmountInput({
           </View>
         </View>
       </View>
+      <Animated.View style={[styles.hint, blinkStyle]}>
+        <AppText variant="captionBold" color={COLORS.black}>
+          {weightHint}
+        </AppText>
+      </Animated.View>
       <AppText
         variant="captionBold"
         color={invalid ? COLORS.dangerText : COLORS.contentMuted}
@@ -118,26 +142,15 @@ export default function InstallmentAmountInput({
           ? "Enter a positive amount in multiples of ₹1,000."
           : "Multiples of ₹1,000 only."}
       </AppText>
-      <AppText
-        variant="captionBold"
-        color={COLORS.contentMuted}
-        style={styles.hint}
-      >
-        {weightHint}
-      </AppText>
+      
       <View style={styles.tags}>
         {AMOUNTS.map((amount) => {
           const selected = Number(value) === amount;
-          const popular = amount === 3000 || amount === 5000;
+          const popular = amount === 3000 || amount === 5000|| amount === 10000;
           return (
             <Animated.View
               key={amount}
-              style={popular && !reducedMotion ? {
-                animationName: { from: { opacity: 1 }, '50%': { opacity: 0.6 }, to: { opacity: 1 } },
-                animationDuration: 1600,
-                animationIterationCount: 'infinite',
-                animationTimingFunction: cubicBezier(0.77, 0, 0.175, 1),
-              } : undefined}
+              style={popular ? blinkStyle : undefined}
             >
             <Pressable
               onPress={() => onChange(String(amount))}
@@ -164,11 +177,14 @@ export default function InstallmentAmountInput({
                 ₹{amount.toLocaleString("en-IN")}
               </AppText>
               {popular && (
-                <View pointerEvents="none" style={styles.savedBadge}>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[styles.savedBadge, blinkStyle]}
+                >
                   <AppText variant="captionBold" color={COLORS.contentOnBrand} style={styles.badgeText}>
                     Most saved
                   </AppText>
-                </View>
+                </Animated.View>
               )}
             </Pressable>
             </Animated.View>
@@ -222,6 +238,8 @@ const styles = StyleSheet.create({
   savedBadge: {
     position: "absolute",
     top: -17,
+    left: 4,
+    right: 0,
     alignSelf: "center",
     paddingHorizontal: SIZES.space.sm,
     paddingVertical: 2,
@@ -236,5 +254,6 @@ const styles = StyleSheet.create({
     paddingTop: SIZES.space.md,
     backgroundColor: COLORS.brandTint,
     borderColor: COLORS.successText,
+    alignSelf: "center",
   },
 });
