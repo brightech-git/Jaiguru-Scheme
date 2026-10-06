@@ -2,6 +2,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, FlatList, RefreshControl, Dimensions } from 'react-native';
 import { useMySchemes } from '../../api/hooks/Account/useMySchemes';
+import { getUserId } from '../../Utills/AsynchStorageHelper';
+import { userService, UserKycDetails } from '../../api/services/userService';
+import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { Account } from '../../types/Account/Account';
 import { COLORS, SIZES, FONTS, ELEVATION } from '../../Utills/AppTheme';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -20,6 +23,35 @@ function isPaidThisMonth(lastPaidDate?: string): boolean {
   return Number(match[1]) === today.getFullYear() && Number(match[2]) === today.getMonth() + 1;
 }
 
+function getNextDueDate(account: Account): string | undefined {
+  if (account.nextDueDate?.trim()) return account.nextDueDate;
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(account.lastPaidDate || '');
+  if (!match) return undefined;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return undefined;
+  date.setDate(date.getDate() + 30);
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
+function OverdueIndicator() {
+  const opacity = useSharedValue(1);
+  const reducedMotion = useReducedMotion();
+  useFocusEffect(useCallback(() => {
+    opacity.value = reducedMotion ? 1 : withRepeat(withSequence(
+      withTiming(0.35, { duration: 700 }),
+      withTiming(1, { duration: 700 }),
+    ), -1);
+    return () => { cancelAnimation(opacity); opacity.value = 1; };
+  }, [opacity, reducedMotion]));
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return <Animated.View style={[styles.dueBadge, animatedStyle]}>
+    <Text style={styles.dueBadgeText}>Overdue</Text>
+  </Animated.View>;
+}
+
 export type SchemeDetailsCardFilter = 'all' | 'active' | 'due' | 'completed';
 
 export interface SchemeDetailsCardProps {
@@ -31,6 +63,25 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
   const { accounts, loading, error, refetch } = useMySchemes();
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<any>();
+  const [userKyc, setUserKyc] = useState<UserKycDetails | null>(null);
+
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    setUserKyc(null);
+    const loadKyc = async () => {
+      try {
+        const userId = await getUserId();
+        if (!userId) return;
+        const details = await userService.getDetails(userId);
+        if (active) setUserKyc(details);
+      } catch {
+        // Unknown verification status must not be treated as completed.
+        if (active) setUserKyc(null);
+      }
+    };
+    void loadKyc();
+    return () => { active = false; };
+  }, []));
 
   // Same status derivation used per-card below, applied at the list level
   // so the "all / active / due / completed" filter actually narrows results.
@@ -43,7 +94,8 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
       const insPaid = parseInt(balance?.insPaid || '0', 10);
       const instalment = parseInt(account.schemeSummary?.instalment || '0', 10);
       const isFullyPaid = instalment > 0 && insPaid >= instalment;
-      const isPaymentDue = !isFullyPaid && account.nextDueDate && new Date(account.nextDueDate) <= new Date();
+      const nextDueDate = getNextDueDate(account);
+      const isPaymentDue = !isFullyPaid && nextDueDate && new Date(nextDueDate.split('T')[0].split(' ')[0] + 'T00:00:00') <= new Date();
 
       if (filter === 'completed') return isFullyPaid;
       if (filter === 'due') return isPaymentDue;
@@ -134,7 +186,7 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
         schemeId: account.schemeSummary?.schemeId,
         totalAmount: account.totalAmount || 0,
         amount: account.amount || 0,
-        nextDueDate: account.nextDueDate,
+        nextDueDate: getNextDueDate(account),
         installmentsPaid: account.schemeSummary?.schemaSummaryTransBalance?.insPaid || '0',
         totalInstallments: account.schemeSummary?.instalment || '0',
         joinDate: account.joinDate,
@@ -157,7 +209,8 @@ const formatDate = useCallback((dateString?: string) => {
   // Render individual account card
   const renderAccountCard = useCallback(
     ({ item: account }: { item: Account }) => {
-      const { regNo, groupCode, pName, joinDate, maturityDate, amount, schemeSummary, nextDueDate, lastPaidDate } = account;
+      const { regNo, groupCode, pName, joinDate, maturityDate, amount, schemeSummary, lastPaidDate } = account;
+      const nextDueDate = getNextDueDate(account);
 
       const balance = schemeSummary?.schemaSummaryTransBalance;
       // const nextPaymentDate = nextDueDate ? formatDate(nextDueDate) : 'N/A';
@@ -170,7 +223,7 @@ const formatDate = useCallback((dateString?: string) => {
       const schemeAmt = parseFloat(String(amount)) || 0;
       const progress = instalment > 0 ? insPaid / instalment : 0;
       const isFullyPaid = instalment > 0 && insPaid >= instalment;
-      const isPaymentDue = !isFullyPaid && nextDueDate && new Date(nextDueDate) <= new Date();
+      const isPaymentDue = !isFullyPaid && nextDueDate && new Date(nextDueDate.split('T')[0].split(' ')[0] + 'T00:00:00') <= new Date();
       const paidThisMonth = isPaidThisMonth(lastPaidDate);
 
       return (
@@ -187,12 +240,8 @@ const formatDate = useCallback((dateString?: string) => {
                 <View style={styles.schemeBadge}>
                   <Text style={styles.schemeBadgeText}>{schemeSName}</Text>
                 </View>
-                {isPaymentDue && (
-                  <View style={styles.dueBadge}>
-                    <Text style={styles.dueBadgeText}>Due</Text>
-                  </View>
-                )}
               </View>
+              {isPaymentDue && <OverdueIndicator />}
             </View>
 
             <View style={styles.divider} />
@@ -244,8 +293,8 @@ const formatDate = useCallback((dateString?: string) => {
                 </View>
                 <View style={styles.dateDivider} />
                 <View style={styles.dateCard}>
-                  <Text style={styles.dateLabel}>Next Payment</Text>
-                  <Text style={styles.dateValue}>{formatDate(nextDueDate)}</Text>
+                  <Text style={styles.dateLabel}>Next due date</Text>
+                  <Text style={styles.dateValue}>{nextDueDate ? formatDate(nextDueDate) : 'Not scheduled'}</Text>
                 </View>
                 <View style={styles.dateDivider} />
                 <View style={styles.dateCard}>
@@ -272,10 +321,23 @@ const formatDate = useCallback((dateString?: string) => {
                     onPress={() => handlePayNow(account)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.payButtonText, paidThisMonth && styles.payButtonTextDisabled]}>{paidThisMonth ? 'Paid For This Month' : isPaymentDue ? 'Pay Now' : 'Make Payment'}</Text>
+                    <Text style={[styles.payButtonText, paidThisMonth && styles.payButtonTextDisabled]}>{paidThisMonth ? 'Paid For This Month' : 'Pay Now'}</Text>
                   </TouchableOpacity>
                 )}
               </View>
+              {userKyc && (userKyc.kycVerified !== true || userKyc.aadhaarVerified !== true) && (
+                <TouchableOpacity
+                  style={styles.kycButton}
+                  accessibilityRole="button"
+                  onPress={() => navigation.navigate('PassbookKyc', {
+                    account,
+                    section: userKyc.kycVerified !== true ? 'address' : 'aadhaar',
+                  })}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.viewButtonText}>Pending KYC</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.bottomBorder} />
@@ -283,7 +345,7 @@ const formatDate = useCallback((dateString?: string) => {
         </View>
       );
     },
-    [formatDate, handleViewDetails, handlePayNow, layout]
+    [formatDate, handleViewDetails, handlePayNow, layout, userKyc, navigation]
   );
 
   // Header Component
@@ -492,10 +554,15 @@ const styles = StyleSheet.create({
     padding: SIZES.space.md,
   },
   cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: SIZES.space.sm,
     padding: SIZES.space.md,
     backgroundColor: COLORS.accentTint,
   },
   headerLeft: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
@@ -525,15 +592,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   dueBadge: {
-    backgroundColor: COLORS.danger,
+    backgroundColor: COLORS.dangerSurface,
+    flexShrink: 0,
     paddingHorizontal: SIZES.space.sm,
     paddingVertical: SIZES.space.xs,
     borderRadius: SIZES.radius.sm,
   },
   dueBadgeText: {
     ...FONTS.label,
-    color: COLORS.contentOnBrand,
-    fontSize: SIZES.text.xxs,
+    color: COLORS.dangerText,
+    fontSize: SIZES.text.md,
   },
   divider: {
     height: 1,
@@ -551,6 +619,7 @@ const styles = StyleSheet.create({
     ...FONTS.body,
     color: COLORS.contentSecondary,
     fontSize: SIZES.text.sm,
+    fontFamily: FONTS.family.bold,
   },
   amountSection: {
     flexDirection: 'row',
@@ -574,14 +643,16 @@ const styles = StyleSheet.create({
     ...FONTS.caption,
     color: COLORS.contentSecondary,
     marginBottom: SIZES.space.xs,
-    fontSize: SIZES.text.xxs,
+    fontSize: SIZES.text.xs,
     textAlign: 'center',
+    fontFamily: FONTS.family.bold,
   },
   amountValue: {
     ...FONTS.heading,
     color: COLORS.contentBrand,
     fontSize: SIZES.text.md,
-    fontWeight: '700',
+    // fontWeight: '700',
+    fontFamily: FONTS.family.bold,
   },
   progressSection: {
     marginBottom: SIZES.space.lg,
@@ -594,7 +665,8 @@ const styles = StyleSheet.create({
   progressLabel: {
     ...FONTS.caption,
     color: COLORS.contentSecondary,
-    fontSize: SIZES.text.xxs,
+    fontSize: SIZES.text.xs,
+    fontFamily: FONTS.family.bold,
   },
   progressCount: {
     ...FONTS.label,
@@ -629,14 +701,27 @@ const styles = StyleSheet.create({
     ...FONTS.caption,
     color: COLORS.contentSecondary,
     marginBottom: SIZES.space.xs,
+    fontFamily: FONTS.family.bold,
   },
   dateValue: {
     ...FONTS.bodyEmphasis,
-    color: COLORS.contentPrimary,
+    color: COLORS.contentSecondary,
+    fontFamily: FONTS.family.bold,
   },
   dueDateSection: {
     alignItems: 'center',
     marginBottom: SIZES.space.lg,
+  },
+  kycButton: {
+    marginTop: SIZES.space.sm,
+    minHeight: 44,
+    padding: SIZES.space.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: SIZES.radius.md,
+    borderWidth: 1,
+    borderColor: COLORS.borderBrand,
+    backgroundColor: COLORS.accentTint,
   },
   buttonsSection: {
     flexDirection: 'row',
@@ -656,9 +741,10 @@ const styles = StyleSheet.create({
     ...ELEVATION.raised,
   },
   viewButtonText: {
-    ...FONTS.bodyEmphasis,
+    // ...FONTS.bodyEmphasis,
     color: COLORS.contentBrand,
     fontSize: SIZES.text.md,
+    fontFamily: FONTS.family.bold,
   },
   payButton: {
     flex: 1,
@@ -693,11 +779,13 @@ const styles = StyleSheet.create({
     ...FONTS.bodyEmphasis,
     color: '#2E7D32',
     fontSize: SIZES.text.md,
+    fontFamily: FONTS.family.bold,
   },
   payButtonText: {
     ...FONTS.bodyEmphasis,
     color: COLORS.contentOnBrand,
     fontSize: SIZES.text.md,
+    fontFamily: FONTS.family.bold,
   },
   bottomBorder: {
     height: 3,

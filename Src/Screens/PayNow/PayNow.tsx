@@ -1,46 +1,23 @@
 // Src/Screens/PayNow/PayNow.tsx
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, StyleSheet, Platform, ActivityIndicator, Modal, ScrollView, Alert } from 'react-native';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { View, StyleSheet, Platform, ActivityIndicator, Modal, Alert } from 'react-native';
+import { useRoute, useNavigation, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { useRazorpayPayment } from '../../api/hooks/Razorpay/useRazorpay';
 import { useTransactionTypes } from '../../api/hooks/Account/useTransactionTypes';
 import RazorpayWebView from '../../Components/RazorpayWebView';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
 import PremiumBackground from '../../Components/PremiumBackground/PremiumBackground';
-import { AppCard, AppText, AppButton, AppBadge, AppDivider, AppInput, ScreenWrapper } from '../../Components/ui/appcomponents';
+import { AppCard, AppText, AppButton, AppBadge, AppDivider, ScreenWrapper } from '../../Components/ui/appcomponents';
 import theme from '../../Utills/AppTheme';
 import { PAYMENT_CONSTANTS } from '../../constants/paymentConstants';
-import { MemberDetailsPayload, memberKycService } from '../../api/services/memberKycService';
+import { userService, UserKycDetails } from '../../api/services/userService';
+import { getUserId } from '../../Utills/AsynchStorageHelper';
 
 const { COLORS, SIZES } = theme;
 
 const STATUS = { IDLE: 'idle', SUCCESS: 'success', FAILED: 'failed' } as const;
 type Status = (typeof STATUS)[keyof typeof STATUS];
 type KycCheckState = 'loading' | 'ready' | 'incomplete' | 'error';
-
-const createMemberDetailsDraft = (accountData: any): MemberDetailsPayload => {
-  const personalInfo = accountData?.personalInfo || {};
-
-  return {
-    doorNo: personalInfo.doorNo || '',
-    address1: personalInfo.address1 || '',
-    area: personalInfo.area || '',
-    city: personalInfo.city || '',
-    state: personalInfo.state || '',
-    country: personalInfo.country || 'India',
-    pinCode: personalInfo.pinCode || '',
-    email: personalInfo.email || accountData?.email || '',
-    dob: personalInfo.dob || '',
-    maritalStatus: personalInfo.maritalStatus || '',
-    anniversaryDate: personalInfo.anniversaryDate || '',
-    idProof: personalInfo.idProof || 'AADHAAR',
-    idProofNo: personalInfo.idProofNo || '',
-    aadhaarMasked: personalInfo.aadhaarMasked || '',
-    nomeni: personalInfo.nomeni || '',
-    nomineeMobile: personalInfo.nomineeMobile || personalInfo.mobile2 || '',
-    nomineeRelationship: personalInfo.nomineeRelationship || '',
-  };
-};
 
 export interface PayNowRouteParams {
   accountData?: any;
@@ -82,16 +59,11 @@ const PayNow = () => {
   const [status, setStatus] = useState<Status>(STATUS.IDLE);
   const [statusMsg, setStatusMsg] = useState('');
   const [paymentId, setPaymentId] = useState('');
-  const personalId = useMemo(
-    () => String(accountData?.personalInfo?.personalId ?? accountData?.personalId ?? '').trim(),
-    [accountData]
-  );
   const [kycCheckState, setKycCheckState] = useState<KycCheckState>('loading');
   const [kycError, setKycError] = useState('');
   const [kycModalVisible, setKycModalVisible] = useState(false);
-  const [showKycForm, setShowKycForm] = useState(false);
-  const [savingKycDetails, setSavingKycDetails] = useState(false);
-  const [kycDetails, setKycDetails] = useState<MemberDetailsPayload>(() => createMemberDetailsDraft(accountData));
+  const [kycDetails, setKycDetails] = useState<UserKycDetails | null>(null);
+  const kycRequest = useRef(0);
 
   const { onlinePayMode } = useTransactionTypes();
 
@@ -135,64 +107,39 @@ const PayNow = () => {
   };
 
   const checkKycStatus = useCallback(async () => {
-    if (!personalId) {
-      setKycCheckState('error');
-      setKycError('Member ID is unavailable. Please return to your scheme and try again.');
-      return;
-    }
-
+    const request = ++kycRequest.current;
     setKycCheckState('loading');
     setKycError('');
-
+    setKycModalVisible(false);
+    setKycDetails(null);
     try {
-      const response = await memberKycService.getKycStatus(personalId);
-      const isKycComplete = String(response?.KYCUPDATION || '').trim().toUpperCase() === 'N';
-
-      if (isKycComplete) {
-        setKycCheckState('ready');
-        setKycModalVisible(false);
-        setShowKycForm(false);
-      } else {
-        setKycCheckState('incomplete');
-        setKycModalVisible(true);
-      }
+      const userId = await getUserId();
+      if (!userId) throw new Error('User ID is unavailable. Please sign in again.');
+      const response = await userService.getDetails(userId);
+      if (request !== kycRequest.current) return;
+      const complete = response?.kycVerified === true || response?.aadhaarVerified === true;
+      setKycDetails(response);
+      setKycCheckState(complete ? 'ready' : 'incomplete');
+      setKycModalVisible(!complete);
     } catch (error: any) {
+      if (request !== kycRequest.current) return;
       setKycCheckState('error');
       setKycError(error?.message || 'Unable to verify your KYC status. Please try again.');
     }
-  }, [personalId]);
-
-  useEffect(() => {
-    setKycDetails(createMemberDetailsDraft(accountData));
-  }, [accountData]);
-
-  useEffect(() => {
-    checkKycStatus();
-  }, [checkKycStatus]);
-
-  const updateKycDetail = useCallback((field: keyof MemberDetailsPayload, value: string) => {
-    setKycDetails((previous) => ({ ...previous, [field]: value }));
   }, []);
 
-  const saveKycDetails = useCallback(async () => {
-    if (savingKycDetails || !personalId) return;
+  useFocusEffect(useCallback(() => {
+    if (!paymentLoading && !webViewVisible && status === STATUS.IDLE) void checkKycStatus();
+    return () => { kycRequest.current += 1; };
+  }, [checkKycStatus, paymentLoading, webViewVisible, status]));
 
-    if (!kycDetails.doorNo || !kycDetails.address1 || !kycDetails.city || !kycDetails.state || !kycDetails.pinCode || !kycDetails.email) {
-      Alert.alert('Complete KYC', 'Please fill your address, city, state, PIN code, and email before continuing.');
-      return;
-    }
-
-    setSavingKycDetails(true);
-    try {
-      await memberKycService.updateDetails(personalId, kycDetails);
-      await checkKycStatus();
-      Alert.alert('KYC Details Updated', 'Your details were submitted. You can continue to payment once KYC is approved.');
-    } catch (error: any) {
-      Alert.alert('Unable to Update KYC', error?.message || 'Please try again.');
-    } finally {
-      setSavingKycDetails(false);
-    }
-  }, [checkKycStatus, kycDetails, personalId, savingKycDetails]);
+  const openKycForm = (section: 'address' | 'aadhaar') => {
+    setKycModalVisible(false);
+    navigation.navigate('PassbookKyc', {
+      account: accountData || { regNo, groupCode, pName: memberName },
+      section,
+    });
+  };
 
   const handlePayment = useCallback(async () => {
     if (paymentLoading) return;
@@ -443,57 +390,30 @@ const PayNow = () => {
 
       <RazorpayWebView visible={webViewVisible} options={razorpayOptions} onSuccess={handlePaymentSuccess} onDismiss={handlePaymentDismiss} />
 
-      <Modal visible={kycModalVisible} transparent animationType="slide" onRequestClose={() => undefined}>
+      <Modal visible={kycModalVisible} transparent animationType="slide" onRequestClose={() => setKycModalVisible(false)}>
         <View style={styles.kycModalOverlay}>
           <View style={styles.kycModalCard}>
-            {!showKycForm ? (
-              <>
-                <AppText variant="h4" align="center">KYC not completed</AppText>
-                <AppText variant="body" color={COLORS.contentSecondary} align="center" style={styles.kycModalMessage}>
-                  Complete your KYC details before paying this installment.
-                </AppText>
-                <AppButton label="Complete KYC" size="lg" onPress={() => setShowKycForm(true)} />
-                <AppButton label="Check KYC Again" variant="outline" size="md" style={styles.kycSecondaryButton} onPress={checkKycStatus} />
-              </>
-            ) : (
-              <>
-                <AppText variant="h4" align="center">Complete KYC Details</AppText>
-                <AppText variant="bodySmall" color={COLORS.contentSecondary} align="center" style={styles.kycModalMessage}>
-                  Update the information below. Payment unlocks once the KYC status becomes complete.
-                </AppText>
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.kycFormContent}>
-                  <AppInput label="Door No." value={kycDetails.doorNo} onChangeText={(value) => updateKycDetail('doorNo', value)} required />
-                  <AppInput label="Address" value={kycDetails.address1} onChangeText={(value) => updateKycDetail('address1', value)} required />
-                  <AppInput label="Area" value={kycDetails.area} onChangeText={(value) => updateKycDetail('area', value)} />
-                  <AppInput label="City" value={kycDetails.city} onChangeText={(value) => updateKycDetail('city', value)} required />
-                  <AppInput label="State" value={kycDetails.state} onChangeText={(value) => updateKycDetail('state', value)} required />
-                  <AppInput label="Country" value={kycDetails.country} onChangeText={(value) => updateKycDetail('country', value)} />
-                  <AppInput label="PIN Code" value={kycDetails.pinCode} onChangeText={(value) => updateKycDetail('pinCode', value)} keyboardType="number-pad" required />
-                  <AppInput label="Email" value={kycDetails.email} onChangeText={(value) => updateKycDetail('email', value)} keyboardType="email-address" autoCapitalize="none" required />
-                  <AppInput label="Date of Birth (YYYY-MM-DD)" value={kycDetails.dob} onChangeText={(value) => updateKycDetail('dob', value)} />
-                  <AppInput label="Marital Status" value={kycDetails.maritalStatus} onChangeText={(value) => updateKycDetail('maritalStatus', value)} />
-                  <AppInput label="Anniversary Date (YYYY-MM-DD)" value={kycDetails.anniversaryDate} onChangeText={(value) => updateKycDetail('anniversaryDate', value)} />
-                  <AppInput label="ID Proof" value={kycDetails.idProof} onChangeText={(value) => updateKycDetail('idProof', value)} />
-                  <AppInput label="ID Proof Number" value={kycDetails.idProofNo} onChangeText={(value) => updateKycDetail('idProofNo', value)} />
-                  <AppInput label="Masked Aadhaar" value={kycDetails.aadhaarMasked} onChangeText={(value) => updateKycDetail('aadhaarMasked', value)} />
-                  <AppInput label="Nominee Name" value={kycDetails.nomeni} onChangeText={(value) => updateKycDetail('nomeni', value)} />
-                  <AppInput label="Nominee Mobile" value={kycDetails.nomineeMobile} onChangeText={(value) => updateKycDetail('nomineeMobile', value)} keyboardType="phone-pad" />
-                  <AppInput label="Nominee Relationship" value={kycDetails.nomineeRelationship} onChangeText={(value) => updateKycDetail('nomineeRelationship', value)} />
-                </ScrollView>
-                <AppButton label="Save KYC Details" size="lg" loading={savingKycDetails} onPress={saveKycDetails} />
-                <AppButton label="Back" variant="ghost" size="md" style={styles.kycSecondaryButton} onPress={() => setShowKycForm(false)} />
-              </>
+            <AppText variant="h4" align="center">Complete your verification</AppText>
+            <AppText variant="body" color={COLORS.contentSecondary} align="center" style={styles.kycModalMessage}>
+              Complete either address KYC or Aadhaar verification to pay this installment.
+            </AppText>
+            {kycDetails?.kycVerified !== true && (
+              <AppButton label="Complete address KYC" size="lg" onPress={() => openKycForm('address')} />
             )}
+            {kycDetails?.aadhaarVerified !== true && (
+              <AppButton label="Complete Aadhaar KYC" size="lg" style={styles.kycSecondaryButton} onPress={() => openKycForm('aadhaar')} />
+            )}
+            <AppButton label="Check verification again" variant="outline" size="md" style={styles.kycSecondaryButton} onPress={checkKycStatus} />
+            <AppButton label="Close" variant="ghost" size="md" style={styles.kycSecondaryButton} onPress={() => setKycModalVisible(false)} />
           </View>
         </View>
       </Modal>
 
       <View style={styles.bottomBar}>
         <AppButton
-          label={`${formatCurrency(paymentAmount)}  ·  Pay Now`}
+          label={kycCheckState === 'incomplete' ? 'Complete KYC to pay' : `${formatCurrency(paymentAmount)}  ·  Pay Now`}
           size="lg"
           loading={isLoading}
-          disabled={kycCheckState !== 'ready'}
           onPress={handlePayment}
         />
         <AppText variant="caption" align="center" style={styles.payNote}>
@@ -643,9 +563,6 @@ const styles = StyleSheet.create({
   },
   kycSecondaryButton: {
     marginTop: SIZES.space.sm,
-  },
-  kycFormContent: {
-    paddingBottom: SIZES.space.md,
   },
 });
 

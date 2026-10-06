@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { View, Pressable, Alert, StyleSheet } from 'react-native';
+import { View, Pressable, Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
 import { AppButton, AppCard, AppInput, AppText, ScreenWrapper } from '../../Components/ui/appcomponents';
@@ -14,11 +14,13 @@ import CalendarPicker from '../MemberCreation/CalendarPicker';
 import { maskAadhaar } from './passbookUtils';
 import { isValidAadhaar } from './aadhaarValidation';
 
+type PostOffice = { Name: string; Block: string | null; State: string; Country: string };
 const { COLORS, SIZES } = theme;
-type Fields = 'username' | 'email' | 'gender' | 'dateOfBirth' | 'address1' | 'address2' | 'city' | 'state' | 'pincode' | 'country';
+type Fields = 'username' | 'email' | 'gender' | 'dateOfBirth' | 'doorNo' | 'address1' | 'address2' | 'city' | 'state' | 'pincode' | 'country';
 const fields: { key: Fields; label: string }[] = [
   { key: 'username', label: 'Name' }, { key: 'email', label: 'Email' }, { key: 'gender', label: 'Gender' },
-  { key: 'dateOfBirth', label: 'Date of birth (YYYY-MM-DD)' }, { key: 'address1', label: 'Address line 1' },
+  { key: 'dateOfBirth', label: 'Date of birth (YYYY-MM-DD)' }, { key: 'doorNo', label: 'Door No' },
+  { key: 'address1', label: 'Street' },
   { key: 'address2', label: 'Address line 2' }, { key: 'city', label: 'City' }, { key: 'state', label: 'State' },
   { key: 'pincode', label: 'PIN code' }, { key: 'country', label: 'Country' },
 ];
@@ -26,6 +28,11 @@ export default function PassbookKycScreen() {
   const navigation = useNavigation<any>();
   const params = useRoute().params as { account: Account; section: 'address' | 'aadhaar' };
   const [values, setValues] = useState<Record<string, string>>({});
+  const [postOffices, setPostOffices] = useState<PostOffice[]>([]);
+  const [postalLoading, setPostalLoading] = useState(false);
+  const [postalError, setPostalError] = useState('');
+  const [officePickerOpen, setOfficePickerOpen] = useState(false);
+  const [postalRetry, setPostalRetry] = useState(0);
   const [terms, setTerms] = useState(false);
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -38,17 +45,64 @@ export default function PassbookKycScreen() {
     getUserData().then(user => {
       if (!active) return;
       const pi = params.account.personalInfo;
-      setValues(Object.fromEntries(fields.map(({ key }) => [key, String(user?.[key] ?? (key === 'username' ? params.account.pName : key === 'pincode' ? pi?.pinCode : pi?.[key as keyof typeof pi]) ?? '')])));
+      const initialValues = Object.fromEntries(fields.map(({ key }) => [key, String(user?.[key] ?? (key === 'username' ? params.account.pName : key === 'pincode' ? pi?.pinCode : key === 'doorNo' ? pi?.doorNo : pi?.[key as keyof typeof pi]) ?? '')]));
+      const combinedAddress = /^(\d[^,]*),(.+)$/.exec(initialValues.address1 || '');
+      if (combinedAddress) {
+        initialValues.doorNo = combinedAddress[1].trim();
+        initialValues.address1 = combinedAddress[2].trim();
+      }
+      setValues(initialValues);
       setExistingAadhaar(String(user?.maskedAadhaar || pi?.maskedAadhaar || params.account.maskedAadhaar || pi?.aadhaarNo || ''));
       setTerms(user?.termsAccepted === true);
       setReady(true);
     }).catch(() => { if (active) setError('Unable to load your profile. Please reopen this page.'); });
     return () => { active = false; };
   }, [params.account]);
+  useEffect(() => {
+    if (params.section !== 'address' || !ready) return;
+    const pincode = values.pincode || '';
+    setPostOffices([]);
+    setPostalError('');
+    setOfficePickerOpen(false);
+    if (!/^\d{6}$/.test(pincode)) { setPostalLoading(false); return; }
+    let active = true;
+    const controller = new AbortController();
+    setPostalLoading(true);
+    const debounce = setTimeout(async () => {
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await fetch('https://api.postalpincode.in/pincode/' + pincode, { signal: controller.signal });
+        if (!response.ok) throw new Error('Unable to load postal details. Please retry.');
+        const data = await response.json();
+        const offices: PostOffice[] = data?.[0]?.PostOffice;
+        if (!active) return;
+        if (data?.[0]?.Status !== 'Success' || !Array.isArray(offices) || !offices.length) {
+          throw new Error('No post offices found. Please check your PIN code.');
+        }
+        setPostOffices(offices);
+        setValues(previous => {
+          const office = offices.find(item => item.Name === previous.address2) || offices[0];
+          return { ...previous, city: office.Block && office.Block !== 'NA' ? office.Block : '', state: office.State || '', country: office.Country || '' };
+        });
+      } catch (err: any) {
+        if (active) setPostalError(err?.name === 'AbortError' ? 'Postal lookup timed out. Please retry.' : err?.message || 'Unable to load postal details. Please retry.');
+      } finally {
+        clearTimeout(timeout);
+        if (active) setPostalLoading(false);
+      }
+    }, 350);
+    return () => { active = false; clearTimeout(debounce); controller.abort(); };
+  }, [values.pincode, ready, params.section, postalRetry]);
+
+  const selectOffice = (office: PostOffice) => {
+    setValues(previous => ({ ...previous, address2: office.Name, city: office.Block && office.Block !== 'NA' ? office.Block : '', state: office.State || '', country: office.Country || '' }));
+    setOfficePickerOpen(false);
+  };
+
   const save = async () => {
     if (saving || !ready) return;
-    if (params.section === 'address' && (!values.username?.trim() || !values.address1?.trim() || !values.city?.trim() || !values.state?.trim() || !/^\d{6}$/.test(values.pincode || '') || !values.country?.trim() || !terms)) {
-      setError('Enter your name, address, city, state, six-digit PIN code and country, and accept the terms.'); return;
+    if (params.section === 'address' && (!values.username?.trim() || !values.doorNo?.trim() || !values.address1?.trim() || !values.city?.trim() || !values.state?.trim() || !/^\d{6}$/.test(values.pincode || '') || !values.country?.trim() || !terms)) {
+      setError('Enter your name, door no, street, city, state, six-digit PIN code and country, and accept the terms.'); return;
     }
     if (params.section === 'address' && values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) { setError('Enter a valid email.'); return; }
     if (params.section === 'address' && values.dateOfBirth && !/^\d{4}-\d{2}-\d{2}$/.test(values.dateOfBirth)) { setError('Use YYYY-MM-DD for date of birth.'); return; }
@@ -59,7 +113,8 @@ export default function PassbookKycScreen() {
       if (!id) throw new Error('User ID is unavailable. Please sign in again.');
       const payload = params.section === 'aadhaar'
         ? { aadhaarVerified: true, maskedAadhaar: aadhaar }
-        : { ...Object.fromEntries(fields.map(({ key }) => [key, (values[key] || '').trim()])), termsAccepted: terms, kycVerified: true };
+        : { ...Object.fromEntries(fields.filter(({ key }) => key !== 'doorNo').map(({ key }) => [key, (values[key] || '').trim()])), address1: [values.doorNo.trim(), values.address1.trim()].join(','), termsAccepted: terms, kycVerified: true };
+      console.log('[KYC UPDATE] Payload:', payload);
       const result = await authService.updateUserInfo(id, payload) as unknown as { status?: string; message?: string; otpSent?: boolean };
       if (String(result.status).toLowerCase() !== 'success') throw new Error(result.message || 'Update failed');
       if ((result as unknown as { otpSent?: boolean }).otpSent) {
@@ -72,7 +127,9 @@ export default function PassbookKycScreen() {
     } catch (err: any) { setError(err?.message || 'Unable to save KYC. Please retry.'); }
     finally { setSaving(false); }
   };
-  const change = (key: string, value: string) => setValues(previous => ({ ...previous, [key]: value }));
+  const change = (key: string, value: string) => setValues(previous => key === 'pincode'
+    ? { ...previous, pincode: value.replace(/[^0-9]/g, '').slice(0, 6), address2: '', city: '', state: '', country: '' }
+    : { ...previous, [key]: value });
   const input = (key: Fields, label: string, icon: string, required = false) => <AppInput
     key={key} label={label} leftIcon={icon} required={required} value={values[key] || ''}
     editable={ready && !saving} onChangeText={value => change(key, value)}
@@ -82,7 +139,7 @@ export default function PassbookKycScreen() {
   />;
   return <ScreenWrapper scroll edges={['bottom']} paddingTop={SIZES.space.lg}
     header={<CommonHeader title={params.section === 'address' ? 'Address verification' : 'Aadhaar verification'} subtitle="Complete your member profile" showBack={!saving} />}
-    footer={<View style={styles.footer}><AppButton label="Save KYC details" rightIcon="arrow-forward" onPress={save} loading={saving} disabled={!ready || saving} /></View>}>
+    footer={<View style={styles.footer}><AppButton label="Save KYC details" rightIcon="arrow-forward" onPress={save} loading={saving} disabled={!ready || saving || (params.section === 'address' && postalLoading)} /></View>}>
     <LinearGradient colors={COLORS.gradient.accent as [string, string]} style={styles.hero}>
       <View style={styles.heroIcon}><Ionicons name="shield-checkmark-outline" size={28} color={COLORS.contentOnBrand} /></View>
       <AppText variant="labelUppercase" color={COLORS.contentBrand}>{params.section === 'aadhaar' ? 'Aadhaar KYC' : 'Your member profile'}</AppText>
@@ -113,11 +170,26 @@ A lasting relationship.</AppText>
     </AppCard>
     <AppCard variant="flat" style={styles.section}>
       <View style={styles.sectionTitle}><View style={styles.sectionIcon}><Ionicons name="location-outline" size={20} color={COLORS.contentBrand} /></View><View><AppText variant="h6">Residential address</AppText><AppText variant="caption" color={COLORS.contentSecondary}>Your current place of residence</AppText></View></View>
-      {input('address1', 'Address line 1', 'home-outline', true)}
-      {input('address2', 'Address line 2 (optional)', 'business-outline')}
+      {input('doorNo', 'Door No', 'home-outline', true)}
+      {input('address1', 'Street / Apartment', 'map-outline', true)}
+      {input('pincode', 'PIN code', 'navigate-outline', true)}
+      {postalLoading && <View style={styles.postalStatus}><ActivityIndicator size="small" color={COLORS.contentBrand} /><AppText variant="caption" color={COLORS.contentSecondary}>Loading postal details...</AppText></View>}
+      {!!postalError && <View style={styles.field}><AppText variant="bodySmall" color={COLORS.dangerText}>{postalError}</AppText><AppButton label="Retry postal lookup" variant="ghost" onPress={() => setPostalRetry(previous => previous + 1)} disabled={saving} /></View>}
+      {postOffices.length > 0 ? <>
+        <AppText variant="captionBold" style={styles.field}>Area</AppText>
+        <Pressable style={styles.dateField} disabled={saving} accessibilityRole="button" accessibilityLabel="Select post office for address line 2" accessibilityState={{ expanded: officePickerOpen }} onPress={() => setOfficePickerOpen(open => !open)}>
+          <Ionicons name="business-outline" size={20} color={COLORS.contentBrand} />
+          <AppText variant="bodySmall" style={{ flex: 1 }} color={values.address2 ? COLORS.contentPrimary : COLORS.contentMuted}>{values.address2 || 'Select your area'}</AppText>
+          <Ionicons name={officePickerOpen ? 'chevron-up' : 'chevron-down'} size={16} color={COLORS.contentBrand} />
+        </Pressable>
+        {officePickerOpen && <View style={styles.officeList}>{postOffices.map((office, index) => <Pressable key={office.Name + index} accessibilityRole="radio" accessibilityState={{ checked: values.address2 === office.Name }} disabled={saving} style={[styles.officeOption, values.address2 === office.Name && styles.genderSelected]} onPress={() => selectOffice(office)}>
+          <AppText variant="bodySmall" style={{ flex: 1 }}>{office.Name}</AppText>
+          {values.address2 === office.Name && <Ionicons name="checkmark-circle" size={20} color={COLORS.contentBrand} />}
+        </Pressable>)}</View>}
+      </> : input('address2', 'Address line 2 (optional)', 'business-outline')}
       {input('city', 'City', 'map-outline', true)}
       {input('state', 'State', 'location-outline', true)}
-      {input('pincode', 'PIN code', 'navigate-outline', true)}
+
       {input('country', 'Country', 'globe-outline', true)}
     </AppCard>
     <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: terms }} disabled={saving} onPress={() => setTerms(value => !value)} style={styles.consent}>
@@ -130,6 +202,9 @@ A lasting relationship.</AppText>
   </ScreenWrapper>;
 }
 const styles = StyleSheet.create({
+  postalStatus: { flexDirection: 'row', alignItems: 'center', gap: SIZES.space.sm, marginTop: SIZES.space.sm },
+  officeList: { marginTop: SIZES.space.sm, borderWidth: 1, borderColor: COLORS.border, borderRadius: SIZES.radius.md, overflow: 'hidden' },
+  officeOption: { flexDirection: 'row', alignItems: 'center', minHeight: 48, padding: SIZES.space.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: COLORS.divider },
   hero: { padding: SIZES.space.xl, borderRadius: SIZES.radius.card, gap: SIZES.space.md },
   heroIcon: { width: 52, height: 52, borderRadius: SIZES.radius.lg, backgroundColor: COLORS.brand, alignItems: 'center', justifyContent: 'center' },
   memberTag: { flexDirection: 'row', alignItems: 'center', gap: SIZES.space.sm, alignSelf: 'flex-start', padding: SIZES.space.sm, borderRadius: SIZES.radius.pill, backgroundColor: COLORS.whiteAlpha70 },
