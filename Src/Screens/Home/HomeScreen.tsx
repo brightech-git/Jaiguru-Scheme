@@ -117,12 +117,9 @@ const HomeScreen = () => {
       setRatesError(null);
       const data = await ratesService.getTodayRate();
       setRates(data);
-      setRatesUpdatedAt(
-        new Date().toLocaleTimeString("en-US", {
-          hour: "numeric",
-          hour12: true,
-        }),
-      );
+      const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(data.GOLDRATEDATE || '');
+      const date = match ? `${match[3]}-${match[2]}-${match[1]}` : data.GOLDRATEDATE;
+      setRatesUpdatedAt([date, data.GOLDUPTIME].filter(Boolean).join(' | '));
     } catch (err: any) {
       setRatesError(err?.message || "Failed to fetch rates");
     } finally {

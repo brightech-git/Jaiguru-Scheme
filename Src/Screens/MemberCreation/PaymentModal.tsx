@@ -28,7 +28,7 @@ export interface PaymentModalProps {
 
 const CONTENT_BY_STEP: Record<string, { title: string; message: string; icon: string; color: string }> = {
   creating_order: {
-    title: 'Creating Order',
+    title: 'Payment Initiated',
     message: 'Please wait while we set up your payment order...',
     icon: 'receipt-outline',
     color: COLORS.contentBrand,

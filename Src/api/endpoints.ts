@@ -93,6 +93,7 @@ export const RAZORPAY = {
 };
 
 export const USER = {
+  DETAILS: (userId: number | string) => `/user/${encodeURIComponent(String(userId))}`,
   DELETE: (userId: number | string) => `/user/delete/${userId}`,
   UPDATE: (userId: number | string) => `/${userId}/update`,
 };

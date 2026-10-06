@@ -20,11 +20,11 @@ import {
   ScreenWrapper,
 } from "../../Components/ui/appcomponents";
 import theme from "../../Utills/AppTheme";
-import { SchemeJoinSuccessDetails } from "./schemeJoinSuccess";
+import { SchemeJoinSuccessDetails, buildSchemeJoinSuccess } from "./schemeJoinSuccess";
 
 const { COLORS, SIZES } = theme;
 type SuccessRoute = RouteProp<
-  { SchemeJoinSuccess: { details: SchemeJoinSuccessDetails } },
+  { SchemeJoinSuccess: { details: SchemeJoinSuccessDetails; processResult?: unknown } },
   "SchemeJoinSuccess"
 >;
 const enter = (delay: number) =>
@@ -50,7 +50,7 @@ function DetailRow({ label, value }: { label: string; value?: string }) {
 export default function SchemeJoinSuccessScreen() {
   const { params } = useRoute<SuccessRoute>();
   const navigation = useNavigation<any>();
-  const details = params.details;
+  const details = params.processResult != null ? buildSchemeJoinSuccess(params.processResult, params.details) : params.details;
   const goHome = useCallback(
     () => navigation.reset({ index: 0, routes: [{ name: "MainDrawer" }] }),
     [navigation],
@@ -123,7 +123,7 @@ export default function SchemeJoinSuccessScreen() {
           <AppText variant="bodyBold" align="center">
           Scheme Membership Code {' '}
           <AppText variant="h3" color={COLORS.contentBrand}>
-            {details.groupCode}-{details.regNo}
+            {[details.groupCode, details.regNo].filter(Boolean).join('-') || 'Confirmed'}
           </AppText>
           </AppText>
         </LinearGradient>
@@ -143,20 +143,11 @@ export default function SchemeJoinSuccessScreen() {
               maximumFractionDigits: 2,
             })}
           </AppText>
-          <AppText
-            variant="captionBold"
-            align="center"
-            color={COLORS.contentSecondary}
-          >
-            Gold Weight Accumulated
-          </AppText>
-
-          <AppText variant="h2" align="center" color={COLORS.contentBrand}>
-            ₹{" "}
-            {details.amount.toLocaleString("en-IN", {
-              maximumFractionDigits: 2,
-            })}
-          </AppText>
+          {details.goldWeight !== undefined && <View style={styles.goldSummary}>
+            <Ionicons name="sparkles-outline" size={24} color={COLORS.contentBrand} />
+            <AppText variant="captionBold" align="center" color={COLORS.contentSecondary}>Gold saved with this payment</AppText>
+            <AppText variant="h2" align="center" color={COLORS.contentBrand}>{details.goldWeight.toFixed(4)} g</AppText>
+          </View>}
           <View style={styles.verified}>
             <Ionicons
               name="shield-checkmark-outline"
@@ -167,6 +158,9 @@ export default function SchemeJoinSuccessScreen() {
               Payment verified
             </AppText>
           </View>
+          <DetailRow label="Receipt number" value={details.receiptNo} />
+          <DetailRow label="Installment" value={details.installment} />
+          <DetailRow label="Gold rate / gram" value={details.goldRate !== undefined ? '? ' + details.goldRate.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : undefined} />
           <DetailRow label="Member name" value={details.userName} />
           <DetailRow label="Scheme" value={details.schemeName} />
           <DetailRow label="Member ID" value={details.personalId} />
@@ -191,6 +185,7 @@ export default function SchemeJoinSuccessScreen() {
   );
 }
 const styles = StyleSheet.create({
+  goldSummary: { marginTop: SIZES.space.lg, padding: SIZES.space.lg, borderRadius: SIZES.radius.card, backgroundColor: COLORS.accentTint, alignItems: "center", gap: SIZES.space.sm },
   hero: {
     borderRadius: SIZES.radius.card,
     padding: SIZES.space.xxl,

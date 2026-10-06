@@ -12,3 +12,9 @@ export function paidThisMonth(raw?: string): boolean {
   const today = new Date();
   return !!raw && raw.slice(0, 7) === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 }
+
+export function maskAadhaar(value?: string): string {
+  if (!value?.trim()) return '';
+  const lastFour = value.replace(/\s|-/g, '').match(/\d{4}$/)?.[0];
+  return lastFour ? `XXXX XXXX ${lastFour}` : 'XXXX XXXX XXXX';
+}

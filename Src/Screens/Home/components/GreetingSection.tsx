@@ -24,6 +24,10 @@ export interface GreetingSectionProps {
 }
 
 const GreetingSection: React.FC<GreetingSectionProps> = ({ greeting, name,  }) => {
+  const todayDay = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long',
+    timeZone: 'Asia/Kolkata',
+  });
   const enter = useSharedValue(0);
   useEffect(() => {
     enter.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
@@ -36,6 +40,7 @@ const GreetingSection: React.FC<GreetingSectionProps> = ({ greeting, name,  }) =
 
   return (
     <Animated.View style={style}>
+      <Text style={styles.day}>{todayDay}</Text>
       <Text style={styles.greeting}>{greeting} 👋</Text>
       <Text style={styles.welcome}>Welcome back, <Text style={styles.name}>{name}</Text></Text>
     </Animated.View>
@@ -43,6 +48,12 @@ const GreetingSection: React.FC<GreetingSectionProps> = ({ greeting, name,  }) =
 };
 
 const styles = StyleSheet.create({
+  day: {
+    fontFamily: FONTS.family.semiBold,
+    fontSize: SIZES.text.sm,
+    color: COLORS.contentOnBrand,
+    marginBottom: SIZES.space.xs,
+  },
   greeting: {
     fontFamily: FONTS.family.medium,
     fontSize: SIZES.text.md,

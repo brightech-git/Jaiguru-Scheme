@@ -24,6 +24,7 @@ import GoldParticles from '../../Auth/Login/components/GoldParticles';
 import GreetingSection from './GreetingSection';
 import ProfileAvatar from './ProfileAvatar';
 import GoldRateCard from './GoldRateCard';
+import { navigate as navigateRoot } from '../../../Navigations/navigationRef';
 import { useCompany } from '../../../api/hooks/Company/useCompany';
 const LOCAL_LOGO = require('../../../../assets/icon.png');
 
@@ -129,6 +130,8 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
       {/* Floating cards overlapping the curve */}
       <View style={styles.cards}>
         <GoldRateCard
+          onGoldPress={() => navigateRoot('Rates', { metal: 'G' })}
+          onSilverPress={() => navigateRoot('Rates', { metal: 'S' })}
           gold={goldValue}
           silver={silverValue}
           loading={ratesLoading}

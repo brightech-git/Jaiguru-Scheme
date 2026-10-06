@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useAnimatedStyle,
@@ -30,7 +30,11 @@ import PassbookSummaryCard, {
 import PassbookMetricCard from "./components/PassbookMetricCard";
 import PassbookHistoryTable from "./components/PassbookHistoryTable";
 import SchemeNameCarousel, { MemberKycInfo } from "./components/SchemeNameCarousel";
-import { dateLabel, money, paidThisMonth, toNumber } from "./passbookUtils";
+import { dateLabel, money, paidThisMonth, toNumber, maskAadhaar } from "./passbookUtils";
+
+
+import { userService, UserKycDetails } from '../../api/services/userService';
+import { getUserId } from '../../Utills/AsynchStorageHelper';
 
 const { COLORS, SIZES } = theme;
 type Tab = "history" | "details" | "overview";
@@ -98,6 +102,25 @@ export default function SchemePassbook() {
     ? params.schemeData[0]
     : params?.schemeData;
   const [tab, setTab] = useState<Tab>("history");
+  const [kycDetails, setKycDetails] = useState<UserKycDetails | null>(null);
+  const [kycError, setKycError] = useState<string | null>(null);
+  useFocusEffect(React.useCallback(() => {
+    let active = true;
+    setKycDetails(null);
+    setKycError(null);
+    (async () => {
+      try {
+        const userId = await getUserId();
+        if (!userId) throw new Error('User ID is unavailable.');
+        const response = await userService.getDetails(userId);
+        if (active) setKycDetails(response);
+      } catch {
+        if (active) setKycError('Unable to check KYC status. Reopen this page to retry.');
+      }
+    })();
+    return () => { active = false; };
+  }, []));
+
 
   const goBack = () =>
     params?.fromScreen === "payment"
@@ -148,9 +171,9 @@ export default function SchemePassbook() {
         ? "Payment due"
         : "Active";
   const canPay = !closed && !completed && !thisMonthPaid;
-  const aadhaarKyc = String(data.aadhaarKyc) === "true";
-  const addressKyc = String(data.addressKyc) === "true";
-  const aadhaarNo = personal?.aadhaarNo || "";
+  const aadhaarKyc = kycDetails?.aadhaarVerified === true;
+  const addressKyc = kycDetails?.kycVerified === true;
+  const aadhaarNo = maskAadhaar(kycDetails?.maskedAadhaar || personal?.maskedAadhaar || data.maskedAadhaar || personal?.aadhaarNo);
   const remaining = Math.max(0, total - paid) * amount;
   const address = [
     personal?.doorNo,
@@ -288,8 +311,8 @@ export default function SchemePassbook() {
           mobile: personal?.mobile || personal?.mobile2,
           aadhaarKyc,
           addressKyc,
-          onAddressKyc: () => navigation.navigate("AddressKyc" as never),
-          onAadhaarKyc: () => navigation.navigate("AadhaarKyc" as never),
+          onAddressKyc: () => navigation.navigate("PassbookKyc", { account: data, section: "address" }),
+          onAadhaarKyc: () => navigation.navigate("PassbookKyc", { account: data, section: "aadhaar" }),
         }}
         names={[]}
       >
@@ -375,6 +398,7 @@ export default function SchemePassbook() {
           </AppText>
         </LinearGradient>
       </SchemeNameCarousel>
+      {!!kycError && <AppText variant="caption" color={COLORS.dangerText} style={{ marginTop: SIZES.space.sm }}>{kycError}</AppText>}
       <View style={styles.tabs}>
         {(["history", "details", "overview"] as Tab[]).map((key) => (
           <Pressable

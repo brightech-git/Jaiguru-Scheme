@@ -40,6 +40,7 @@ import WastageCardScreen from '../Screens/WastageCard/WastageCardScreen';
 import { navigationRef } from './navigationRef';
 import RatesScreen from '../Screens/Rates/RateScreen';
 import SchemeJoinSuccessScreen from '../Screens/MemberCreation/SchemeJoinSuccessScreen';
+import PassbookKycScreen from '../Screens/SchemePassbook/PassbookKycScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -107,6 +108,7 @@ export default function StackNavigator() {
         <Stack.Screen name="TermsAndConditions" component={TermsAndConditions} />
         <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
         <Stack.Screen name="SchemePassbook" component={SchemePassbook} />
+        <Stack.Screen name="PassbookKyc" component={PassbookKycScreen} />
         <Stack.Screen name="PaymentReceipt" component={PaymentReceiptPage} />
         <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
         <Stack.Screen name="ForgotMpin" component={ForgotMpinScreen} />

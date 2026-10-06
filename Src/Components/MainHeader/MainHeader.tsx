@@ -1,5 +1,5 @@
 // Src/Components/MainHeader/MainHeader.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity,ActivityIndicator, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -10,6 +10,7 @@ import useNotifications from '../../api/hooks/Notifications/useNotifications';
 import { notificationEmitter } from '../NotificationBanner/NotificationBanner';
 import { COLORS, SIZES, FONTS, ELEVATION, moderateScale } from '../../Utills/AppTheme';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { navigate as navigateRoot } from '../../Navigations/navigationRef';
 
 const GOLD_HEADER_GRADIENT = COLORS.gradient.brand as [string, string, string];
 
@@ -22,7 +23,6 @@ export interface HomeHeaderRedesignedProps {
 const HomeHeaderRedesigned = ({ onLogoPress }: HomeHeaderRedesignedProps) => {
   const { company, loading: companyLoading, error: companyError } = useCompany();
   const { rates, loading: ratesLoading, error: ratesError } = useTodayRate();
-  const [currentTime, setCurrentTime] = useState(new Date());
   const navigation = useNavigation<any>();
 
   const { unreadCount, refreshUnreadCount } = useNotifications();
@@ -49,22 +49,10 @@ const HomeHeaderRedesigned = ({ onLogoPress }: HomeHeaderRedesignedProps) => {
     };
   }, [refreshUnreadCount]);
 
-  // Update time every minute
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // Format time to 12-hour format
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+  const updatedAt = (date?: string, time?: string) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date || '');
+    const dateText = match ? `${match[3]}-${match[2]}-${match[1]}` : date;
+    return [dateText, time].filter(Boolean).join(' | ');
   };
 
   return (
@@ -103,7 +91,7 @@ const HomeHeaderRedesigned = ({ onLogoPress }: HomeHeaderRedesignedProps) => {
       {/* Bottom Row: Gold & Silver Rates with Updated Time */}
       <View style={styles.ratesContainer}>
         {/* Gold Rate Card */}
-        <View style={styles.rateCard}>
+        <TouchableOpacity style={styles.rateCard} onPress={() => navigateRoot('Rates', { metal: 'G' })} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="View gold rate history">
           <View style={styles.rateHeader}>
             <Icon name="trending-up" size={SIZES.icon.md} color={COLORS.brand} />
             <Text style={styles.rateLabel}>GOLD</Text>
@@ -116,13 +104,14 @@ const HomeHeaderRedesigned = ({ onLogoPress }: HomeHeaderRedesignedProps) => {
             <Text style={styles.rateValue}>₹{rates?.GOLDRATE?.toLocaleString('en-IN') || '--'}</Text>
           )}
           <Text style={styles.rateUnit}>per gram</Text>
-        </View>
+          {!ratesLoading && !ratesError && !!updatedAt(rates?.GOLDRATEDATE, rates?.GOLDUPTIME) && <Text style={styles.rateUpdated}>Updated {updatedAt(rates?.GOLDRATEDATE, rates?.GOLDUPTIME)}</Text>}
+        </TouchableOpacity>
 
         {/* Vertical Divider */}
         <View style={styles.divider} />
 
         {/* Silver Rate Card */}
-        <View style={styles.rateCard}>
+        <TouchableOpacity style={styles.rateCard} onPress={() => navigateRoot('Rates', { metal: 'S' })} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="View silver rate history">
           <View style={styles.rateHeader}>
             <Icon name="trending-up" size={SIZES.icon.md} color={COLORS.contentSecondary} />
             <Text style={styles.rateLabel}>SILVER</Text>
@@ -135,21 +124,16 @@ const HomeHeaderRedesigned = ({ onLogoPress }: HomeHeaderRedesignedProps) => {
             <Text style={[styles.rateValue, styles.silverValue]}>₹{rates?.SILVERRATE?.toLocaleString('en-IN') || '--'}</Text>
           )}
           <Text style={styles.rateUnit}>per gram</Text>
-        </View>
+          {!ratesLoading && !ratesError && !!updatedAt(rates?.SILVERRATEDATE, rates?.SILVERUPTIME) && <Text style={styles.rateUpdated}>Updated {updatedAt(rates?.SILVERRATEDATE, rates?.SILVERUPTIME)}</Text>}
+        </TouchableOpacity>
       </View>
 
-      {/* Last Updated Time */}
-      {rates && !ratesLoading && (
-        <View style={styles.updateTimeContainer}>
-          <Icon name="schedule" size={moderateScale(12)} color={COLORS.contentOnAccent} />
-          <Text style={styles.updateTimeText}>Updated: Today {formatTime(currentTime)}</Text>
-        </View>
-      )}
     </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  rateUpdated: { ...FONTS.caption, fontSize: SIZES.text.xxs, color: COLORS.contentSecondary, textAlign: 'center', marginTop: SIZES.space.xs },
   container: {
     paddingTop: (StatusBar.currentHeight || SIZES.space.md) + SIZES.space.sm,
     paddingBottom: SIZES.space.lg,

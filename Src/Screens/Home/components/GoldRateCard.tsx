@@ -29,6 +29,8 @@ export interface GoldRateCardProps {
   lastUpdated?: string;
   onRefresh?: () => void;
   refreshing?: boolean;
+  onGoldPress?: () => void;
+  onSilverPress?: () => void;
 }
 
 const formatINR = (n: number) => `₹ ${n.toLocaleString('en-IN')}`;
@@ -41,6 +43,8 @@ const GoldRateCard: React.FC<GoldRateCardProps> = ({
   lastUpdated,
   onRefresh,
   refreshing = false,
+  onGoldPress,
+  onSilverPress,
 }) => {
   const navigation = useNavigation<any>();
   const spin = useSharedValue(0);
@@ -96,7 +100,7 @@ const GoldRateCard: React.FC<GoldRateCardProps> = ({
         </View>
 
         <View style={styles.ratesRow}>
-          <View style={styles.rateCol}>
+          <Pressable style={styles.rateCol} onPress={onGoldPress} accessibilityRole="button" accessibilityLabel="View gold rate history">
             <View style={styles.metalWrap}>
               <MaterialCommunityIcons name="circle" size={SIZES.icon.xs} color={COLORS.contentBrand} />
               <Text style={styles.metal}>GOLD</Text>
@@ -104,26 +108,26 @@ const GoldRateCard: React.FC<GoldRateCardProps> = ({
             <Text style={styles.purity}>916</Text>
             {renderValue(gold)}
             <Text style={styles.unit}>per gram</Text>
-          </View>
+          </Pressable>
 
           <View style={styles.vDivider} />
 
-          <View style={styles.rateCol}>
+          <Pressable style={styles.rateCol} onPress={onSilverPress} accessibilityRole="button" accessibilityLabel="View silver rate history">
             <View style={styles.metalWrap}>
               <MaterialCommunityIcons name="circle" size={SIZES.icon.xs} color={COLORS.contentPlaceholder} />
               <Text style={styles.metal}>SILVER</Text>
             </View>
             {renderValue(silver)}
             <Text style={styles.unit}>per gram</Text>
-          </View>
+          </Pressable>
         </View>
 
-         {/* {!!lastUpdated && !error && (
+         {!!lastUpdated && !error && !loading && (
           <View style={styles.footer}>
             <MaterialCommunityIcons name="clock-outline" size={SIZES.icon.xs} color={COLORS.contentMuted} />
             <Text style={styles.updated}>Updated {lastUpdated}</Text>
           </View>
-        )} */}
+        )}
       </View>
     </View>
   );
@@ -227,8 +231,8 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.borderSubtle,
   },
   updated: {
-    fontFamily: FONTS.family.regular,
-    fontSize: SIZES.text.xxs,
+    fontFamily: FONTS.family.bold,
+    fontSize: SIZES.text.xs,
     color: COLORS.contentMuted,
     marginLeft: SIZES.space.xs,
   },

@@ -3,6 +3,10 @@
 // Shape of GET /account/todayrate (Src/Services/TodayRateService.js).
 
 export interface Rates {
+  GOLDUPTIME?: string;
+  SILVERUPTIME?: string;
+  GOLDRATEDATE?: string;
+  SILVERRATEDATE?: string;
   GOLDRATE: number;
   SILVERRATE: number;
 }

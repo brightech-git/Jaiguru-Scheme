@@ -20,10 +20,11 @@ export function normalizeRateHistory(rows: RateHistoryResponse[]): RateHistoryEn
 }
 
 export const ratesService = {
-  getHistory: async (): Promise<RateHistoryEntry[]> => {
+  getHistory: async (metalId: 'G' | 'S' = 'G'): Promise<RateHistoryEntry[]> => {
     const rows = await callApi<null, RateHistoryResponse[]>({
       method: 'get',
       url: ACCOUNT.RATE_HISTORY,
+      params: { METALID: metalId },
     });
     if (!Array.isArray(rows)) throw new Error('Invalid rate history response');
     return normalizeRateHistory(rows);

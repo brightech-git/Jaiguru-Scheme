@@ -352,13 +352,13 @@ const MemberCreation = () => {
       const memberName = requiresKyc
         ? [userRegistrationData.userName, userRegistrationData.lastName].filter(Boolean).join(' ')
         : String(loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name || 'Member');
-      const details = buildSchemeJoinSuccess(result.processResult, {
+      const details = buildSchemeJoinSuccess(result.processResult ?? result.data, {
         userName: memberName,
         schemeName: formData.schemeName,
         amount: formData.amount,
         groupCode,
       });
-      navigation.replace('SchemeJoinSuccess', { details });
+      navigation.replace('SchemeJoinSuccess', { details, processResult: result.processResult ?? result.data });
     } else if (result.message !== 'Payment cancelled by user') {
       console.log('[SCHEME JOIN] FLOW FAILED —', result.message);
       Alert.alert('Payment Failed', result.message || 'Payment failed');

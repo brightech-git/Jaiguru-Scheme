@@ -25,6 +25,7 @@ export interface SchemeSummary {
 }
 
 export interface PersonalInfo {
+  maskedAadhaar?: string;
   personalId?: number;
   doorNo?: string;
   address1?: string;
@@ -54,6 +55,9 @@ export interface PaymentHistoryItem {
 }
 
 export interface Account {
+  maskedAadhaar?: string;
+  kycVerified?: boolean | string;
+  aadhaarVerified?: boolean | string;
   regNo: number;
   groupCode: string;
   amount?: number;
