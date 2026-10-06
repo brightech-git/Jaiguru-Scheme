@@ -35,6 +35,7 @@ export interface PersonalInfo {
   pinCode?: string;
   mobile?: string;
   mobile2?: string;
+  aadhaarNo?: string;
 }
 
 export interface SchemeClosedSummary {
@@ -68,6 +69,8 @@ export interface Account {
   paymentHistoryList?: PaymentHistoryItem[];
   remainingDueDates?: string[];
   schemeClosedSummary?: SchemeClosedSummary;
+  aadhaarKyc?: string | boolean;
+  addressKyc?: string | boolean;
 }
 
 export type AccountListResponse = Account[];

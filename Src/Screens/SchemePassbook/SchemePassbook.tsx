@@ -29,7 +29,7 @@ import PassbookSummaryCard, {
 } from "./components/PassbookSummaryCard";
 import PassbookMetricCard from "./components/PassbookMetricCard";
 import PassbookHistoryTable from "./components/PassbookHistoryTable";
-import SchemeNameCarousel from "./components/SchemeNameCarousel";
+import SchemeNameCarousel, { MemberKycInfo } from "./components/SchemeNameCarousel";
 import { dateLabel, money, paidThisMonth, toNumber } from "./passbookUtils";
 
 const { COLORS, SIZES } = theme;
@@ -148,6 +148,9 @@ export default function SchemePassbook() {
         ? "Payment due"
         : "Active";
   const canPay = !closed && !completed && !thisMonthPaid;
+  const aadhaarKyc = String(data.aadhaarKyc) === "true";
+  const addressKyc = String(data.addressKyc) === "true";
+  const aadhaarNo = personal?.aadhaarNo || "";
   const remaining = Math.max(0, total - paid) * amount;
   const address = [
     personal?.doorNo,
@@ -250,13 +253,13 @@ export default function SchemePassbook() {
         !closed && !completed ? (
           <View style={styles.footer}>
             <View style={styles.footerInfo}>
-              <AppText variant="caption">
+              <AppText variant="captionBold">
                 {flexible ? "Add a payment" : `Next installment (#${paid + 1})`}
               </AppText>
-              <AppText variant="h5" color={COLORS.contentBrand}>
+              <AppText variant="h3" color={COLORS.contentBrand}>
                 {money(amount)}
               </AppText>
-              <AppText variant="caption">
+              <AppText variant="captionBold">
                 {thisMonthPaid
                   ? "Your payment for this month is recorded"
                   : data.nextDueDate
@@ -278,15 +281,17 @@ export default function SchemePassbook() {
       <SchemeNameCarousel
         memberName={data.pName}
         mobileNumber={personal?.mobile || personal?.mobile2}
-        names={(Array.isArray(params?.schemeData) ? params.schemeData : [data])
-          .map((account) => ({
-            rows: [
-              { label: "Scheme Code", value: account.schemeSummary?.schemeSName || "" },
-              { label: "Name", value: account.schemeSummary?.schemeName || "" },
-              { label: "Mobile", value: account.personalInfo?.mobile || account.personalInfo?.mobile2 || "" },
-            ].filter((r) => r.value),
-          }))
-          .filter((item) => item.rows.length > 0)}
+        memberKyc={{
+          name: data.pName,
+          address,
+          aadhaarNo,
+          mobile: personal?.mobile || personal?.mobile2,
+          aadhaarKyc,
+          addressKyc,
+          onAddressKyc: () => navigation.navigate("AddressKyc" as never),
+          onAadhaarKyc: () => navigation.navigate("AadhaarKyc" as never),
+        }}
+        names={[]}
       >
         <LinearGradient
   colors={[
@@ -311,10 +316,10 @@ export default function SchemePassbook() {
               gap: SIZES.space.sm,
             }}
           >
-            <AppText variant="h4" color={COLORS.contentOnAccent}>
+            <AppText variant="h4" color={COLORS.contentOnAccent} style={styles.schemeTitle}>
               {scheme?.schemeName || "Your scheme"}
             </AppText>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: SIZES.space.xs }}>
+            <View style={styles.statusContainer}>
               <PassbookStatusBadge status={status} />
             </View>
           </View>
@@ -348,7 +353,7 @@ export default function SchemePassbook() {
           ) : (
             <>
               <View style={styles.progressLabels}>
-                <AppText variant="caption" color={COLORS.contentSecondary}>
+                <AppText variant="caption" color={COLORS.contentPrimary}>
                   Scheme progress
                 </AppText>
                 <AppText variant="captionBold" color={COLORS.contentOnAccent}>
@@ -358,8 +363,8 @@ export default function SchemePassbook() {
               <AppProgressBar
                 animated={false}
                 progress={total > 0 ? (paid / total) * 100 : 0}
-                color={COLORS.accentDeep}
-                trackColor={COLORS.accentAlpha16}
+                color={COLORS.brandDeep}
+                trackColor={COLORS.whiteAlpha70}
               />
             </>
           )}
@@ -444,6 +449,15 @@ export default function SchemePassbook() {
   );
 }
 const styles = StyleSheet.create({
+  schemeTitle: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  statusContainer: {
+    flexShrink: 0,
+    alignSelf: "flex-start",
+  },
   hero: {
     padding: SIZES.space.xl,
     borderRadius: SIZES.radius.card,
