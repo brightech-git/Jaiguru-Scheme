@@ -13,6 +13,8 @@ export interface TransBalance {
 }
 
 export interface SchemeSummary {
+  fixedIns?: string;
+  weightLedger?: string;
   schemeId?: number;
   schemeName?: string;
   schemeSName?: string;
@@ -41,6 +43,8 @@ export interface SchemeClosedSummary {
 }
 
 export interface PaymentHistoryItem {
+  receiptNo?: string | number;
+  rate?: string | number;
   amount?: number;
   weight?: string;
   installment?: number;

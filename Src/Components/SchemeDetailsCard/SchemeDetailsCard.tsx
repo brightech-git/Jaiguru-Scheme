@@ -10,6 +10,16 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
 const CARD_SPACING = SIZES.space.lg;
 
+// Compare calendar months, including the year, without shifting date-only
+// backend values through UTC conversion. No previous payment allows payment.
+function isPaidThisMonth(lastPaidDate?: string): boolean {
+  if (!lastPaidDate) return false;
+  const match = /^(\d{4})-(\d{2})-/.exec(lastPaidDate);
+  if (!match) return false;
+  const today = new Date();
+  return Number(match[1]) === today.getFullYear() && Number(match[2]) === today.getMonth() + 1;
+}
+
 export type SchemeDetailsCardFilter = 'all' | 'active' | 'due' | 'completed';
 
 export interface SchemeDetailsCardProps {
@@ -99,15 +109,19 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
       // Navigate to SchemeDetails page with the account data
       navigation.navigate('SchemePassbook', {
         schemeData: account,
+        schemeNames: (accounts || []).map(item => item.schemeSummary?.schemeName || '').filter(Boolean),
         fromScreen: 'SchemeDetailsCard',
       });
     },
-    [navigation]
+    [navigation, accounts]
   );
 
   const handlePayNow = useCallback(
     (account: Account) => {
       // Navigate to PayNow page with all account details
+      const paid = Number(account.schemeSummary?.schemaSummaryTransBalance?.insPaid || 0);
+      const total = Number(account.schemeSummary?.instalment || 0);
+      if (isPaidThisMonth(account.lastPaidDate) || (total > 0 && paid >= total)) return;
       navigation.navigate('Paynow', {
         accountData: account,
         fromScreen: 'SchemeDetailsCard',
@@ -131,10 +145,14 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
     [navigation]
   );
 
-  const formatDate = useCallback((dateString?: string) => {
-    if (!dateString) return 'N/A';
-    return dateString.split('T')[0].split(' ')[0];
-  }, []);
+const formatDate = useCallback((dateString?: string) => {
+  if (!dateString) return '-';
+
+  const date = dateString.split('T')[0].split(' ')[0];
+  const [year, month, day] = date.split('-');
+
+  return `${day}-${month}-${year}`;
+}, []);
 
   // Render individual account card
   const renderAccountCard = useCallback(
@@ -142,6 +160,7 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
       const { regNo, groupCode, pName, joinDate, maturityDate, amount, schemeSummary, nextDueDate, lastPaidDate } = account;
 
       const balance = schemeSummary?.schemaSummaryTransBalance;
+      // const nextPaymentDate = nextDueDate ? formatDate(nextDueDate) : 'N/A';
       const insPaid = parseInt(balance?.insPaid || '0', 10);
       const instalment = parseInt(schemeSummary?.instalment || '0', 10);
       const amtRecd = parseFloat(balance?.amtrecd || '0');
@@ -152,6 +171,7 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
       const progress = instalment > 0 ? insPaid / instalment : 0;
       const isFullyPaid = instalment > 0 && insPaid >= instalment;
       const isPaymentDue = !isFullyPaid && nextDueDate && new Date(nextDueDate) <= new Date();
+      const paidThisMonth = isPaidThisMonth(lastPaidDate);
 
       return (
         <View style={[styles.cardWrapper, layout === 'vertical' && styles.cardWrapperVertical]}>
@@ -219,13 +239,13 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
               {/* Dates */}
               <View style={styles.dateSection}>
                 <View style={styles.dateCard}>
-                  <Text style={styles.dateLabel}>Join Date</Text>
-                  <Text style={styles.dateValue}>{formatDate(joinDate)}</Text>
+                  <Text style={styles.dateLabel}>Last Paid</Text>
+                  <Text style={styles.dateValue}>{formatDate(lastPaidDate)}</Text>
                 </View>
                 <View style={styles.dateDivider} />
                 <View style={styles.dateCard}>
-                  <Text style={styles.dateLabel}>Last Paid</Text>
-                  <Text style={styles.dateValue}>{formatDate(lastPaidDate)}</Text>
+                  <Text style={styles.dateLabel}>Next Payment</Text>
+                  <Text style={styles.dateValue}>{formatDate(nextDueDate)}</Text>
                 </View>
                 <View style={styles.dateDivider} />
                 <View style={styles.dateCard}>
@@ -245,11 +265,14 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={[styles.payButton, isPaymentDue && styles.payButtonDue]}
+                    style={[styles.payButton, isPaymentDue && styles.payButtonDue, paidThisMonth && styles.payButtonDisabled]}
+                    disabled={paidThisMonth}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: paidThisMonth }}
                     onPress={() => handlePayNow(account)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.payButtonText}>{isPaymentDue ? 'Pay Now' : 'Make Payment'}</Text>
+                    <Text style={[styles.payButtonText, paidThisMonth && styles.payButtonTextDisabled]}>{paidThisMonth ? 'Paid For This Month' : isPaymentDue ? 'Pay Now' : 'Make Payment'}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -648,6 +671,15 @@ const styles = StyleSheet.create({
     ...ELEVATION.raised,
   },
   payButtonDue: {},
+  payButtonDisabled: {
+    backgroundColor: COLORS.surfaceMuted,
+    borderColor: COLORS.border,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  payButtonTextDisabled: {
+    color: COLORS.contentMuted,
+  },
   fullyPaidBadge: {
     flex: 1,
     backgroundColor: '#E8F5E9',
