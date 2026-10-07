@@ -219,7 +219,8 @@ const HomeScreen = () => {
           <SliderComponent />
         </View>
         <SchemeDetailsCard />
-          <ShowroomLocatorCard onPress={() => navigation.navigate('Showrooms')} />
+        
+          {/* <ShowroomLocatorCard onPress={() => navigation.navigate('Showrooms')} /> */}
 
 
         <SectionHeader title="Promotions & Updates" />
@@ -227,8 +228,7 @@ const HomeScreen = () => {
           <MainPageWithYouTube />
         </View>
 
-        {/* <ShowroomLocatorCard onPress={() => navigation.navigate('Showrooms')} /> */}
-
+      
         <SectionHeader title="Need Help?" />
         <NeedHelpCard />
 

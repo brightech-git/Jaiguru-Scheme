@@ -14,8 +14,9 @@ export default function ShowroomLocatorCard({ onPress }: { onPress: () => void }
           <MaterialCommunityIcons name="map-marker" size={27} color={COLORS.brand} style={styles.pin} />
         </View>
         <View style={styles.copy}>
-          <AppText variant="caption" color={COLORS.contentSecondary}>Click here to find your nearest</AppText>
+          <AppText variant="captionBold" color={COLORS.contentSecondary}>Find your nearest branch on the map</AppText>
           <AppText variant="bodyBold" color={COLORS.brand}>JAI GURU SHOWROOM</AppText>
+          <AppText variant="captionBold" color={COLORS.contentSecondary}>3 branches · Directions & calls</AppText>
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={COLORS.brand} />
       </LinearGradient>

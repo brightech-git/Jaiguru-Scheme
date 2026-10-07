@@ -22,6 +22,7 @@ export interface UserKycDetails {
   country?: string;
   termsAccepted?: boolean;
   photoPath?: string | null;
+  user_image?: string | null;
 }
 
 export const userService = {

@@ -39,7 +39,8 @@
           "tez",
           "credpay",
           "mobikwik"
-        ]
+        ],
+        "NSLocationWhenInUseUsageDescription": "Allow Jaiguru to use your location to find the nearest showroom."
       },
       "appleTeamId": "236BJUX2XU",
       "buildNumber": "12"
@@ -53,7 +54,9 @@
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.INTERNET",
         "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
@@ -85,6 +88,15 @@
           "photosPermission": "Allow Jaiguru to select your profile photo.",
           "cameraPermission": false,
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Jaiguru to use your location to find the nearest showroom.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
         }
       ]
     ],

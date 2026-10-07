@@ -149,7 +149,12 @@ const getAvatarColor = (name: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const photoUrl = (value: string) => !value ? '' : /^https?:\/\//i.test(value) ? value : `${IMAGE_BASE_URL}/${value.replace(/^\/+/, '')}`;
+const photoUrl = (uri: string): string => {
+  const imagePath = uri.trim();
+  if (!imagePath) return '';
+  if (/^https?:\/\//i.test(imagePath)) return imagePath;
+  return `${IMAGE_BASE_URL.replace(/\/+$/, '')}/${imagePath.replace(/^\/+/, '')}`;
+};
 
 const ProfileScreen = () => {
   const navigation = useNavigation<any>();
@@ -169,7 +174,7 @@ const ProfileScreen = () => {
         name: info.username || info.name || 'User',
         email: info.email || '',
         contactNumber: info.contactNumber || info.mobileNumber || '',
-        picture: photoUrl(info.photoPath ?? info.picture ?? ''),
+        picture: photoUrl(info.user_image !== undefined ? info.user_image || '' : info.photoPath ?? info.picture ?? ''),
         referralCode: info.referralCode || '',
         loginType: info.loginType || 'normal',
       });
@@ -177,9 +182,12 @@ const ProfileScreen = () => {
       if (id !== null && id !== undefined) {
         try {
           const details = await userService.getDetails(id);
-          if (details.photoPath !== undefined && !photoBusy.current) {
-            const picture = photoUrl(details.photoPath || '');
+          const imagePath = details.user_image !== undefined ? details.user_image : details.photoPath;
+          if (imagePath !== undefined && !photoBusy.current) {
+            const picture = photoUrl(imagePath || '');
+            setPhotoFailed(false);
             setUser((previous) => previous.id === id ? { ...previous, picture } : previous);
+            await updateUserData({ user_image: imagePath || '', picture, photoPath: picture });
           }
         } catch {
           // Keep the saved avatar available when the details request fails.
@@ -204,7 +212,7 @@ const ProfileScreen = () => {
     const picture = path ? `${photoUrl(path)}${path.includes('?') ? '&' : '?'}v=${Date.now()}` : '';
     setPhotoFailed(false);
     setUser((previous) => ({ ...previous, picture }));
-    const saved = await updateUserData({ picture, photoPath: picture });
+    const saved = await updateUserData({ user_image: path, picture, photoPath: picture });
     if (!saved.success) Alert.alert('Photo saved', 'Your photo was updated on the server, but could not be saved on this device.');
   };
 
