@@ -22,6 +22,7 @@ import MainPageWithYouTube from "../../Components/Youtube/Youtube";
 import { ScreenWrapper } from "../../Components/ui/appcomponents";
 import GoldParticles from "../Auth/Login/components/GoldParticles";
 import HomeHeader from "./components/HomeHeader";
+import ShowroomLocatorCard from "./components/ShowroomLocatorCard";
 import { useCompany } from "../../api/hooks/Company/useCompany";
 
 const { COLORS, FONTS, SIZES, moderateScale } = theme;
@@ -218,11 +219,15 @@ const HomeScreen = () => {
           <SliderComponent />
         </View>
         <SchemeDetailsCard />
+          <ShowroomLocatorCard onPress={() => navigation.navigate('Showrooms')} />
+
 
         <SectionHeader title="Promotions & Updates" />
         <View style={styles.youtubeWrapper}>
           <MainPageWithYouTube />
         </View>
+
+        {/* <ShowroomLocatorCard onPress={() => navigation.navigate('Showrooms')} /> */}
 
         <SectionHeader title="Need Help?" />
         <NeedHelpCard />

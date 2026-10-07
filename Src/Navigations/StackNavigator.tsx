@@ -34,6 +34,7 @@ import HelpCentre from '../Screens/HelpCenter/HelpCenter';
 import KnowMore from '../Screens/KnowMore/KnowMore'
 import ProfileScreen from '../Screens/Profile/Profile';
 import MyProfileScreen from '../Screens/Profile/MyProfile';
+import ShowroomsScreen from '../Screens/Showrooms/Showrooms';
 import RegisterInfoScreen from '../Screens/Auth/RegisterInfo/RegisterInfo';
 import RegistrationWelcomeScreen from '../Screens/Auth/RegisterInfo/registration-welcome';
 import SplashScreen from '../Screens/Splash/SplashScreen';
@@ -129,6 +130,7 @@ export default function StackNavigator() {
         <Stack.Screen name="KnowMore" component={KnowMore} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="MyProfile" component={MyProfileScreen} />
+        <Stack.Screen name="Showrooms" component={ShowroomsScreen} />
         <Stack.Screen name="RegisterInfo" component={RegisterInfoScreen} />
         <Stack.Screen name="RegistrationWelcome" component={RegistrationWelcomeScreen} />
         <Stack.Screen name="WastageCard" component={WastageCardScreen} />

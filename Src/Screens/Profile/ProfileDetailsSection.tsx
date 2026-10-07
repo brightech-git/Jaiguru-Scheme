@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppCard, AppText } from '../../Components/ui/appcomponents';
 import { userService, UserKycDetails } from '../../api/services/userService';
-import { COLORS, SIZES } from '../../Utills/AppTheme';
+import { COLORS, SIZES, FONTS } from '../../Utills/AppTheme';
 
 const display = (value?: string | number) => value === undefined || value === null || String(value).trim() === '' ? 'Not provided' : String(value);
 const status = (value?: boolean) => value === undefined ? 'Not provided' : value ? 'Verified' : 'Not verified';
@@ -11,8 +11,8 @@ const status = (value?: boolean) => value === undefined ? 'Not provided' : value
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.row}>
-      <AppText variant="caption" color={COLORS.contentMuted}>{label}</AppText>
-      <AppText variant="bodySmall" color={COLORS.contentPrimary}>{value}</AppText>
+      <AppText variant="bodySmall" color={COLORS.contentSecondary} style={styles.fieldLabel}>{label}</AppText>
+      <AppText variant="bodyMedium" color={value === 'Not provided' ? COLORS.contentMuted : COLORS.contentPrimary} style={styles.fieldValue}>{value}</AppText>
     </View>
   );
 }
@@ -47,7 +47,6 @@ export default function ProfileDetailsSection({ userId }: { userId: string | num
       ['Mobile number', display(details.contactNumber)],
       ['Gender', display(details.gender)],
       ['Date of birth', !details.dateOfBirth || details.dateOfBirth.startsWith('1900-01-01') ? 'Not provided' : details.dateOfBirth.split('T')[0].split('-').reverse().join('/')],
-      ['Wallet balance', typeof details.walletBalance === 'number' ? `? ${details.walletBalance.toFixed(2)}` : 'Not provided'],
       ['Referral code', display(details.referralCode)],
     ] },
     { title: 'Address', rows: [
@@ -82,7 +81,7 @@ export default function ProfileDetailsSection({ userId }: { userId: string | num
       {!loading && !error && userId !== null && !details && <AppText variant="bodySmall">No profile details found.</AppText>}
       {groups.map((group) => (
         <AppCard key={group.title} style={styles.card}>
-          <AppText variant="bodyBold" color={COLORS.brand}>{group.title}</AppText>
+          <AppText variant="bodyBold" color={COLORS.brand} style={styles.groupTitle}>{group.title}</AppText>
           {group.rows.map(([label, value]) => <DetailRow key={label} label={label} value={value} />)}
         </AppCard>
       ))}
@@ -92,9 +91,12 @@ export default function ProfileDetailsSection({ userId }: { userId: string | num
 
 const styles = StyleSheet.create({
   section: { marginBottom: SIZES.space.lg },
-  title: { marginLeft: 4, marginBottom: SIZES.space.sm, letterSpacing: 0.5 },
+  title: { fontFamily: FONTS.family.semiBold, fontSize: 12, lineHeight: 18, marginLeft: 4, marginBottom: SIZES.space.sm, letterSpacing: 0.5 },
+  groupTitle: { fontFamily: FONTS.family.semiBold, fontSize: 16, lineHeight: 24, marginBottom: SIZES.space.xs },
+  fieldLabel: { fontFamily: FONTS.family.regular, fontSize: 12, lineHeight: 18 },
+  fieldValue: { fontFamily: FONTS.family.medium, fontSize: 14, lineHeight: 22, flexShrink: 1 },
   card: { marginBottom: SIZES.space.sm },
-  row: { paddingVertical: SIZES.space.sm, gap: SIZES.space.xs, borderBottomWidth: 1, borderBottomColor: COLORS.borderSubtle },
+  row: { paddingVertical: SIZES.space.md, gap: SIZES.space.xs, borderBottomWidth: 1, borderBottomColor: COLORS.borderSubtle },
   loading: { padding: SIZES.space.lg },
   retry: { alignSelf: 'flex-start', paddingVertical: SIZES.space.sm },
 });

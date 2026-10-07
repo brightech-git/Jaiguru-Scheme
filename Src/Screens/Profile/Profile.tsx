@@ -14,8 +14,11 @@
 //          from the "Delete Account" danger-zone row above it.
 //       4. Version + "Powered by" are merged into a single footer block
 //          under a hairline divider.
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import Constants from 'expo-constants';
+import * as ImagePicker from 'expo-image-picker';
+import { userService } from '../../api/services/userService';
+import { IMAGE_BASE_URL } from '../../Config/BaseUrl';
 import { View, ScrollView, Image, ActivityIndicator, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,7 +27,7 @@ import CommonHeader from '../../Components/CommonHeader/CommonHeader';
 import PremiumBackground from '../../Components/PremiumBackground/PremiumBackground';
 import BottomTab from '../../Components/BottomTab/BottomTab';
 import { AppText, AppCard } from '../../Components/ui/appcomponents';
-import { getAuthSession, getUserData, getUserId, clearAuthData } from '../../Utills/AsynchStorageHelper';
+import { getAuthSession, getUserData, getUserId, clearAuthData, updateUserData } from '../../Utills/AsynchStorageHelper';
 import { clearFCMToken } from '../../Helpers/NotificationHelper';
 import theme from '../../Utills/AppTheme';
 
@@ -146,24 +149,42 @@ const getAvatarColor = (name: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
+const photoUrl = (value: string) => !value ? '' : /^https?:\/\//i.test(value) ? value : `${IMAGE_BASE_URL}/${value.replace(/^\/+/, '')}`;
+
 const ProfileScreen = () => {
   const navigation = useNavigation<any>();
   const [user, setUser] = useState<ProfileUser>(EMPTY_USER);
   const [loading, setLoading] = useState(true);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const photoBusy = useRef(false);
 
   const loadUser = useCallback(async () => {
     try {
       const [userData, session, userId] = await Promise.all([getUserData(), getAuthSession(), getUserId()]);
       const info: Record<string, any> = userData || session?.user || {};
+      setPhotoFailed(false);
       setUser({
         id: info.userId ?? info.userid ?? info.id ?? userId,
         name: info.username || info.name || 'User',
         email: info.email || '',
         contactNumber: info.contactNumber || info.mobileNumber || '',
-        picture: info.picture || '',
+        picture: photoUrl(info.photoPath ?? info.picture ?? ''),
         referralCode: info.referralCode || '',
         loginType: info.loginType || 'normal',
       });
+      const id = info.userId ?? info.userid ?? info.id ?? userId;
+      if (id !== null && id !== undefined) {
+        try {
+          const details = await userService.getDetails(id);
+          if (details.photoPath !== undefined && !photoBusy.current) {
+            const picture = photoUrl(details.photoPath || '');
+            setUser((previous) => previous.id === id ? { ...previous, picture } : previous);
+          }
+        } catch {
+          // Keep the saved avatar available when the details request fails.
+        }
+      }
     } catch (e) {
       console.log('Failed to load profile user data', e);
     } finally {
@@ -178,6 +199,77 @@ const ProfileScreen = () => {
       loadUser();
     }, [loadUser])
   );
+
+  const savePhoto = async (path: string) => {
+    const picture = path ? `${photoUrl(path)}${path.includes('?') ? '&' : '?'}v=${Date.now()}` : '';
+    setPhotoFailed(false);
+    setUser((previous) => ({ ...previous, picture }));
+    const saved = await updateUserData({ picture, photoPath: picture });
+    if (!saved.success) Alert.alert('Photo saved', 'Your photo was updated on the server, but could not be saved on this device.');
+  };
+
+  const choosePhoto = async () => {
+    if (photoBusy.current || user.id === null) return;
+    photoBusy.current = true;
+    setPhotoLoading(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+      const asset = result.assets[0];
+      const type = asset.mimeType || 'image/jpeg';
+      const response = await userService.updatePhoto(user.id, {
+        uri: asset.uri,
+        name: asset.fileName || `profile.${type.split('/')[1] || 'jpg'}`,
+        type,
+        file: asset.file,
+      });
+      if (!response.photoPath) throw new Error('The server did not return a photo URL.');
+      await savePhoto(response.photoPath);
+    } catch (error: any) {
+      Alert.alert('Photo update failed', error?.message || 'Unable to update your photo. Please try again.');
+    } finally {
+      photoBusy.current = false;
+      setPhotoLoading(false);
+    }
+  };
+
+  const removePhoto = () => {
+    Alert.alert('Remove profile photo?', 'Your profile will show your initial instead.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: async () => {
+        if (photoBusy.current || user.id === null) return;
+        photoBusy.current = true;
+        setPhotoLoading(true);
+        try {
+          await userService.deletePhoto(user.id);
+          await savePhoto('');
+        } catch (error: any) {
+          Alert.alert('Photo removal failed', error?.message || 'Unable to remove your photo. Please try again.');
+        } finally {
+          photoBusy.current = false;
+          setPhotoLoading(false);
+        }
+      } },
+    ]);
+  };
+
+  const handlePhotoPress = () => {
+    if (photoBusy.current) return;
+    if (user.id === null) {
+      Alert.alert('Profile unavailable', 'Please sign in again to update your profile photo.');
+      return;
+    }
+    Alert.alert('Profile Photo', 'Choose an option', [
+      { text: 'Choose Photo', onPress: choosePhoto },
+      ...(user.picture ? [{ text: 'Remove Photo', style: 'destructive' as const, onPress: removePhoto }] : []),
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
@@ -215,7 +307,7 @@ const ProfileScreen = () => {
             <ActivityIndicator size="large" color={COLORS.contentBrand} />
           ) : (
             <>
-              <View style={styles.avatarCenterWrap}>
+              <TouchableOpacity style={styles.avatarCenterWrap} onPress={handlePhotoPress} disabled={photoLoading} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Change profile photo">
                 <LinearGradient
                   colors={[COLORS.brand, COLORS.brandStrong]}
                   style={styles.avatarRing}
@@ -223,8 +315,8 @@ const ProfileScreen = () => {
                   end={{ x: 1, y: 1 }}
                 >
                   <View style={styles.avatarInner}>
-                    {user.picture ? (
-                      <Image source={{ uri: user.picture }} style={styles.avatarImage} />
+                    {user.picture && !photoFailed ? (
+                      <Image source={{ uri: user.picture }} style={styles.avatarImage} onError={() => setPhotoFailed(true)} />
                     ) : (
                       <View style={[styles.avatarFallback, { backgroundColor: getAvatarColor(user.name) }]}>
                         <AppText variant="h2" color={COLORS.contentOnBrand}>
@@ -234,7 +326,13 @@ const ProfileScreen = () => {
                     )}
                   </View>
                 </LinearGradient>
-              </View>
+                <View style={styles.photoEditBadge}>
+                  {photoLoading ? <ActivityIndicator size="small" color={COLORS.contentOnBrand} /> : <MaterialIcons name="photo-camera" size={16} color={COLORS.contentOnBrand} />}
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handlePhotoPress} disabled={photoLoading} style={styles.photoAction}>
+                <AppText variant="captionBold" color={COLORS.brand}>{photoLoading ? 'Updating photo...' : user.picture ? 'Change photo' : 'Add photo'}</AppText>
+              </TouchableOpacity>
 
               <View style={styles.nameRowCenter}>
                 <AppText variant="h3" color={COLORS.contentPrimary} numberOfLines={1}>
@@ -247,7 +345,7 @@ const ProfileScreen = () => {
 
               {/* Contact info rows */}
               <View style={styles.infoCard}>
-                {!!user.email && (
+                {/* {!!user.email && (
                   <View style={styles.infoRow}>
                     <View style={styles.infoIconWrap}>
                       <MaterialIcons name="mail-outline" size={16} color={COLORS.brand} />
@@ -256,8 +354,8 @@ const ProfileScreen = () => {
                       {user.email}
                     </AppText>
                   </View>
-                )}
-                {!!user.email && !!user.contactNumber && <View style={styles.infoDivider} />}
+                )} */}
+                {/* {!!user.email && !!user.contactNumber && <View style={styles.infoDivider} />}
                 {!!user.contactNumber && (
                   <View style={styles.infoRow}>
                     <View style={styles.infoIconWrap}>
@@ -267,7 +365,7 @@ const ProfileScreen = () => {
                       {user.contactNumber}
                     </AppText>
                   </View>
-                )}
+                )} */}
                 {/* {!!user.id && (
                   <>
                     <View style={styles.infoDivider} />
@@ -367,6 +465,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: SIZES.space.sm,
   },
+  photoEditBadge: {
+    position: 'absolute', right: 0, bottom: 0,
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: COLORS.brand, borderWidth: 2, borderColor: COLORS.surface,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  photoAction: { paddingVertical: SIZES.space.sm, marginBottom: SIZES.space.xs },
   avatarRing: {
     width: 96,
     height: 96,

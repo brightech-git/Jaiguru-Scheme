@@ -93,19 +93,20 @@ export const RAZORPAY = {
 };
 
 export const USER = {
+  PHOTO: (userId: number | string) => `/photo/${encodeURIComponent(String(userId))}`,
   DETAILS: (userId: number | string) => `/user/${encodeURIComponent(String(userId))}`,
-  DELETE: (userId: number | string) => `/user/delete/${userId}`,
-  UPDATE: (userId: number | string) => `/${userId}/update`,
+  DELETE: (userId: number | string) => `/user/delete/${encodeURIComponent(String(userId))}`,
+  UPDATE: (userId: number | string) => `/user/${encodeURIComponent(String(userId))}/update`,
 };
 
 export const NOTIFICATIONS = {
-  GET_USER: (userId: number | string) => `/notifications/user/${userId}`,
-  UNREAD_COUNT: (userId: number | string) => `/notifications/user/${userId}/unread-count`,
-  MARK_ALL_READ: (userId: number | string) => `/notifications/read/all/${userId}`,
+  GET_USER: (userId: number | string) => `/notifications/user/${encodeURIComponent(String(userId))}`,
+  UNREAD_COUNT: (userId: number | string) => `/notifications/user/${encodeURIComponent(String(userId))}/unread-count`,
+  MARK_ALL_READ: (userId: number | string) => `/notifications/read/all/${encodeURIComponent(String(userId))}`,
   MARK_READ: (notificationId: number | string, userId: number | string) =>
-    `/notifications/read/${notificationId}/user/${userId}`,
+    `/notifications/read/${notificationId}/user/${encodeURIComponent(String(userId))}`,
   DELETE_ONE: (notificationId: number | string) => `/notifications/notification/${notificationId}`,
-  DELETE_BY_USER: (userId: number | string) => `/notifications/user/${userId}`,
+  DELETE_BY_USER: (userId: number | string) => `/notifications/user/${encodeURIComponent(String(userId))}`,
 };
 
 export const EMPLOYEES = {
