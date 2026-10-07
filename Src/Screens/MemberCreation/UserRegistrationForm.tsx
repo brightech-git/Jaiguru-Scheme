@@ -1,17 +1,7 @@
+import { Text, TextInput } from '../../Components/Typography/FontText';
 // Src/Screens/MemberCreation/UserRegistrationForm.tsx
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  KeyboardTypeOptions,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, Platform, Alert, ActivityIndicator, KeyboardTypeOptions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import theme from '../../Utills/AppTheme';
 import authStorage from '../../Utills/AsynchStorageHelper';

@@ -1,5 +1,6 @@
+import { Text } from '../../../Components/Typography/FontText';
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import useAuth from '../../../api/hooks/Auth/useAuth';
 import CommonHeader from '../../../Components/CommonHeader/CommonHeader';
 import PremiumBackground from '../../../Components/PremiumBackground/PremiumBackground';

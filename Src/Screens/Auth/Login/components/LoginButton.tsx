@@ -1,3 +1,4 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Login/components/LoginButton.tsx
 // -----------------------------------------------------------------------------
 // Large gold-gradient primary button with press-scale, loading and disabled
@@ -5,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';

@@ -1,3 +1,4 @@
+import { Text, TextInput } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Login/components/LuxuryInput.tsx
 // -----------------------------------------------------------------------------
 // Reusable premium text field with an animated focus glow (border + soft gold
@@ -6,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, StyleSheet, View, type TextInputProps } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
   interpolateColor,

@@ -1,6 +1,7 @@
+import { TextInput } from '../../Components/Typography/FontText';
 // Src/Screens/MemberCreation/EmployeePickerModal.tsx
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Modal, Pressable, FlatList, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Modal, Pressable, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useEmployeeSearch } from '../../api/hooks/Employee/useEmployeeSearch';
 import { Employee } from '../../types/Employee/Employee';

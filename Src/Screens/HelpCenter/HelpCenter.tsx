@@ -1,6 +1,7 @@
+import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/HelpCenter/HelpCenter.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Linking, TouchableOpacity, ActivityIndicator, SafeAreaView, RefreshControl, Animated } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, Linking, TouchableOpacity, ActivityIndicator, SafeAreaView, RefreshControl, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';

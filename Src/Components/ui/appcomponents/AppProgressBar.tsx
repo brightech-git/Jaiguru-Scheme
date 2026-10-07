@@ -1,6 +1,7 @@
+import { Text } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppProgressBar.tsx
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, Text, StyleProp, ViewStyle } from 'react-native';
+import { View, Animated, StyleProp, ViewStyle } from 'react-native';
 import theme from '../../../Utills/AppTheme';
 
 const { COLORS, SIZES, FONTS } = theme;

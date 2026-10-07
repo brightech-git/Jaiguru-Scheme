@@ -1,8 +1,6 @@
+import { Text } from './Typography/FontText';
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import {
-  Modal, View, StyleSheet, ActivityIndicator,
-  TouchableOpacity, Text, Linking, AppState, StatusBar, Platform, 
-} from "react-native";
+import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, AppState, StatusBar, Platform } from "react-native";
 import { WebView, WebViewNavigation } from "react-native-webview";
 import { COLORS, SIZES, FONTS } from "../Utills/AppTheme";
 import { SafeAreaView } from "react-native-safe-area-context";

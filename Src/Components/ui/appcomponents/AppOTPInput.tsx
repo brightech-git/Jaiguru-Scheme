@@ -1,3 +1,4 @@
+import { Text, TextInput } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppOTPInput.tsx
 //
 // Reusable OTP box row. Consolidates the backspace-handling fix applied
@@ -15,19 +16,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  Animated,
-  NativeSyntheticEvent,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TextInputKeyPressEventData,
-  View,
-  StyleProp,
-  ViewStyle,
-  Pressable,
-} from 'react-native';
+import { Animated, NativeSyntheticEvent, Platform, StyleSheet, TextInputKeyPressEventData, View, StyleProp, ViewStyle, Pressable } from 'react-native';
 import theme from '../../../Utills/AppTheme';
 
 const { COLORS, FONTS, SIZES, ELEVATION } = theme;

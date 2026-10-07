@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Onboard/components/NextButton.tsx
 // -----------------------------------------------------------------------------
 // Gold-gradient primary CTA with a tactile press (scale + shadow) animation and
@@ -5,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {

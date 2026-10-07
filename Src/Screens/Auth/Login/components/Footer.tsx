@@ -1,3 +1,4 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Login/components/Footer.tsx
 // -----------------------------------------------------------------------------
 // Trust footer: security badges (Secure Login · 256-bit Encryption · Trusted
@@ -5,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import theme from '../../../../Utills/AppTheme';

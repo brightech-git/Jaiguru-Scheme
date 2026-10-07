@@ -1,16 +1,7 @@
+import { TextInput } from '../../Components/Typography/FontText';
 // Src/Screens/MemberCreation/SchemeJoiningForm.tsx
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-  Modal,
-  TouchableOpacity,
-  FlatList,
-  Pressable,
-  TextInput,
-} from 'react-native';
+import { View, StyleSheet, ActivityIndicator, ScrollView, Modal, TouchableOpacity, FlatList, Pressable } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -1,3 +1,4 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Login/components/SocialActions.tsx
 // -----------------------------------------------------------------------------
 // Secondary actions: Create Account link, an OR divider, Google sign-in and a
@@ -5,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import React from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import theme from '../../../../Utills/AppTheme';

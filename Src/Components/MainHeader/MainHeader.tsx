@@ -1,6 +1,7 @@
+import { Text } from '../Typography/FontText';
 // Src/Components/MainHeader/MainHeader.tsx
 import React, { useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity,ActivityIndicator, StatusBar } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity, ActivityIndicator, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useCompany } from '../../api/hooks/Company/useCompany';

@@ -1,6 +1,7 @@
+import { Text } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppChip.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
+import { View, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import theme from '../../../Utills/AppTheme';
 

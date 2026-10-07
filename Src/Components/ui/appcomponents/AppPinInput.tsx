@@ -1,3 +1,4 @@
+import { Text, TextInput } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppPinInput.tsx
 //
 // For MPIN entry (4-digit). Unlike AppOTPInput, this drives all dots from
@@ -5,8 +6,10 @@
 // each change — so there's no per-box backspace/onKeyPress logic to get
 // wrong in the first place.
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { Animated, StyleSheet, Text, TextInput, View, StyleProp, ViewStyle, Pressable, Vibration } from 'react-native';
+import { Animated, StyleSheet, View, StyleProp, ViewStyle, Pressable, Vibration } from 'react-native';
 import theme from '../../../Utills/AppTheme';
+
+const FontAnimatedText = Animated.createAnimatedComponent(Text);
 
 const { COLORS, FONTS, SIZES, ELEVATION } = theme;
 
@@ -171,14 +174,14 @@ const AppPinInput = forwardRef<AppPinInputRef, AppPinInputProps>(
                       ]}
                     />
                   ) : (
-                    <Animated.Text
+                    <FontAnimatedText
                       style={[
                         styles.boxText,
                         { fontSize: DOT * 0.55, color: error ? COLORS.danger : success ? COLORS.success : COLORS.contentPrimary, opacity: dotAnims[i] },
                       ]}
                     >
                       {digit}
-                    </Animated.Text>
+                    </FontAnimatedText>
                   )}
                 </View>
               ) : (
@@ -194,7 +197,7 @@ const AppPinInput = forwardRef<AppPinInputRef, AppPinInputProps>(
                     },
                   ]}
                 >
-                  <Animated.Text
+                  <FontAnimatedText
                     style={[
                       styles.boxText,
                       {
@@ -205,7 +208,7 @@ const AppPinInput = forwardRef<AppPinInputRef, AppPinInputProps>(
                     ]}
                   >
                     {digit ? (secureTextEntry ? '●' : digit) : ''}
-                  </Animated.Text>
+                  </FontAnimatedText>
                 </View>
               )
             )}

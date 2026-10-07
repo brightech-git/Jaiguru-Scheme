@@ -1,6 +1,7 @@
+import { Text } from '../Typography/FontText';
 // Src/Components/SchemeDetailsCard/SchemeDetailsCard.tsx
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, FlatList, RefreshControl, Dimensions } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, TouchableOpacity, FlatList, RefreshControl, Dimensions } from 'react-native';
 import { useMySchemes } from '../../api/hooks/Account/useMySchemes';
 import { getUserId } from '../../Utills/AsynchStorageHelper';
 import { userService, UserKycDetails } from '../../api/services/userService';

@@ -1,14 +1,6 @@
+import { Text } from '../Typography/FontText';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Dimensions,
-  Platform,
-  Pressable,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { Dimensions, Platform, Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';

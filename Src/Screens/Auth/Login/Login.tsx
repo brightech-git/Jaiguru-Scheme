@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Auth/Login/Login.tsx
 // -----------------------------------------------------------------------------
 // Jaiguru Digi Gold — premium luxury Login screen.
@@ -12,18 +13,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import {
-  Dimensions,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { Dimensions, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';

@@ -1,6 +1,7 @@
+import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/Notification/NotificationScreen.tsx
 import React, { useRef, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, SectionList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, Animated, Platform, Image } from 'react-native';
+import { View, StyleSheet, SectionList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, Animated, Platform, Image } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';

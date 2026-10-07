@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Onboard/components/OnboardingItem.tsx
 // -----------------------------------------------------------------------------
 // A single onboarding page. Drives two scroll-linked animations:
@@ -6,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,

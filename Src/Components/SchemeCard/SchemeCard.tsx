@@ -1,6 +1,7 @@
+import { Text } from '../Typography/FontText';
 // Src/Components/SchemeCard/SchemeCard.tsx
 import React, { useCallback, useRef, useState, useMemo } from 'react';
-import { View, FlatList, StyleSheet, ImageBackground, Text, Dimensions } from 'react-native';
+import { View, FlatList, StyleSheet, ImageBackground, Dimensions } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -22,6 +23,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import placeholderImage from '../../Assets/Company/logo.png';
 import { COLORS, SIZES, FONTS, moderateScale, ELEVATION } from '../../Utills/AppTheme';
 import { IMAGE_BASE_URL } from '../../Config/BaseUrl';
+
+const FontAnimatedText = Animated.createAnimatedComponent(Text);
 
 const THUMB_SIZE = moderateScale(44);
 
@@ -74,9 +77,9 @@ function SlideToJoin({ onSlideComplete }: { onSlideComplete: () => void }) {
       onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
     >
       <Animated.View style={[styles.slideFill, fillStyle]} />
-      <Animated.Text style={[styles.slideLabel, labelStyle]}>
+      <FontAnimatedText style={[styles.slideLabel, labelStyle]}>
         Slide To View Terms & Join Now →
-      </Animated.Text>
+      </FontAnimatedText>
       <GestureDetector gesture={gesture}>
         <Animated.View style={[styles.slideThumb, thumbStyle]}>
           <Ionicons name="arrow-forward" size={moderateScale(20)} color={COLORS.white} />

@@ -83,7 +83,7 @@ export default function App() {
   //   return <MaintenanceScreen message={maintenanceMsg} />;
   // }
 
-  if (forceUpdate) {
+  if (forceUpdate && fontsLoaded && appReady) {
     return (
       <ForceUpdateScreen
         currentVersion={forceUpdate.currentVersion}

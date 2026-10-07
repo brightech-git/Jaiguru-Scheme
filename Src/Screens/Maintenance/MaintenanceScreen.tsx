@@ -1,13 +1,7 @@
+import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/Maintenance/MaintenanceScreen.tsx
 import React, { useEffect } from 'react';
-import {
-  Dimensions,
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Dimensions, Image, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

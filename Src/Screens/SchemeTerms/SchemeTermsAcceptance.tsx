@@ -1,5 +1,6 @@
+import { Text } from '../../Components/Typography/FontText';
 import React, { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppContentScreen from '../../Components/AppContent/AppContentScreen';

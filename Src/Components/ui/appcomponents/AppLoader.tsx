@@ -1,6 +1,7 @@
+import { Text } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppLoader.tsx
 import React from 'react';
-import { View, Text, ActivityIndicator, Modal, StyleProp, ViewStyle } from 'react-native';
+import { View, ActivityIndicator, Modal, StyleProp, ViewStyle } from 'react-native';
 import theme from '../../../Utills/AppTheme';
 
 const { COLORS, SIZES, FONTS } = theme;

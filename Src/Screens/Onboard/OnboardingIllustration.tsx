@@ -1,3 +1,4 @@
+import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/Onboard/OnboardingIllustration.tsx
 // -----------------------------------------------------------------------------
 // Jaiguru Jewellers — premium 4-screen onboarding (illustration version).
@@ -6,19 +7,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Dimensions,
-  FlatList,
-  Platform,
-  Pressable,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  type ViewToken,
-} from 'react-native';
+import { Dimensions, FlatList, Platform, Pressable, StatusBar, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ViewToken } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';

@@ -1,18 +1,6 @@
+import { Text } from '../Typography/FontText';
 import React, { useState, useMemo, useCallback, memo, useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-  StatusBar,
-  ScrollView,
-  Animated,
-  Platform,
-  ActivityIndicator,
-  Image,
-  Easing,
-} from "react-native";
+import { View, StyleSheet, TouchableOpacity, Dimensions, StatusBar, ScrollView, Animated, Platform, ActivityIndicator, Image, Easing } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialIcons";

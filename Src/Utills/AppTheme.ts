@@ -1,6 +1,6 @@
 // theme.ts
 import { Dimensions, PixelRatio, Platform } from "react-native";
-import { BOLD, BODY } from "./Fonts";
+import { BOLD, BODY, LIGHT, MEDIUM, SEMIBOLD } from "./Fonts";
 
 const { width, height } = Dimensions.get("window");
 
@@ -302,14 +302,14 @@ export const SIZES = {
 };
 
 /* ============================================================
-   TYPOGRAPHY (Poppins Bold / Inter Display Medium)
+   TYPOGRAPHY (Poppins, using the actual font file for each weight)
    ============================================================ */
 export const FONTS: Record<string, any> = {
   family: {
-    light: BODY,
+    light: LIGHT,
     regular: BODY,
-    medium: BODY,
-    semiBold: BOLD,
+    medium: MEDIUM,
+    semiBold: SEMIBOLD,
     bold: BOLD,
   },
 
@@ -375,12 +375,12 @@ export const FONTS: Record<string, any> = {
     color: COLORS.contentPrimary,
   },
   bodyEmphasis: {
-    fontFamily: BODY,
+    fontFamily: MEDIUM,
     fontSize: SIZES.text.md,
     lineHeight: SIZES.text.md * 1.5,
     color: COLORS.contentPrimary,
   },
-  // Genuinely bold body copy — `bodyEmphasis` is only Medium.
+  // Bold body copy uses the bundled Bold face.
   bodyStrong: {
     fontFamily: BOLD,
     fontSize: SIZES.text.md,

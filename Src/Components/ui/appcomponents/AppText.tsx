@@ -1,6 +1,7 @@
+import { Text } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppText.tsx
 import React from 'react';
-import { Text, StyleProp, TextStyle } from 'react-native';
+import { StyleProp, TextStyle } from 'react-native';
 import theme from '../../../Utills/AppTheme';
 
 const { FONTS, COLORS } = theme;

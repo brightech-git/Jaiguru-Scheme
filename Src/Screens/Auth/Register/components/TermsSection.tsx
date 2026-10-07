@@ -1,10 +1,11 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Register/components/TermsSection.tsx
 // -----------------------------------------------------------------------------
 // Terms & Privacy acceptance: an animated gold checkbox + clickable links.
 // -----------------------------------------------------------------------------
 
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import theme from '../../../../Utills/AppTheme';

@@ -1,10 +1,11 @@
+import { Text } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppToast.tsx
 //
 // App-wide toast/snackbar system. Wrap the app root with <AppToastProvider>
 // once (done in App.tsx), then call useToast().show(...) from anywhere —
 // no prop drilling or per-screen toast state needed.
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import theme from '../../../Utills/AppTheme';
 

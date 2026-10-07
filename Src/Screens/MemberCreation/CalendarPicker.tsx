@@ -1,6 +1,7 @@
+import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/MemberCreation/CalendarPicker.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native';
+import { View, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native';
 import theme from '../../Utills/AppTheme';
 
 const { COLORS, SIZES, FONTS, ELEVATION } = theme;

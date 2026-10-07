@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Onboard/components/Illustrations.tsx
 // -----------------------------------------------------------------------------
 // Premium, fully-vector jewellery illustrations (no image assets needed).
@@ -6,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

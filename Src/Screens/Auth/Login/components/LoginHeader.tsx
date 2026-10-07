@@ -1,3 +1,4 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Login/components/LoginHeader.tsx
 // -----------------------------------------------------------------------------
 // Premium header: gold medallion logo with a looping shine sweep, brand name
@@ -5,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,

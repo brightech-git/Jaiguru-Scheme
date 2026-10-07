@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Auth/Mpin/MpinScaffold.tsx
 // -----------------------------------------------------------------------------
 // Shared premium shell for every MPIN screen (Create / Verify / Forgot / OTP /
@@ -7,18 +8,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import {
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Dimensions, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';

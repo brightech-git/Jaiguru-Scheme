@@ -1,3 +1,4 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Login/components/LoginForm.tsx
 // -----------------------------------------------------------------------------
 // Glassmorphism login card: mobile + password inputs, show/hide, remember-me,
@@ -6,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 

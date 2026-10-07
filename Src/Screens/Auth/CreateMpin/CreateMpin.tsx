@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Auth/CreateMpin/CreateMpin.tsx
 // -----------------------------------------------------------------------------
 // Premium Create-MPIN screen (champagne theme). Two-step enter → confirm flow
@@ -6,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, Alert, StyleSheet, BackHandler } from 'react-native';
+import { View, Pressable, Alert, StyleSheet, BackHandler } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';

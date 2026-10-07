@@ -1,3 +1,4 @@
+import { Text } from './Typography/FontText';
 // Src/Components/ErrorBoundary.tsx
 //
 // The app had ZERO error boundaries anywhere before this. React's default
@@ -18,7 +19,7 @@
 //     crash log (adb logcat) or a crash-reporting SDK (Crashlytics/Sentry —
 //     neither is wired up in this app yet) to diagnose.
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { COLORS } from '../Utills/AppTheme';
 
 interface Props {

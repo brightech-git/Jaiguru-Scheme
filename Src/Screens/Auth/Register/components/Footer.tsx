@@ -1,10 +1,11 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Register/components/Footer.tsx
 // -----------------------------------------------------------------------------
 // Bottom section: "Already have an account? Login".
 // -----------------------------------------------------------------------------
 
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import theme from '../../../../Utills/AppTheme';
 

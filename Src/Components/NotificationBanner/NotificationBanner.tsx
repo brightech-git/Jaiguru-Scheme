@@ -1,8 +1,6 @@
+import { Text } from '../Typography/FontText';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View, Text, Image, StyleSheet, Animated,
-  TouchableOpacity, Platform, StatusBar,
-} from 'react-native';
+import { View, Image, StyleSheet, Animated, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { EventEmitter } from 'eventemitter3';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import theme from '../../Utills/AppTheme';

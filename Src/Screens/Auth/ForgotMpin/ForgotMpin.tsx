@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Auth/ForgotMpin/ForgotMpin.tsx
 // -----------------------------------------------------------------------------
 // Premium Forgot-MPIN screen (champagne theme). Shows the masked registered
@@ -5,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 

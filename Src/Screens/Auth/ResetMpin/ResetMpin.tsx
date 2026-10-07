@@ -1,7 +1,8 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Auth/ResetMpin/ResetMpin.tsx
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, Keyboard, StyleSheet } from 'react-native';
+import { View, Pressable, Keyboard, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 

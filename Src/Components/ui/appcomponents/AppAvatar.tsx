@@ -1,6 +1,7 @@
+import { Text } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppAvatar.tsx
 import React from 'react';
-import { View, Text, Image, StyleProp, ViewStyle } from 'react-native';
+import { View, Image, StyleProp, ViewStyle } from 'react-native';
 import theme from '../../../Utills/AppTheme';
 
 const { COLORS, FONTS } = theme;

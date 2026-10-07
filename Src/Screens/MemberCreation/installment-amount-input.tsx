@@ -1,5 +1,6 @@
+import { TextInput } from '../../Components/Typography/FontText';
 import React, { useState } from "react";
-import { View, TextInput, Pressable, StyleSheet } from "react-native";
+import { View, Pressable, StyleSheet } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing, useReducedMotion } from "react-native-reanimated";
 import { AppText } from "../../Components/ui/appcomponents";
 import { useTodayRate } from "../../api/hooks/Rates/useTodayRate";

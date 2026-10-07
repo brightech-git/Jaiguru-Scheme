@@ -1,15 +1,7 @@
+import { Text } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppButton.tsx
 import React, { useRef } from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  Animated,
-  ActivityIndicator,
-  StyleProp,
-  ViewStyle,
-  TextStyle,
-} from 'react-native';
+import { TouchableOpacity, StyleSheet, Animated, ActivityIndicator, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import theme from '../../../Utills/AppTheme';
 

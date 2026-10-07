@@ -1,3 +1,4 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Register/components/PasswordStrength.tsx
 // -----------------------------------------------------------------------------
 // Live password strength meter: an animated gold/traffic-light bar plus the
@@ -5,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
   useAnimatedStyle,

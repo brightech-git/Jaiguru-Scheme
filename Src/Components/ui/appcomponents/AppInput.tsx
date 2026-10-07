@@ -1,16 +1,7 @@
+import { TextInput, Text } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppInput.tsx
 import React, { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
-import {
-  View,
-  TextInput,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  TextInputProps,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, TextInputProps, StyleProp, ViewStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import theme from '../../../Utills/AppTheme';
 

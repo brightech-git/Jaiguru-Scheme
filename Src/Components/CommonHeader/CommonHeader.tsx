@@ -1,3 +1,4 @@
+import { Text } from '../Typography/FontText';
 // Src/Components/CommonHeader/CommonHeader.tsx
 // -----------------------------------------------------------------------------
 // Shared premium header used across the whole app. Safe-area aware (pads the
@@ -10,7 +11,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, StatusBar } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';

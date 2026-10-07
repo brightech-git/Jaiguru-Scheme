@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Home/components/HomeHeader.tsx
 // -----------------------------------------------------------------------------
 // Premium Home header: curved gold gradient with floating particles + shimmer,
@@ -7,7 +8,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { Dimensions, Image, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Image, StatusBar, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {

@@ -1,16 +1,7 @@
+import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/ForceUpdate/ForceUpdateScreen.tsx
 import React, { useEffect } from 'react';
-import {
-  Dimensions,
-  Image,
-  Linking,
-  Platform,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Dimensions, Image, Linking, Platform, StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

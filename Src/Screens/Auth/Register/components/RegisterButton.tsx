@@ -1,3 +1,4 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Register/components/RegisterButton.tsx
 // -----------------------------------------------------------------------------
 // Gold-gradient "Create Account" button with press-scale, loading spinner,
@@ -5,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {

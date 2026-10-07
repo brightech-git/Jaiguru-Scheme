@@ -1,3 +1,4 @@
+import { Text } from '../../../../Components/Typography/FontText';
 // Src/Screens/Auth/Register/components/RegisterHeader.tsx
 // -----------------------------------------------------------------------------
 // Premium header: reuses the shimmering gold medallion from the Login screen,
@@ -5,7 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,

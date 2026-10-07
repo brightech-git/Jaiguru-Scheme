@@ -1,18 +1,7 @@
+import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/Onboard/OnboardingScreen.tsx
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  Image,
-  Pressable,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-  type NativeSyntheticEvent,
-  type NativeScrollEvent,
-} from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, Image, Pressable, StatusBar, StyleSheet, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';

@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Home/components/GoldRateCard.tsx
 // -----------------------------------------------------------------------------
 // Floating premium "Today's Rate" card driven by the real /account/todayrate
@@ -6,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
   Easing,

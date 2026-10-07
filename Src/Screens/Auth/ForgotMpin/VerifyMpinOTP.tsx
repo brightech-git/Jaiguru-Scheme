@@ -1,3 +1,4 @@
+import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Auth/ForgotMpin/VerifyMpinOTP.tsx
 // -----------------------------------------------------------------------------
 // Premium Forgot-MPIN OTP + reset screen (champagne theme). Two steps:
@@ -7,7 +8,7 @@
 // -----------------------------------------------------------------------------
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getHash, useOtpVerify, removeListener } from '../../../Utills/otpVerifyShim';

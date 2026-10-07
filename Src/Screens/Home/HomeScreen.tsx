@@ -1,15 +1,7 @@
+import { Text } from '../../Components/Typography/FontText';
 // screens/HomeScreen.tsx
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Linking,
-  Dimensions,
-} from "react-native";
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/MaterialIcons";

@@ -1,6 +1,7 @@
+import { Text } from '../Typography/FontText';
 // Src/Components/Slider/Slider.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Image, ActivityIndicator, Animated, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity, ViewToken } from 'react-native';
+import { View, Image, ActivityIndicator, Animated, StyleSheet, FlatList, Dimensions, TouchableOpacity, ViewToken } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSchemeSliders } from '../../api/hooks/HomeBanner/useSchemeSliders';
 import { useSchemeCatalog } from '../../api/hooks/Schemes/useSchemeCatalog';

@@ -1,6 +1,7 @@
+import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/AccountDelete/AccountDelete.tsx
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, Alert, View, Text, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView, Alert, View, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';

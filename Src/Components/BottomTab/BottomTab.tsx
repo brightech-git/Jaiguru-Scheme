@@ -1,6 +1,7 @@
+import { Text } from '../Typography/FontText';
 // Floating capsule navigation with the existing stack destinations.
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Pressable, Animated, Platform } from 'react-native';
+import { View, Pressable, Animated, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
