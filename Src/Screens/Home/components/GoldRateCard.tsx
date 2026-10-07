@@ -144,9 +144,9 @@ const styles = StyleSheet.create({
     borderRadius: SIZES.radius.xxl,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.brandAlpha16,
+    borderColor: COLORS.accentSoft,
     paddingHorizontal: SIZES.space.lg,
-    paddingVertical: SIZES.space.xs,
+    paddingVertical: SIZES.space.md,
   },
   header: {
     flexDirection: 'row',
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   ratesRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: SIZES.space.xs,
+    marginTop: SIZES.space.md,
   },
   rateCol: { flex: 1, alignItems: 'center' },
   metalWrap: { flexDirection: 'row', alignItems: 'center', marginBottom: 1 },
@@ -204,7 +204,8 @@ const styles = StyleSheet.create({
   },
   rate: {
     fontFamily: FONTS.family.bold,
-    fontSize: SIZES.text.md,
+    fontSize: 22,
+    lineHeight: 32,
     color: COLORS.contentBrand,
   },
   na: {
@@ -226,13 +227,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: SIZES.space.xs,
-    paddingTop: SIZES.space.xs,
+    marginTop: SIZES.space.md,
+    paddingTop: SIZES.space.sm,
     borderTopWidth: 1,
     borderTopColor: COLORS.borderSubtle,
   },
   updated: {
-    fontFamily: FONTS.family.bold,
+    fontFamily: FONTS.family.regular,
     fontSize: SIZES.text.xs,
     color: COLORS.contentMuted,
     marginLeft: SIZES.space.xs,

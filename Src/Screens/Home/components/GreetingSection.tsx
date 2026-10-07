@@ -41,9 +41,9 @@ const GreetingSection: React.FC<GreetingSectionProps> = ({ greeting, name,  }) =
 
   return (
     <Animated.View style={style}>
-      <Text style={styles.day}>{todayDay},  {new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</Text>
-      <Text style={styles.greeting}>{greeting} 👋</Text>
-      <Text style={styles.welcome}>Welcome back, <Text style={styles.name}>{name}</Text></Text>
+      <Text style={styles.day}>{todayDay.toUpperCase()} · {new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</Text>
+      <Text style={styles.greeting}>{greeting},</Text>
+      <Text style={styles.name}>Hi, {name || 'Welcome'}</Text>
     </Animated.View>
   );
 };
@@ -51,13 +51,14 @@ const GreetingSection: React.FC<GreetingSectionProps> = ({ greeting, name,  }) =
 const styles = StyleSheet.create({
   day: {
     fontFamily: FONTS.family.semiBold,
-    fontSize: SIZES.text.sm,
-    color: COLORS.contentOnBrand,
-    marginBottom: SIZES.space.xs,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: COLORS.accentStrong,
+    marginBottom: SIZES.space.sm,
   },
   greeting: {
     fontFamily: FONTS.family.medium,
-    fontSize: SIZES.text.md,
+    fontSize: 14,
     color: COLORS.contentOnBrand,
     opacity: 0.85,
   },
@@ -68,8 +69,9 @@ const styles = StyleSheet.create({
     marginTop: SIZES.space.xs,
   },
   name: {
-    fontFamily: FONTS.family.bold,
-    fontSize: SIZES.text.xl,
+    fontFamily: FONTS.family.semiBold,
+    fontSize: 28,
+    lineHeight: 38,
     color: COLORS.contentOnBrand,
   },
   memberRow: {

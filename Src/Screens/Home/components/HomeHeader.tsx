@@ -8,7 +8,8 @@ import { Text } from '../../../Components/Typography/FontText';
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { Dimensions, Image, StatusBar, StyleSheet, View } from 'react-native';
+import { Dimensions, Image, Pressable, StatusBar, StyleSheet, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -21,7 +22,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import theme from '../../../Utills/AppTheme';
-import GoldParticles from '../../Auth/Login/components/GoldParticles';
 import GreetingSection from './GreetingSection';
 import ProfileAvatar from './ProfileAvatar';
 import GoldRateCard from './GoldRateCard';
@@ -39,7 +39,7 @@ import {
 const { COLORS, SIZES } = theme;
 const { width } = Dimensions.get('window');
 
-const HEADER_GRADIENT = COLORS.gradient.brand as [string, string, string];
+const HEADER_GRADIENT: [string, string, string] = [COLORS.brandDeep, COLORS.brandStrong, COLORS.brand];
 const SHINE_GRADIENT = COLORS.gradient.shine as [string, string, string];
 const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -76,7 +76,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
   onRefreshRate,
 }) => {
   const insets = useSafeAreaInsets();
-  const { company, loading: companyLoading } = useCompany();
+  const { company } = useCompany();
 
   // Slow shimmer sweep across the curved header.
   const shine = useSharedValue(0);
@@ -86,7 +86,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
 
   const shineStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: interpolate(shine.value, [0, 1], [-width, width]) }, { rotateZ: '18deg' }],
-    opacity: interpolate(shine.value, [0, 0.5, 1], [0, 0.5, 0]),
+    opacity: interpolate(shine.value, [0, 0.5, 1], [0, 0.16, 0]),
   }));
 
   return (
@@ -102,7 +102,8 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
       >
         {/* particles + shimmer */}
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <GoldParticles width={width} height={width * 0.7} />
+          <View style={styles.orbitOuter} />
+          <View style={styles.orbitInner} />
           <View style={styles.shineClip} pointerEvents="none">
             <AnimatedGradient
               colors={SHINE_GRADIENT}
@@ -117,15 +118,25 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
         <View style={styles.topRow}>
           <View style={styles.brandRow}>
             <Image source={LOCAL_LOGO} style={styles.logo} resizeMode="contain" />
-            <Text style={styles.companyName} numberOfLines={1}>
-              {company?.COMPANYNAME || company?.COMPANYID || 'Jaiguru Jewellers'}
-            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.brandEyebrow}>THE ART OF FINE JEWELLERY</Text>
+              <Text style={styles.companyName} numberOfLines={2}>
+                {company?.COMPANYNAME || company?.COMPANYID || 'Jaiguru Jewellers'}
+              </Text>
+            </View>
           </View>
-          <ProfileAvatar name={profile.name} imageUrl={profile.avatarUrl} onPress={onProfilePress} />
+          <View style={styles.headerActions}>
+            <Pressable onPress={onNotificationsPress} style={styles.notificationButton} accessibilityRole="button" accessibilityLabel={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}>
+              <MaterialCommunityIcons name="bell-outline" size={20} color={COLORS.accentTint} />
+              {unreadCount > 0 && <View style={styles.notificationDot} />}
+            </Pressable>
+            <ProfileAvatar size={42} name={profile.name} imageUrl={profile.avatarUrl} onPress={onProfilePress} />
+          </View>
         </View>
 
         {/* Greeting below */}
         <GreetingSection greeting={getGreeting()} name={profile.name} />
+        {/* <View style={styles.signatureLine}><View style={styles.goldLine} /><Text style={styles.signature}>A little today. A golden tomorrow.</Text></View> */}
       </LinearGradient>
 
       {/* Floating cards overlapping the curve */}
@@ -151,8 +162,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   curve: {
-    borderBottomLeftRadius: SIZES.radius.xxl,
-    borderBottomRightRadius: SIZES.radius.xxl,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
     paddingHorizontal: SIZES.space.gutter,
     paddingBottom: SIZES.space.huge + SIZES.space.xl,
     overflow: 'hidden',
@@ -171,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: SIZES.space.sm,
+    marginBottom: SIZES.space.xxl,
   },
   brandRow: {
     flexDirection: 'row',
@@ -180,14 +191,14 @@ const styles = StyleSheet.create({
     marginRight: SIZES.space.md,
   },
   logo: {
-    width: theme.moderateScale(66),
-    height: theme.moderateScale(66),
-    borderRadius: theme.moderateScale(33),
+    width: theme.moderateScale(44),
+    height: theme.moderateScale(44),
+    borderRadius: theme.moderateScale(22),
     marginRight: SIZES.space.sm,
   },
   companyName: {
-    fontFamily: theme.FONTS.family.bold,
-    fontSize: SIZES.text.lg,
+    fontFamily: theme.FONTS.family.semiBold,
+    fontSize: 13,
     color: COLORS.contentOnBrand,
     letterSpacing: 0.3,
     flexShrink: 1,
@@ -198,6 +209,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: SIZES.space.gutter,
   },
   cardGap: { marginTop: SIZES.space.lg },
+  brandEyebrow: { fontFamily: theme.FONTS.family.medium, fontSize: 7, lineHeight: 12, letterSpacing: 1, color: COLORS.accentStrong },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: SIZES.space.sm },
+  notificationButton: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: COLORS.whiteAlpha20, backgroundColor: COLORS.whiteAlpha10, alignItems: 'center', justifyContent: 'center' },
+  notificationDot: { position: 'absolute', top: 8, right: 9, width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.accentDeep },
+  orbitOuter: { position: 'absolute', right: -110, top: 65, width: 280, height: 280, borderRadius: 140, borderWidth: 1, borderColor: COLORS.accentAlpha16 },
+  orbitInner: { position: 'absolute', right: -85, top: 90, width: 230, height: 230, borderRadius: 115, borderWidth: 1, borderColor: COLORS.accentAlpha08 },
+  signatureLine: { flexDirection: 'row', alignItems: 'center', gap: SIZES.space.sm, marginTop: SIZES.space.lg },
+  goldLine: { width: 22, height: 1, backgroundColor: COLORS.accentDeep },
+  signature: { fontFamily: theme.FONTS.family.regular, fontSize: 10, color: COLORS.accentSoft, letterSpacing: 0.3 },
 });
 
 export default React.memo(HomeHeader);

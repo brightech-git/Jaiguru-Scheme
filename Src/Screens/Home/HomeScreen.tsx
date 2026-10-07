@@ -1,10 +1,9 @@
 import { Text } from '../../Components/Typography/FontText';
 // screens/HomeScreen.tsx
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Dimensions } from "react-native";
+import { View, ScrollView, StyleSheet, Linking } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from "@react-navigation/native";
 import { getUserData } from "../../Utills/AsynchStorageHelper";
 import useNotifications from "../../api/hooks/Notifications/useNotifications";
@@ -20,21 +19,24 @@ import { getFCMToken } from "../../Helpers/NotificationHelper";
 import BottomTab from "../../Components/BottomTab/BottomTab";
 import MainPageWithYouTube from "../../Components/Youtube/Youtube";
 import { ScreenWrapper } from "../../Components/ui/appcomponents";
-import GoldParticles from "../Auth/Login/components/GoldParticles";
 import HomeHeader from "./components/HomeHeader";
+import HomeQuickActions from "./components/HomeQuickActions";
 import ShowroomLocatorCard from "./components/ShowroomLocatorCard";
 import { useCompany } from "../../api/hooks/Company/useCompany";
 
 const { COLORS, FONTS, SIZES, moderateScale } = theme;
-const { width, height } = Dimensions.get("window");
 
-const BG_GRADIENT = COLORS.gradient.accentWash as [string, string, string];
+const BG_GRADIENT: [string, string, string] = [COLORS.surface, COLORS.accentTint, COLORS.surface];
 
-/** Premium section header with a gold accent bar. */
-const SectionHeader = ({ title }: { title: string }) => (
+const SectionHeader = ({ title, subtitle, eyebrow }: { title: string; subtitle?: string; eyebrow?: string }) => (
   <View style={styles.sectionHeader}>
-    <View style={styles.sectionBar} />
-    <Text style={styles.sectionTitle}>{title}</Text>
+    {!!eyebrow && <Text style={styles.sectionEyebrow}>{eyebrow}</Text>}
+    <View style={styles.sectionTitleRow}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionRule} />
+      <MaterialCommunityIcons name="star-four-points" size={12} color={COLORS.accentDeep} />
+    </View>
+    {!!subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>}
   </View>
 );
 
@@ -53,7 +55,7 @@ const NeedHelpCard = () => {
           <MaterialCommunityIcons
             name="headset"
             size={moderateScale(22)}
-            color={COLORS.contentBrand}
+            color={COLORS.accentDeep}
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -179,13 +181,12 @@ const HomeScreen = () => {
       {/* Full-bleed luxury background + floating particles */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <LinearGradient colors={BG_GRADIENT} style={StyleSheet.absoluteFill} />
-        <GoldParticles width={width} height={height} />
       </View>
 
       <ScreenWrapper
         scroll
         backgroundColor="transparent"
-        statusBarStyle="dark-content"
+        statusBarStyle="light-content"
         statusBarBg="transparent"
         paddingHorizontal={0}
         paddingTop={0}
@@ -213,24 +214,35 @@ const HomeScreen = () => {
 
         {/* {renderNotificationBanner()} */}
 
-        <SectionHeader title="Our Schemes" />
+        {/* <HomeQuickActions onNavigate={(route) => navigation.navigate(route)} /> */}
+
+        <SectionHeader eyebrow="MADE FOR YOUR TOMORROW" title="Your golden journey" subtitle="Explore a jewellery savings plan that fits you." />
         <SchemesList />
+        <View style={styles.accountSection}>
+          <SchemeDetailsCard />
+        </View>
         <View style={styles.sliderWrap}>
           <SliderComponent />
         </View>
-        <SchemeDetailsCard />
         
-          {/* <ShowroomLocatorCard onPress={() => navigation.navigate('Showrooms')} /> */}
 
 
-        <SectionHeader title="Promotions & Updates" />
+
+        <ShowroomLocatorCard onPress={() => navigation.navigate('Showrooms')} />
+
+        <SectionHeader eyebrow="THE JAIGURU EDIT" title="Stories & collections" subtitle="Discover what is new in our world of jewellery." />
         <View style={styles.youtubeWrapper}>
           <MainPageWithYouTube />
         </View>
 
       
-        <SectionHeader title="Need Help?" />
+        <SectionHeader eyebrow="ALWAYS BY YOUR SIDE" title="A personal touch" />
         <NeedHelpCard />
+        <View style={styles.brandFooter}>
+          <MaterialCommunityIcons name="star-four-points" size={15} color={COLORS.accentDeep} />
+          <Text style={styles.footerBrand}>JAIGURU JEWELLERS</Text>
+          <Text style={styles.footerTagline}>Celebrate every golden moment.</Text>
+        </View>
 
         <View style={{ height: moderateScale(8) }} />
       </ScreenWrapper>
@@ -266,34 +278,24 @@ const styles = StyleSheet.create({
 
   sliderWrap: { marginTop: SIZES.space.lg },
 
-  // Section header
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: SIZES.space.gutter,
-    marginTop: SIZES.space.lg,
-    marginBottom: SIZES.space.sm,
-  },
-  sectionBar: {
-    width: moderateScale(4),
-    height: moderateScale(18),
-    borderRadius: 2,
-    backgroundColor: COLORS.brand,
-    marginRight: SIZES.space.sm,
-  },
-  sectionTitle: {
-    fontFamily: FONTS.family.bold,
-    fontSize: SIZES.text.xl,
-    color: COLORS.contentPrimary,
-  },
+  accountSection: { marginTop: SIZES.space.lg },
+  sectionHeader: { paddingHorizontal: SIZES.space.gutter, marginTop: SIZES.space.xxxl, marginBottom: SIZES.space.lg },
+  sectionEyebrow: { fontFamily: FONTS.family.semiBold, fontSize: 9, lineHeight: 15, letterSpacing: 1.5, color: COLORS.contentBrand, marginBottom: 6 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: SIZES.space.sm },
+  sectionTitle: { fontFamily: FONTS.family.semiBold, fontSize: 22, lineHeight: 32, color: COLORS.brandDeep, flexShrink: 1 },
+  sectionRule: { flex: 1, minWidth: 12, height: 1, backgroundColor: COLORS.accentStrong },
+  sectionSubtitle: { fontFamily: FONTS.family.regular, fontSize: 11, lineHeight: 18, color: COLORS.contentMuted, marginTop: 4 },
+  brandFooter: { alignItems: 'center', paddingTop: SIZES.space.xxxl, paddingBottom: SIZES.space.lg, gap: SIZES.space.sm },
+  footerBrand: { fontFamily: FONTS.family.semiBold, fontSize: 11, letterSpacing: 2, color: COLORS.brand },
+  footerTagline: { fontFamily: FONTS.family.regular, fontSize: 10, color: COLORS.contentMuted },
 
   // Help card
   helpCard: {
     marginHorizontal: SIZES.space.gutter,
     borderRadius: SIZES.radius.xl,
-    backgroundColor: COLORS.whiteAlpha90,
+    backgroundColor: COLORS.brandDeep,
     borderWidth: 1,
-    borderColor: COLORS.brandAlpha16,
+    borderColor: COLORS.brandStrong,
     padding: SIZES.space.lg,
     ...theme.ELEVATION.raised,
   },
@@ -306,23 +308,23 @@ const styles = StyleSheet.create({
     width: moderateScale(44),
     height: moderateScale(44),
     borderRadius: SIZES.radius.md,
-    backgroundColor: COLORS.brandAlpha16,
+    backgroundColor: COLORS.whiteAlpha10,
     alignItems: "center",
     justifyContent: "center",
   },
   helpTitle: {
     fontFamily: FONTS.family.semiBold,
     fontSize: SIZES.text.lg,
-    color: COLORS.contentPrimary,
+    color: COLORS.accentTint,
   },
   helpSubtitle: {
     fontFamily: FONTS.family.regular,
     fontSize: SIZES.text.sm,
-    color: COLORS.contentSecondary,
+    color: COLORS.whiteAlpha80,
     marginTop: moderateScale(2),
     lineHeight: SIZES.text.sm * 1.5,
   },
-  helpLink: { color: COLORS.contentBrand, fontFamily: FONTS.family.semiBold },
+  helpLink: { color: COLORS.accentStrong, fontFamily: FONTS.family.semiBold },
 
   youtubeWrapper: {
     marginHorizontal: SIZES.space.gutter,

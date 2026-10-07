@@ -125,21 +125,21 @@ const MENU_SECTIONS: MenuSection[] = [
       },
     ],
   },
-  {
-    title: 'Danger Zone',
-    items: [
-      {
-        key: 'deleteaccount',
-        label: 'Delete Account',
-        icon: 'delete-outline',
-        iconLib: 'MaterialIcons',
-        iconColor: COLORS.danger,
-        bgColor: COLORS.dangerSurface,
-        danger: true,
-        onPress: (nav) => nav.navigate('DeleteAccount'),
-      },
-    ],
-  },
+  // {
+  //   title: 'Danger Zone',
+  //   items: [
+  //     {
+  //       key: 'deleteaccount',
+  //       label: 'Delete Account',
+  //       icon: 'delete-outline',
+  //       iconLib: 'MaterialIcons',
+  //       iconColor: COLORS.danger,
+  //       bgColor: COLORS.dangerSurface,
+  //       danger: true,
+  //       onPress: (nav) => nav.navigate('DeleteAccount'),
+  //     },
+  //   ],
+  // },
 ];
 
 const getAvatarColor = (name: string): string => {

@@ -8,7 +8,7 @@ export default StyleSheet.create({
     flexShrink: 0,
   },
   shadowWrap: {
-    marginHorizontal: SIZES.space.gutter,
+    marginHorizontal: SIZES.space.xs,
     borderRadius: SIZES.radius.pill,
     ...ELEVATION.floating,
   },
@@ -29,7 +29,7 @@ export default StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 0,
+    minWidth: 60,
   },
   iconSlot: {
     alignItems: 'center',
