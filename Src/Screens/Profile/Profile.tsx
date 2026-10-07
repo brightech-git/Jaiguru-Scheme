@@ -72,6 +72,14 @@ const MENU_SECTIONS: MenuSection[] = [
     title: 'Account',
     items: [
       {
+        key: 'myprofile',
+        label: 'My Profile',
+        icon: 'person-outline',
+        iconColor: COLORS.brand,
+        bgColor: COLORS.brandAlpha16,
+        onPress: (nav) => nav.navigate('MyProfile'),
+      },
+      {
         key: 'resetmpin',
         label: 'Reset MPIN',
         icon: 'lock-reset',
@@ -148,7 +156,7 @@ const ProfileScreen = () => {
       const [userData, session, userId] = await Promise.all([getUserData(), getAuthSession(), getUserId()]);
       const info: Record<string, any> = userData || session?.user || {};
       setUser({
-        id: info.userId || info.userid || userId,
+        id: info.userId ?? info.userid ?? info.id ?? userId,
         name: info.username || info.name || 'User',
         email: info.email || '',
         contactNumber: info.contactNumber || info.mobileNumber || '',

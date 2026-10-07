@@ -7,6 +7,20 @@ export interface UserKycDetails {
   id: number | string;
   aadhaarVerified?: boolean;
   kycVerified?: boolean;
+  username?: string;
+  email?: string;
+  contactNumber?: string;
+  walletBalance?: number;
+  referralCode?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  country?: string;
+  termsAccepted?: boolean;
 }
 
 export const userService = {

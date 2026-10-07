@@ -53,6 +53,7 @@ export interface MpinScaffoldProps {
   showBack?: boolean;
   onBackPress?: () => void;
   contentStyle?: StyleProp<ViewStyle>;
+  bottomContent?: React.ReactNode;
 }
 
 const MpinScaffold: React.FC<MpinScaffoldProps> = ({
@@ -64,6 +65,7 @@ const MpinScaffold: React.FC<MpinScaffoldProps> = ({
   showBack = true,
   onBackPress,
   contentStyle,
+  bottomContent,
 }) => {
   const enter = useSharedValue(0);
   const insets = useSafeAreaInsets();
@@ -131,6 +133,7 @@ const MpinScaffold: React.FC<MpinScaffoldProps> = ({
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
+        {bottomContent && <View style={styles.bottomContent}>{bottomContent}</View>}
       </SafeAreaView>
     </View>
   );
@@ -139,7 +142,13 @@ const MpinScaffold: React.FC<MpinScaffoldProps> = ({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.surfacePage },
   safe: { flex: 1 },
-  flex: { flex: 1 },
+  flex: { flex: 1, minHeight: 0 },
+  bottomContent: {
+    flexShrink: 0,
+    paddingHorizontal: SIZES.space.gutter,
+    paddingTop: SIZES.space.md,
+    paddingBottom: SIZES.space.xxl,
+  },
   scroll: {
     flexGrow: 1,
     paddingHorizontal: SIZES.space.gutter,

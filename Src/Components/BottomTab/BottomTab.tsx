@@ -1,19 +1,10 @@
-// Src/Components/BottomTab/BottomTab.tsx
-//
-// App-wide bottom navigation bar. This is NOT a react-navigation
-// Tab.Navigator — each screen mounts <BottomTab activeScreen="..." /> itself
-// at the bottom of its own layout (matching the pattern already used by
-// HomeScreen/SchemeDetailScreen/HelpCenter before this change). That keeps
-// every tab's screen as a normal Stack.Screen (so existing navigation.push
-// calls, headers, etc. keep working) while still giving the persistent
-// 5-tab bar the user asked for: My Schemes, Support, Home (center,
-// elevated), Profile, Alerts — each tab icon/label animates between its
-// active and inactive state instead of just swapping color instantly.
+// Floating capsule navigation with the existing stack destinations.
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, Pressable, Animated, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SIZES } from '../../Utills/AppTheme';
 import useNotifications from '../../api/hooks/Notifications/useNotifications';
 import { notificationEmitter } from '../NotificationBanner/NotificationBanner';
@@ -28,7 +19,6 @@ interface TabDef {
   iconLib: 'MaterialCommunityIcons' | 'MaterialIcons' | 'Ionicons';
   iconName: string;
   activeIconName?: string;
-  isCenter?: boolean;
 }
 
 interface BottomTabProps {
@@ -41,8 +31,8 @@ const TABS: TabDef[] = [
     label: 'Home',
     screen: { name: 'MainDrawer', params: { screen: 'Home' } },
     iconLib: 'MaterialCommunityIcons',
-    iconName: 'home',
-    isCenter: true,
+    iconName: 'home-outline',
+    activeIconName: 'home',
   },
   {
     key: 'SCHEMES',
@@ -56,7 +46,8 @@ const TABS: TabDef[] = [
     label: 'Wastage Card',
     screen: 'WastageCard',
     iconLib: 'MaterialCommunityIcons',
-    iconName: 'card-account-details',
+    iconName: 'card-account-details-outline',
+    activeIconName: 'card-account-details',
   },
   
   {
@@ -86,57 +77,48 @@ interface AnimatedTabProps {
   badgeCount?: number;
 }
 
-// Each tab animates its own scale/lift/color on activation instead of
-// snapping — this is the "diesin animated to active and not active" the
-// user asked for.
 const AnimatedTab = ({ tab, isActive, onPress, badgeCount = 0 }: AnimatedTabProps) => {
   const progress = useRef(new Animated.Value(isActive ? 1 : 0)).current;
+  const press = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.spring(progress, {
       toValue: isActive ? 1 : 0,
       useNativeDriver: true,
-      speed: 18,
-      bounciness: 8,
+      damping: 15,
+      stiffness: 180,
     }).start();
   }, [isActive, progress]);
 
   const IconComponent = ICON_LIBS[tab.iconLib];
   const iconName = isActive && tab.activeIconName ? tab.activeIconName : tab.iconName;
-
-  if (tab.isCenter) {
-    const lift = progress.interpolate({ inputRange: [0, 1], outputRange: [0, -4] });
-    const scale = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
-
-    return (
-      <TouchableOpacity style={styles.centerContainer} onPress={onPress} activeOpacity={0.8}>
-        <Animated.View style={[styles.centerIconWrap, isActive ? styles.centerIconActive : styles.centerIconInactive, { transform: [{ translateY: lift }, { scale }] }]}>
-          <IconComponent name={iconName as any} size={SIZES.icon.lg} color={COLORS.contentOnBrand} />
-        </Animated.View>
-        <Text style={isActive ? styles.centerActiveText : styles.centerInactiveText}>{tab.label}</Text>
-      </TouchableOpacity>
-    );
-  }
-
-  const scale = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] });
-  const lift = progress.interpolate({ inputRange: [0, 1], outputRange: [0, -2] });
-  const color = isActive ? COLORS.brand : COLORS.contentSecondary;
+  const scale = press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.88] });
+  const pillScale = progress.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
 
   return (
-    <TouchableOpacity style={styles.footerBtnContainer} onPress={onPress} activeOpacity={0.7}>
-      <Animated.View style={{ transform: [{ scale }, { translateY: lift }] }}>
-        <View>
-          <IconComponent name={iconName as any} size={SIZES.icon.md} color={color} />
+    <Pressable
+      style={styles.footerBtnContainer}
+      onPress={onPress}
+      onPressIn={() => Animated.spring(press, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 0 }).start()}
+      onPressOut={() => Animated.spring(press, { toValue: 0, useNativeDriver: true, speed: 30, bounciness: 8 }).start()}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: isActive }}
+      accessibilityLabel={badgeCount > 0 ? `${tab.label}, ${badgeCount} unread notifications` : tab.label}
+      hitSlop={6}
+    >
+      <Animated.View style={{ transform: [{ scale }], alignItems: 'center' }}>
+        <View style={styles.iconSlot}>
+          <Animated.View style={[styles.activePill, { opacity: progress, transform: [{ scale: pillScale }] }]} />
+          <IconComponent name={iconName as any} size={SIZES.icon.md} color={isActive ? COLORS.contentBrand : COLORS.accentTint} />
           {badgeCount > 0 && (
             <View style={styles.tabBadge}>
               <Text style={styles.tabBadgeText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
             </View>
           )}
         </View>
+        <Text numberOfLines={1} style={[styles.label, isActive ? styles.activeText : styles.inactiveText]}>{tab.label}</Text>
       </Animated.View>
-      <Text style={isActive ? styles.activeText : styles.inactiveText}>{tab.label}</Text>
-      {/* {isActive && <View style={styles.activeDot} />} */}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -166,16 +148,28 @@ function BottomTab({ activeScreen }: BottomTabProps) {
   };
 
   return (
-    <View style={[styles.footerContainer, { paddingBottom: Math.max(insets.bottom, SIZES.space.xs) }]}>
-      {TABS.map((tab) => (
-        <AnimatedTab
-          key={tab.key}
-          tab={tab}
-          isActive={activeScreen === tab.key}
-          onPress={() => handlePress(tab.screen)}
-          badgeCount={tab.key === 'ALERTS' ? unreadCount : 0}
-        />
-      ))}
+    <View pointerEvents="box-none" style={[styles.host, { paddingBottom: insets.bottom + (Platform.OS === 'ios' ? 0 : 10) }]}>
+      <View style={styles.shadowWrap}>
+        <View style={styles.capsule}>
+          <LinearGradient
+            colors={[COLORS.brandStrong, COLORS.brand, COLORS.brandMuted]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradient}
+          />
+          <View style={styles.footerContainer}>
+            {TABS.map((tab) => (
+              <AnimatedTab
+                key={tab.key}
+                tab={tab}
+                isActive={activeScreen === tab.key}
+                onPress={() => handlePress(tab.screen)}
+                badgeCount={tab.key === 'ALERTS' ? unreadCount : 0}
+              />
+            ))}
+          </View>
+        </View>
+      </View>
     </View>
   );
 }

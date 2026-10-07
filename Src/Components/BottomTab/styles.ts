@@ -1,115 +1,73 @@
-// styles.ts
-import { StyleSheet } from "react-native";
-import { COLORS, SIZES, FONTS, ELEVATION } from "../../Utills/AppTheme";
+import { StyleSheet } from 'react-native';
+import { COLORS, SIZES, FONTS, ELEVATION, moderateScale } from '../../Utills/AppTheme';
 
-const styles = StyleSheet.create({
-  footerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.surface,
-    minHeight: SIZES.tabBarHeight,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.accentSubtle,
-    paddingTop: SIZES.space.xs,
+export default StyleSheet.create({
+  host: {
+    backgroundColor: 'transparent',
+    paddingTop: SIZES.space.sm,
+    flexShrink: 0,
+  },
+  shadowWrap: {
+    marginHorizontal: SIZES.space.gutter,
+    borderRadius: SIZES.radius.pill,
     ...ELEVATION.floating,
   },
-
+  capsule: {
+    borderWidth: 1,
+    borderColor: COLORS.brandSoft,
+    backgroundColor: COLORS.brand,
+    borderRadius: SIZES.radius.pill,
+    overflow: 'hidden',
+  },
+  gradient: { ...StyleSheet.absoluteFillObject },
+  footerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
   footerBtnContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: SIZES.space.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 0,
   },
-
-  activeText: {
-    fontSize: SIZES.text.xxs,
-    fontFamily: FONTS.family.medium,
-    color: COLORS.contentBrand,
-    marginTop: SIZES.space.xs,
-    textAlign: "center",
-    includeFontPadding: false,
+  iconSlot: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: moderateScale(28),
   },
-
-  inactiveText: {
-    fontSize: SIZES.text.xxs,
-    fontFamily: FONTS.family.regular,
-    color: COLORS.contentSecondary,
-    marginTop: SIZES.space.xs,
-    textAlign: "center",
-    includeFontPadding: false,
+  activePill: {
+    position: 'absolute',
+    width: moderateScale(40),
+    height: moderateScale(28),
+    borderRadius: moderateScale(14),
+    backgroundColor: COLORS.accentTint,
   },
-
-  // Unread-count badge on the Alerts tab icon.
+  label: {
+    fontSize: 10,
+    marginTop: 3,
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  activeText: { color: COLORS.accentTint, fontFamily: FONTS.family.semiBold },
+  inactiveText: { color: COLORS.whiteAlpha80, fontFamily: FONTS.family.regular },
   tabBadge: {
-    position: "absolute",
-    top: -4,
-    right: -8,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: COLORS.danger,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 3,
+    position: 'absolute',
+    top: -3,
+    right: -10,
+    minWidth: 15,
+    height: 15,
+    borderRadius: SIZES.radius.pill,
+    backgroundColor: COLORS.accentDeep,
+    borderColor: COLORS.brand,
     borderWidth: 1.5,
-    borderColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
   },
   tabBadgeText: {
-    fontSize: 9,
+    fontSize: 8,
+    color: COLORS.contentPrimary,
     fontFamily: FONTS.family.bold,
-    color: COLORS.contentOnBrand,
-    includeFontPadding: false,
-  },
-
-  // Small dot under the icon of the active (non-center) tab.
-  activeDot: {
-    position: "absolute",
-    top: -5,
-    width: SIZES.radius.sm * 0.7,
-    height: SIZES.radius.sm * 0.7,
-    borderRadius: SIZES.radius.pill,
-    backgroundColor: COLORS.brand,
-  },
-
-  // Center "Home" tab — elevated pill/FAB style so it visually anchors the
-  // middle of the bar as requested.
-  centerContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  centerIconWrap: {
-    width: SIZES.icon.xl * 1.3,
-    height: SIZES.icon.xl * 1.3,
-    borderRadius: SIZES.radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3,
-    borderColor: COLORS.surface,
-    ...ELEVATION.brandGlow,
-  },
-  centerIconActive: {
-    backgroundColor: COLORS.brand,
-  },
-  centerIconInactive: {
-    backgroundColor: COLORS.contentSecondary,
-  },
-  centerActiveText: {
-    fontSize: SIZES.text.xxs,
-    fontFamily: FONTS.family.bold,
-    color: COLORS.contentBrand,
-    marginTop: SIZES.space.xs,
-    textAlign: "center",
-    includeFontPadding: false,
-  },
-  centerInactiveText: {
-    fontSize: SIZES.text.xxs,
-    fontFamily: FONTS.family.medium,
-    color: COLORS.contentSecondary,
-    marginTop: SIZES.space.xs,
-    textAlign: "center",
-    includeFontPadding: false,
   },
 });
-
-export default styles;

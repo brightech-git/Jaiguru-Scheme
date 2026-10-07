@@ -40,7 +40,7 @@ const GreetingSection: React.FC<GreetingSectionProps> = ({ greeting, name,  }) =
 
   return (
     <Animated.View style={style}>
-      <Text style={styles.day}>{todayDay}</Text>
+      <Text style={styles.day}>{todayDay},  {new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</Text>
       <Text style={styles.greeting}>{greeting} 👋</Text>
       <Text style={styles.welcome}>Welcome back, <Text style={styles.name}>{name}</Text></Text>
     </Animated.View>

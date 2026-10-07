@@ -11,6 +11,8 @@ import theme from '../../../Utills/AppTheme';
 import { AppPinInput, AppPinInputRef } from '../../../Components/ui/appcomponents';
 import MpinScaffold from '../Mpin/MpinScaffold';
 import LoginButton from '../Login/components/LoginButton';
+import { clearAuthData } from '../../../Utills/AsynchStorageHelper';
+import { clearFCMToken } from '../../../Helpers/NotificationHelper';
 
 const { COLORS, SIZES, FONTS } = theme;
 const MAX_ATTEMPTS = 5;
@@ -28,6 +30,7 @@ const MpinVerifyScreen = () => {
   const [locked, setLocked] = useState(false);
   const [lockTime, setLockTime] = useState(0);
   const [blockAutoSubmit, setBlockAutoSubmit] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const pinRef = useRef<AppPinInputRef>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -185,6 +188,32 @@ const MpinVerifyScreen = () => {
     ]);
   }, [navigation, showToast, locked, resetMpin]);
 
+  const handleLogout = useCallback(() => {
+    if (loading || loggingOut) return;
+    setBlockAutoSubmit(true);
+    resetMpin();
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel', onPress: () => setBlockAutoSubmit(false) },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          setLoggingOut(true);
+          try {
+            const result = await clearAuthData();
+            if (!result.success) throw new Error(result.error || 'Unable to logout');
+            await clearFCMToken();
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          } catch {
+            setLoggingOut(false);
+            setBlockAutoSubmit(false);
+            showToast({ message: 'Unable to logout. Please try again.', type: ToastTypes.ERROR, duration: 3000, position: ToastPositions.TOP });
+          }
+        },
+      },
+    ], { cancelable: false });
+  }, [loading, loggingOut, navigation, resetMpin, showToast]);
+
   const isSubmitDisabled = loading || locked || blockAutoSubmit || mpinValue.length !== 4;
 
   return (
@@ -195,6 +224,18 @@ const MpinVerifyScreen = () => {
         heading="Verify G-PIN"
         subtitle="Enter your 4-digit security G-PIN to access your account"
         showBack={false}
+        bottomContent={
+        <Pressable
+          onPress={handleLogout}
+          disabled={loading || loggingOut || blockAutoSubmit}
+          accessibilityRole="button"
+          accessibilityLabel="Logout"
+          style={[styles.logoutBtn, (loading || loggingOut || blockAutoSubmit) && styles.disabled]}
+        >
+          <MaterialCommunityIcons name="logout" size={SIZES.icon.sm} color={COLORS.danger} />
+          <Text style={styles.logoutText}>{loggingOut ? 'Logging out...' : 'Logout'}</Text>
+        </Pressable>
+        }
       >
         {locked && (
           <View style={styles.lockBox}>
@@ -257,6 +298,8 @@ const MpinVerifyScreen = () => {
           />
         </View>
 
+
+
         <View style={styles.secureRow}>
           <MaterialCommunityIcons name="shield-check" size={SIZES.icon.xs} color={COLORS.success} />
           <Text style={styles.secureText}>Your G-PIN is stored securely on your device</Text>
@@ -301,8 +344,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   timerFill: { height: '100%', borderRadius: 2, backgroundColor: COLORS.danger },
-  pinRow: { alignItems: 'center' },
-  eyeBtn: { marginTop: SIZES.space.lg, padding: SIZES.space.xs },
+  pinRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  eyeBtn: { padding: SIZES.space.xs },
   attemptsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -339,6 +382,25 @@ const styles = StyleSheet.create({
   },
   disabled: { opacity: 0.5 },
   footer: { marginTop: SIZES.space.xxxl },
+  logoutBtn: {
+    alignSelf: 'center',
+    flexShrink: 0,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SIZES.space.sm,
+    paddingHorizontal: SIZES.space.lg,
+    borderWidth: 1,
+    borderColor: COLORS.danger,
+    borderRadius: SIZES.radius.lg,
+  },
+  logoutText: {
+    fontFamily: FONTS.family.semiBold,
+    fontSize: SIZES.text.sm,
+    color: COLORS.danger,
+    marginLeft: SIZES.space.xs,
+  },
   secureRow: {
     flexDirection: 'row',
     alignItems: 'center',
