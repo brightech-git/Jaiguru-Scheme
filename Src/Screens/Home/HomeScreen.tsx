@@ -21,7 +21,6 @@ import MainPageWithYouTube from "../../Components/Youtube/Youtube";
 import { ScreenWrapper } from "../../Components/ui/appcomponents";
 import HomeHeader from "./components/HomeHeader";
 import HomeQuickActions from "./components/HomeQuickActions";
-import ShowroomLocatorCard from "./components/ShowroomLocatorCard";
 import { useCompany } from "../../api/hooks/Company/useCompany";
 
 const { COLORS, FONTS, SIZES, moderateScale } = theme;
@@ -228,7 +227,6 @@ const HomeScreen = () => {
 
 
 
-        <ShowroomLocatorCard onPress={() => navigation.navigate('Showrooms')} />
 
         <SectionHeader eyebrow="THE JAIGURU EDIT" title="Stories & collections" subtitle="Discover what is new in our world of jewellery." />
         <View style={styles.youtubeWrapper}>
@@ -286,8 +284,8 @@ const styles = StyleSheet.create({
   sectionRule: { flex: 1, minWidth: 12, height: 1, backgroundColor: COLORS.accentStrong },
   sectionSubtitle: { fontFamily: FONTS.family.regular, fontSize: 11, lineHeight: 18, color: COLORS.contentMuted, marginTop: 4 },
   brandFooter: { alignItems: 'center', paddingTop: SIZES.space.xxxl, paddingBottom: SIZES.space.lg, gap: SIZES.space.sm },
-  footerBrand: { fontFamily: FONTS.family.semiBold, fontSize: 11, letterSpacing: 2, color: COLORS.brand },
-  footerTagline: { fontFamily: FONTS.family.regular, fontSize: 10, color: COLORS.contentMuted },
+  footerBrand: { fontFamily: FONTS.family.semiBold, fontSize: 13, letterSpacing: 2, color: COLORS.brand },
+  footerTagline: { fontFamily: FONTS.family.semiBold, fontSize: 12, color: COLORS.contentMuted },
 
   // Help card
   helpCard: {

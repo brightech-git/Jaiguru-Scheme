@@ -33,8 +33,11 @@ import GoogleContactOtpScreen from '../Screens/Auth/GoogleContactUpdate/GoogleCo
 import HelpCentre from '../Screens/HelpCenter/HelpCenter';
 import KnowMore from '../Screens/KnowMore/KnowMore'
 import ProfileScreen from '../Screens/Profile/Profile';
+import RedemptionScreen from '../Screens/Redemption/RedemptionScreen';
+import Redeematstore from '../Screens/Redemption/Redeematstore';
+import RedemptionOtp from '../Screens/Redemption/RedemptionOtp';
 import MyProfileScreen from '../Screens/Profile/MyProfile';
-import ShowroomsScreen from '../Screens/Showrooms/Showrooms';
+import RedemptionHistory from '../Screens/Redemption/RedemptionHistory';
 import RegisterInfoScreen from '../Screens/Auth/RegisterInfo/RegisterInfo';
 import RegistrationWelcomeScreen from '../Screens/Auth/RegisterInfo/registration-welcome';
 import SplashScreen from '../Screens/Splash/SplashScreen';
@@ -129,8 +132,11 @@ export default function StackNavigator() {
         <Stack.Screen name="HelpCenter" component={HelpCentre} />
         <Stack.Screen name="KnowMore" component={KnowMore} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Redemption" component={RedemptionScreen} />
+        <Stack.Screen name="Redeematstore" component={Redeematstore} />
+        <Stack.Screen name="RedemptionOtp" component={RedemptionOtp} />
         <Stack.Screen name="MyProfile" component={MyProfileScreen} />
-        <Stack.Screen name="Showrooms" component={ShowroomsScreen} />
+        <Stack.Screen name="RedemptionHistory" component={RedemptionHistory} />
         <Stack.Screen name="RegisterInfo" component={RegisterInfoScreen} />
         <Stack.Screen name="RegistrationWelcome" component={RegistrationWelcomeScreen} />
         <Stack.Screen name="WastageCard" component={WastageCardScreen} />

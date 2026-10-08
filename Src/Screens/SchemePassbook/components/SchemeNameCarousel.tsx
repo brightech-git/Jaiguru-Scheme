@@ -53,20 +53,26 @@ export default function SchemeNameCarousel({
   memberName,
   mobileNumber,
   memberKyc,
+  cardHeight,
+  matchMemberCardHeight = false,
 }: {
   names: { rows: { label: string; value: string }[] }[];
   children: React.ReactNode;
   memberName?: string;
   mobileNumber?: string;
   memberKyc?: MemberKycInfo;
+  cardHeight?: number;
+  matchMemberCardHeight?: boolean;
 }) {
   const [width, setWidth] = useState(0);
   const [active, setActive] = useState(0);
   const [slideHeights, setSlideHeights] = useState<Record<number, number>>({});
 
   const totalSlides = 1 + (memberKyc ? 1 : 0) + names.length;
-  const measured = Object.keys(slideHeights).length === totalSlides;
-  const maxHeight = measured ? Math.max(...Object.values(slideHeights)) : undefined;
+  const measured = cardHeight != null || Object.keys(slideHeights).length === totalSlides;
+  const maxHeight = cardHeight ?? (measured
+    ? matchMemberCardHeight && memberKyc ? slideHeights[1] : Math.max(...Object.values(slideHeights))
+    : undefined);
   const fullHeightChildren = React.Children.map(children, (child) =>
     React.isValidElement<{ style?: StyleProp<ViewStyle> }>(child)
       ? React.cloneElement(child, {
@@ -83,6 +89,7 @@ export default function SchemeNameCarousel({
   const kycSlide = (
     <LinearGradient colors={GOLD_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
       style={[styles.card, maxHeight ? { height: maxHeight } : undefined]}>
+      <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', gap: SIZES.space.sm }}>
       <KycRow label="Name" value={memberKyc?.name || NA} />
       <View style={styles.divider} />
       <KycRow label="Address" value={memberKyc?.address || NA} showKyc kycDone={memberKyc?.addressKyc} onKyc={memberKyc?.onAddressKyc} />
@@ -90,6 +97,7 @@ export default function SchemeNameCarousel({
       <KycRow label="Aadhaar No." value={memberKyc?.aadhaarNo || NA} showKyc kycDone={memberKyc?.aadhaarKyc} onKyc={memberKyc?.onAadhaarKyc} />
       <View style={styles.divider} />
       <KycRow label="Mobile" value={memberKyc?.mobile || NA} />
+      </ScrollView>
     </LinearGradient>
   );
 

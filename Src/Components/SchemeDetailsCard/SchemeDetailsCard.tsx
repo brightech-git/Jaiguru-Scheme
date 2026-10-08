@@ -5,6 +5,7 @@ import { View, ActivityIndicator, StyleSheet, TouchableOpacity, FlatList, Refres
 import { useMySchemes } from '../../api/hooks/Account/useMySchemes';
 import { getUserId } from '../../Utills/AsynchStorageHelper';
 import { userService, UserKycDetails } from '../../api/services/userService';
+import { redemptionService } from '../../api/services/redemptionService';
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { Account } from '../../types/Account/Account';
 import { COLORS, SIZES, FONTS, ELEVATION } from '../../Utills/AppTheme';
@@ -13,6 +14,19 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
 const CARD_SPACING = SIZES.space.lg;
+
+function hasReachedMaturity(maturityDate?: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:$|T|\s)/.exec(maturityDate || '');
+  if (!match || maturityDate?.startsWith('1900-01-01')) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const maturity = new Date(year, month - 1, day);
+  if (maturity.getFullYear() !== year || maturity.getMonth() !== month - 1 || maturity.getDate() !== day) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return maturity.getTime() <= today.getTime();
+}
 
 // Compare calendar months, including the year, without shifting date-only
 // backend values through UTC conversion. No previous payment allows payment.
@@ -35,6 +49,22 @@ function getNextDueDate(account: Account): string | undefined {
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return undefined;
   date.setDate(date.getDate() + 30);
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
+function CompletedIndicator({ redeemed = false }: { redeemed?: boolean }) {
+  const opacity = useSharedValue(1);
+  const reducedMotion = useReducedMotion();
+  useFocusEffect(useCallback(() => {
+    opacity.value = reducedMotion ? 1 : withRepeat(withSequence(
+      withTiming(0.4, { duration: 900 }),
+      withTiming(1, { duration: 900 }),
+    ), -1);
+    return () => { cancelAnimation(opacity); opacity.value = 1; };
+  }, [opacity, reducedMotion]));
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return <Animated.View style={[styles.completedBadge, redeemed && styles.redeemedBadge, animatedStyle]}>
+    <Text style={[styles.completedBadgeText, redeemed && styles.redeemedText]}>{redeemed ? '✓ Redeemed' : '✓ Completed'}</Text>
+  </Animated.View>;
 }
 
 function OverdueIndicator() {
@@ -65,6 +95,25 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<any>();
   const [userKyc, setUserKyc] = useState<UserKycDetails | null>(null);
+  const [redemptionStatus, setRedemptionStatus] = useState<Record<string, 'redeemed' | 'available' | 'error'>>({});
+  const [redemptionRefresh, setRedemptionRefresh] = useState(0);
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    setRedemptionStatus({});
+    void Promise.allSettled(accounts.map(async account => {
+      const key = `${account.groupCode}-${account.regNo}`;
+      let status: 'redeemed' | 'available' | 'error';
+      try {
+        const estimates = await redemptionService.getEstimates({ groupCode: account.groupCode, regNo: account.regNo });
+        if (!Array.isArray(estimates)) throw new Error('Invalid estimate response');
+        status = estimates.some(item => item.GROUPCODE === account.groupCode && Number(item.RegNo) === Number(account.regNo) && Number.isInteger(Number(item.SlipNo)) && Number(item.SlipNo) > 0) ? 'redeemed' : 'available';
+      } catch {
+        status = 'error';
+      }
+      if (active) setRedemptionStatus(previous => ({ ...previous, [key]: status }));
+    }));
+    return () => { active = false; };
+  }, [accounts, redemptionRefresh]));
 
   useFocusEffect(useCallback(() => {
     let active = true;
@@ -88,9 +137,11 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
   // so the "all / active / due / completed" filter actually narrows results.
   const filteredAccounts = useMemo(() => {
     if (!accounts) return accounts;
-    if (filter === 'all') return accounts;
 
     return accounts.filter((account) => {
+      const redemption = redemptionStatus[`${account.groupCode}-${account.regNo}`];
+      if (!redemption || redemption === 'redeemed') return false;
+      if (filter === 'all') return true;
       const balance = account.schemeSummary?.schemaSummaryTransBalance;
       const insPaid = parseInt(balance?.insPaid || '0', 10);
       const instalment = parseInt(account.schemeSummary?.instalment || '0', 10);
@@ -103,7 +154,7 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
       if (filter === 'active') return !isFullyPaid && !isPaymentDue;
       return true;
     });
-  }, [accounts, filter]);
+  }, [accounts, filter, redemptionStatus]);
 
   useFocusEffect(
     useCallback(() => {
@@ -113,7 +164,10 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
   );
 
   // Memoized values - must be called unconditionally
-  const accountCount = useMemo(() => accounts?.length || 0, [accounts]);
+  const accountCount = useMemo(() => accounts.filter(account => {
+    const status = redemptionStatus[`${account.groupCode}-${account.regNo}`];
+    return !!status && status !== 'redeemed';
+  }).length, [accounts, redemptionStatus]);
 
   // Memoize list props unconditionally
   const listProps = useMemo(() => {
@@ -226,6 +280,9 @@ const formatDate = useCallback((dateString?: string) => {
       const isFullyPaid = instalment > 0 && insPaid >= instalment;
       const isPaymentDue = !isFullyPaid && nextDueDate && new Date(nextDueDate.split('T')[0].split(' ')[0] + 'T00:00:00') <= new Date();
       const paidThisMonth = isPaidThisMonth(lastPaidDate);
+      const redemption = redemptionStatus[`${groupCode}-${regNo}`];
+      const isRedeemed = isFullyPaid && redemption === 'redeemed';
+      const isMatured = hasReachedMaturity(maturityDate);
 
       return (
         <View style={[styles.cardWrapper, layout === 'vertical' && styles.cardWrapperVertical]}>
@@ -242,7 +299,7 @@ const formatDate = useCallback((dateString?: string) => {
                   <Text style={styles.schemeBadgeText}>{schemeSName}</Text>
                 </View>
               </View>
-              {isPaymentDue && <OverdueIndicator />}
+              {isFullyPaid ? <CompletedIndicator redeemed={isRedeemed} /> : isPaymentDue && <OverdueIndicator />}
             </View>
 
             <View style={styles.divider} />
@@ -309,11 +366,15 @@ const formatDate = useCallback((dateString?: string) => {
                 <TouchableOpacity style={styles.viewButton} onPress={() => handleViewDetails(account)} activeOpacity={0.7}>
                   <Text style={styles.viewButtonText}>View Details</Text>
                 </TouchableOpacity>
-                {isFullyPaid ? (
-                  <View style={styles.fullyPaidBadge}>
-                    <Text style={styles.fullyPaidText}>✓ Fully Paid</Text>
-                  </View>
-                ) : (
+                {isFullyPaid ? (isRedeemed || isMatured ? (
+                  <TouchableOpacity style={[styles.fullyPaidBadge, isRedeemed && styles.redeemedBadge]} accessibilityRole="button" disabled={isRedeemed || !redemption} accessibilityState={{ disabled: isRedeemed || !redemption }} onPress={() => {
+                    if (!hasReachedMaturity(account.maturityDate) || isRedeemed) return;
+                    if (redemption === 'error') setRedemptionRefresh(value => value + 1);
+                    else if (redemption === 'available') navigation.navigate('Redemption', { accountData: account });
+                  }} activeOpacity={0.7}>
+                    <Text style={[styles.fullyPaidText, isRedeemed && styles.redeemedText]}>{isRedeemed ? '✓ Redeemed' : !redemption ? 'Checking…' : redemption === 'error' ? 'Retry Status' : '✓ Redeem Now'}</Text>
+                  </TouchableOpacity>
+                ) : null) : (
                   <TouchableOpacity
                     style={[styles.payButton, isPaymentDue && styles.payButtonDue, paidThisMonth && styles.payButtonDisabled]}
                     disabled={paidThisMonth}
@@ -346,7 +407,7 @@ const formatDate = useCallback((dateString?: string) => {
         </View>
       );
     },
-    [formatDate, handleViewDetails, handlePayNow, layout, userKyc, navigation]
+    [formatDate, handleViewDetails, handlePayNow, layout, userKyc, navigation, redemptionStatus]
   );
 
   // Header Component
@@ -413,8 +474,11 @@ const formatDate = useCallback((dateString?: string) => {
       <View style={styles.container}>
         {layout === 'horizontal' && renderHeader()}
         <View style={styles.center}>
-          <Text style={styles.noAccountText}>No schemes match this filter</Text>
-          <Text style={styles.emptySubtext}>Try a different filter to see your other schemes.</Text>
+          {accounts.some(account => !redemptionStatus[`${account.groupCode}-${account.regNo}`]) ? (
+            <><ActivityIndicator color={COLORS.brand} /><Text style={styles.loadingText}>Checking your schemes…</Text></>
+          ) : (
+            <><Text style={styles.noAccountText}>{filter === 'all' ? 'No unredeemed schemes' : 'No schemes match this filter'}</Text><Text style={styles.emptySubtext}>View redeemed schemes in Profile → History.</Text></>
+          )}
         </View>
       </View>
     );
@@ -592,6 +656,21 @@ const styles = StyleSheet.create({
     fontSize: SIZES.text.xxs,
     fontWeight: 'bold',
   },
+  completedBadge: {
+    backgroundColor: '#E8F5E9',
+    flexShrink: 0,
+    paddingHorizontal: SIZES.space.sm,
+    paddingVertical: SIZES.space.xs,
+    borderRadius: SIZES.radius.sm,
+    borderWidth: 1,
+    borderColor: '#43A047',
+  },
+  completedBadgeText: {
+    ...FONTS.label,
+    color: '#2E7D32',
+    fontSize: SIZES.text.md,
+    fontFamily: FONTS.family.bold,
+  },
   dueBadge: {
     backgroundColor: COLORS.dangerSurface,
     flexShrink: 0,
@@ -601,7 +680,7 @@ const styles = StyleSheet.create({
   },
   dueBadgeText: {
     ...FONTS.label,
-    color: COLORS.dangerText,
+    color: COLORS.info,
     fontSize: SIZES.text.md,
   },
   divider: {
@@ -781,6 +860,13 @@ const styles = StyleSheet.create({
     color: '#2E7D32',
     fontSize: SIZES.text.md,
     fontFamily: FONTS.family.bold,
+  },
+  redeemedBadge: {
+    backgroundColor: COLORS.dangerSurface,
+    borderColor: COLORS.dangerText,
+  },
+  redeemedText: {
+    color: COLORS.dangerText,
   },
   payButtonText: {
     ...FONTS.bodyEmphasis,

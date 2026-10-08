@@ -190,6 +190,7 @@ const MemberCreation = () => {
   const createMemberPayload = useCallback(
     (formData: any, regNo: number): CreateMemberPayload => {
       const user = userRegistrationData;
+      const nickname = String(formData.nickname || '').trim();
       const aadhaar = user.aadharNumber?.replace(/\s/g, '') || '';
       const maskedAadhaar = aadhaar.length >= 4 ? `XXXX-XXXX-${aadhaar.slice(-4)}` : '';
       const nowDateTime = new Date().toISOString().slice(0, 10) + ' 00:00:00';
@@ -199,7 +200,7 @@ const MemberCreation = () => {
           title: PAYMENT_CONSTANTS.TITLE,
           initial: (user.userName?.[0] || PAYMENT_CONSTANTS.INITIAL_FALLBACK).toUpperCase(),
           pName: user.userName || 'NA',
-          sName: user.lastName || 'NA',
+          sName: nickname || user.lastName || 'NA',
           doorNo: user.doorNo || '',
           address1: user.street || '',
           address2: '',
@@ -287,6 +288,7 @@ const MemberCreation = () => {
           mobile: loginMobile,
           userId: '999',
           appVer: 'Web',
+          sName: String(formData.nickname || '').trim(),
         },
         createSchemeSummary: {
           schemeId: formData.schemeId || 0,

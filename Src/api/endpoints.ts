@@ -63,6 +63,12 @@ export const ACCOUNT = {
   TRANSACTION_TYPES: '/account/getTranType',
 };
 
+export const REDEMPTION = {
+  GET_ESTIMATES: '/redemption/estimate',
+  SEND_OTP: '/redemption/otp/send',
+  VERIFY_OTP: '/redemption/otp/verify',
+};
+
 export const MEMBER = {
   KYC_STATUS: (personalId: string | number) => `/member/kyc-status/${encodeURIComponent(String(personalId))}`,
   DETAILS: (personalId: string | number) => `/member/details/${encodeURIComponent(String(personalId).toLowerCase())}`,

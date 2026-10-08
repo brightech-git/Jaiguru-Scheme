@@ -1,7 +1,12 @@
 import React, { useState } from "react";
-import { View, Pressable, StyleSheet } from "react-native";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import { View, Pressable, ScrollView, StyleSheet } from "react-native";
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -29,12 +34,20 @@ import PassbookSummaryCard, {
 } from "./components/PassbookSummaryCard";
 import PassbookMetricCard from "./components/PassbookMetricCard";
 import PassbookHistoryTable from "./components/PassbookHistoryTable";
-import SchemeNameCarousel, { MemberKycInfo } from "./components/SchemeNameCarousel";
-import { dateLabel, money, paidThisMonth, toNumber, maskAadhaar } from "./passbookUtils";
+import SchemeNameCarousel, {
+  MemberKycInfo,
+} from "./components/SchemeNameCarousel";
+import {
+  dateLabel,
+  money,
+  paidThisMonth,
+  toNumber,
+  maskAadhaar,
+} from "./passbookUtils";
 
-
-import { userService, UserKycDetails } from '../../api/services/userService';
-import { getUserId } from '../../Utills/AsynchStorageHelper';
+import { userService, UserKycDetails } from "../../api/services/userService";
+import { redemptionService } from "../../api/services/redemptionService";
+import { getUserId } from "../../Utills/AsynchStorageHelper";
 
 const { COLORS, SIZES } = theme;
 type Tab = "history" | "details" | "overview";
@@ -52,7 +65,10 @@ function PassbookStatusBadge({ status }: { status: string }) {
     if (status === "Active" && !reducedMotion) {
       opacity.set(
         withRepeat(
-          withTiming(0.3, { duration: 800, easing: Easing.bezier(0.77, 0, 0.175, 1) }),
+          withTiming(0.3, {
+            duration: 800,
+            easing: Easing.bezier(0.77, 0, 0.175, 1),
+          }),
           -1,
           true,
         ),
@@ -62,7 +78,13 @@ function PassbookStatusBadge({ status }: { status: string }) {
   }, [status, reducedMotion, opacity]);
   const blinkStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
   return (
-    <Animated.View style={[styles.status, blinkStyle]}>
+    <Animated.View
+      style={[
+        styles.status,
+        status === "Redeemed" && { backgroundColor: COLORS.dangerText },
+        blinkStyle,
+      ]}
+    >
       <AppText variant="captionBold" color={COLORS.white}>
         {status}
       </AppText>
@@ -77,7 +99,10 @@ function GoldBadge() {
     if (reducedMotion) return;
     opacity.set(
       withRepeat(
-        withTiming(0.3, { duration: 800, easing: Easing.bezier(0.77, 0, 0.175, 1) }),
+        withTiming(0.3, {
+          duration: 800,
+          easing: Easing.bezier(0.77, 0, 0.175, 1),
+        }),
         -1,
         true,
       ),
@@ -104,23 +129,75 @@ export default function SchemePassbook() {
   const [tab, setTab] = useState<Tab>("history");
   const [kycDetails, setKycDetails] = useState<UserKycDetails | null>(null);
   const [kycError, setKycError] = useState<string | null>(null);
-  useFocusEffect(React.useCallback(() => {
-    let active = true;
-    setKycDetails(null);
-    setKycError(null);
-    (async () => {
-      try {
-        const userId = await getUserId();
-        if (!userId) throw new Error('User ID is unavailable.');
-        const response = await userService.getDetails(userId);
-        if (active) setKycDetails(response);
-      } catch {
-        if (active) setKycError('Unable to check KYC status. Reopen this page to retry.');
+  const [redemptionStatus, setRedemptionStatus] = useState<
+    "checking" | "redeemed" | "available" | "error"
+  >("checking");
+  const [redemptionRetry, setRedemptionRetry] = useState(0);
+  const [redemptionSlipNo, setRedemptionSlipNo] = useState<number | null>(null);
+  useFocusEffect(
+    React.useCallback(() => {
+      let active = true;
+      setRedemptionStatus("checking");
+      setRedemptionSlipNo(null);
+      if (data) {
+        void redemptionService
+          .getEstimates({ groupCode: data.groupCode, regNo: data.regNo })
+          .then((estimates) => {
+            if (!Array.isArray(estimates))
+              throw new Error("Invalid estimate response");
+            const slips = estimates.filter(
+              (item) =>
+                item.GROUPCODE === data.groupCode &&
+                Number(item.RegNo) === Number(data.regNo) &&
+                Number.isInteger(Number(item.SlipNo)) &&
+                Number(item.SlipNo) > 0,
+            );
+            const latestSlip = slips.reduce<number | null>(
+              (latest, item) =>
+                latest === null
+                  ? Number(item.SlipNo)
+                  : Math.max(latest, Number(item.SlipNo)),
+              null,
+            );
+            if (active) {
+              setRedemptionSlipNo(latestSlip);
+              setRedemptionStatus(
+                latestSlip !== null ? "redeemed" : "available",
+              );
+            }
+          })
+          .catch(() => {
+            if (active) setRedemptionStatus("error");
+          });
       }
-    })();
-    return () => { active = false; };
-  }, []));
-
+      return () => {
+        active = false;
+      };
+    }, [data?.groupCode, data?.regNo, redemptionRetry]),
+  );
+  useFocusEffect(
+    React.useCallback(() => {
+      let active = true;
+      setKycDetails(null);
+      setKycError(null);
+      (async () => {
+        try {
+          const userId = await getUserId();
+          if (!userId) throw new Error("User ID is unavailable.");
+          const response = await userService.getDetails(userId);
+          if (active) setKycDetails(response);
+        } catch {
+          if (active)
+            setKycError(
+              "Unable to check KYC status. Reopen this page to retry.",
+            );
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   const goBack = () =>
     params?.fromScreen === "payment"
@@ -163,17 +240,26 @@ export default function SchemePassbook() {
     !completed &&
     !!data.nextDueDate &&
     data.nextDueDate.slice(0, 10) <= todayDate;
-  const status = closed
-    ? "Closed"
-    : completed
-      ? "Completed"
-      : due && !thisMonthPaid
-        ? "Payment due"
-        : "Active";
-  const canPay = !closed && !completed && !thisMonthPaid;
+  const status =
+    redemptionStatus === "redeemed"
+      ? "Redeemed"
+      : closed
+        ? "Closed"
+        : completed
+          ? "Completed"
+          : due && !thisMonthPaid
+            ? "Payment due"
+            : "Active";
+  const canPay =
+    redemptionStatus === "available" && !closed && !completed && !thisMonthPaid;
   const aadhaarKyc = kycDetails?.aadhaarVerified === true;
   const addressKyc = kycDetails?.kycVerified === true;
-  const aadhaarNo = maskAadhaar(kycDetails?.maskedAadhaar || personal?.maskedAadhaar || data.maskedAadhaar || personal?.aadhaarNo);
+  const aadhaarNo = maskAadhaar(
+    kycDetails?.maskedAadhaar ||
+      personal?.maskedAadhaar ||
+      data.maskedAadhaar ||
+      personal?.aadhaarNo,
+  );
   const remaining = Math.max(0, total - paid) * amount;
   const address = [
     personal?.doorNo,
@@ -273,7 +359,7 @@ export default function SchemePassbook() {
         />
       }
       footer={
-        !closed && !completed ? (
+        redemptionStatus === "available" && !closed && !completed ? (
           <View style={styles.footer}>
             <View style={styles.footerInfo}>
               <AppText variant="captionBold">
@@ -301,7 +387,24 @@ export default function SchemePassbook() {
         ) : undefined
       }
     >
+      {redemptionStatus === "checking" && (
+        <AppText variant="caption" style={{ marginBottom: SIZES.space.sm }}>
+          Checking redemption status…
+        </AppText>
+      )}
+      {redemptionStatus === "error" && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setRedemptionRetry((value) => value + 1)}
+          style={{ paddingVertical: SIZES.space.sm }}
+        >
+          <AppText variant="bodySmall" color={COLORS.dangerText}>
+            Unable to check redemption status. Tap to retry.
+          </AppText>
+        </Pressable>
+      )}
       <SchemeNameCarousel
+        matchMemberCardHeight
         memberName={data.pName}
         mobileNumber={personal?.mobile || personal?.mobile2}
         memberKyc={{
@@ -311,26 +414,34 @@ export default function SchemePassbook() {
           mobile: personal?.mobile || personal?.mobile2,
           aadhaarKyc,
           addressKyc,
-          onAddressKyc: () => navigation.navigate("PassbookKyc", { account: data, section: "address" }),
-          onAadhaarKyc: () => navigation.navigate("PassbookKyc", { account: data, section: "aadhaar" }),
+          onAddressKyc: () =>
+            navigation.navigate("PassbookKyc", {
+              account: data,
+              section: "address",
+            }),
+          onAadhaarKyc: () =>
+            navigation.navigate("PassbookKyc", {
+              account: data,
+              section: "aadhaar",
+            }),
         }}
         names={[]}
       >
+        <View style={styles.heroShadow}>
+        <View style={styles.heroGlass}>
+          <BlurView tint="light" intensity={35} pointerEvents="none" style={StyleSheet.absoluteFill} />
+        <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         <LinearGradient
-  colors={[
-    "#C9A55B",
-    "#DBBD79",
-    "#F4E2A4",
-    "#D3AE62",
-    "#C39A4F",
-    "#fae59f",
-    "#D8B56F",
-    "#B98D3D"
-  ]}
-  start={{ x: 0, y: 0 }}
-  end={{ x: 1, y: 1 }}
-  style={styles.hero}
->
+          colors={[
+            COLORS.whiteAlpha80,
+            COLORS.whiteAlpha20,
+            COLORS.accentAlpha32,
+          ]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <View pointerEvents="none" style={styles.heroGlow} />
           <View
             style={{
               flexDirection: "row",
@@ -339,7 +450,11 @@ export default function SchemePassbook() {
               gap: SIZES.space.sm,
             }}
           >
-            <AppText variant="h4" color={COLORS.contentOnAccent} style={styles.schemeTitle}>
+            <AppText
+              variant="h4"
+              color={COLORS.contentOnAccent}
+              style={styles.schemeTitle}
+            >
               {scheme?.schemeName || "Your scheme"}
             </AppText>
             <View style={styles.statusContainer}>
@@ -354,7 +469,14 @@ export default function SchemePassbook() {
               gap: SIZES.space.sm,
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: SIZES.space.sm, flex: 1 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: SIZES.space.sm,
+                flex: 1,
+              }}
+            >
               <AppText variant="h4" color={COLORS.black}>
                 {data.pName}
               </AppText>
@@ -364,6 +486,7 @@ export default function SchemePassbook() {
             </View>
             {hasWeight && <GoldBadge />}
           </View>
+
           {flexible ? (
             <>
               <AppText variant="captionBold" color={COLORS.contentPrimary}>
@@ -396,9 +519,25 @@ export default function SchemePassbook() {
               ? `Last paid ${dateLabel(data.lastPaidDate)}`
               : "No payments yet"}
           </AppText>
+          {redemptionStatus === "redeemed" && redemptionSlipNo !== null && (
+            <AppText variant="h4" color={COLORS.black}>
+              Closing Slip No: {redemptionSlipNo}
+            </AppText>
+          )}
         </LinearGradient>
+        </ScrollView>
+        </View>
+        </View>
       </SchemeNameCarousel>
-      {!!kycError && <AppText variant="caption" color={COLORS.dangerText} style={{ marginTop: SIZES.space.sm }}>{kycError}</AppText>}
+      {!!kycError && (
+        <AppText
+          variant="caption"
+          color={COLORS.dangerText}
+          style={{ marginTop: SIZES.space.sm }}
+        >
+          {kycError}
+        </AppText>
+      )}
       <View style={styles.tabs}>
         {(["history", "details", "overview"] as Tab[]).map((key) => (
           <Pressable
@@ -483,9 +622,31 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   hero: {
+    flexGrow: 1,
     padding: SIZES.space.xl,
     borderRadius: SIZES.radius.card,
     gap: SIZES.space.sm,
+  },
+  heroShadow: {
+    borderRadius: SIZES.radius.card,
+    ...theme.ELEVATION.raised,
+  },
+  heroGlass: {
+    flex: 1,
+    borderRadius: SIZES.radius.card,
+    overflow: 'hidden',
+    backgroundColor: COLORS.whiteAlpha50,
+    borderWidth: 1,
+    borderColor: COLORS.whiteAlpha90,
+  },
+  heroGlow: {
+    position: 'absolute',
+    right: -45,
+    top: -65,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    backgroundColor: COLORS.accentAlpha32,
   },
   status: {
     alignSelf: "flex-start",

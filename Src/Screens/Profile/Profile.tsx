@@ -91,6 +91,15 @@ const MENU_SECTIONS: MenuSection[] = [
         bgColor: COLORS.brandAlpha16,
         onPress: (nav) => nav.navigate('ResetMPIN'),
       },
+      {
+        key: 'redemptionhistory',
+        label: 'History',
+        icon: 'history',
+        iconLib: 'MaterialIcons',
+        iconColor: COLORS.brand,
+        bgColor: COLORS.brandAlpha16,
+        onPress: (nav) => nav.navigate('RedemptionHistory'),
+      },
     ],
   },
   {
@@ -414,7 +423,7 @@ const ProfileScreen = () => {
                     <View style={[styles.menuIconWrap, { backgroundColor: item.bgColor ?? COLORS.brandAlpha16 }]}>
                       <MaterialIcons name={item.icon as any} size={20} color={item.iconColor ?? COLORS.brand} />
                     </View>
-                    <AppText variant="body" color={item.danger ? COLORS.danger : COLORS.contentPrimary} style={{ flex: 1 }}>
+                    <AppText variant="bodyBold" color={item.danger ? COLORS.danger : COLORS.contentPrimary} style={{ flex: 1 }}>
                       {item.label}
                     </AppText>
                     <MaterialIcons name="chevron-right" size={20} color={COLORS.contentMuted} />

@@ -1,7 +1,7 @@
 import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/Maintenance/MaintenanceScreen.tsx
-import React, { useEffect } from 'react';
-import { Dimensions, Image, StatusBar, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, StatusBar, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -22,11 +22,27 @@ const { width } = Dimensions.get('window');
 
 interface Props {
   message?: string;
+  onUnlock?: () => void;
 }
 
 const MaintenanceScreen: React.FC<Props> = ({
   message = 'The app is currently under maintenance. Please try again later.',
+  onUnlock,
 }) => {
+  const taps = useRef(0);
+  const [showAccess, setShowAccess] = useState(false);
+  const [password, setPassword] = useState('');
+  const [accessError, setAccessError] = useState('');
+  const closeAccess = () => { setShowAccess(false); setPassword(''); setAccessError(''); };
+  const tapLogo = () => {
+    taps.current += 1;
+    if (taps.current >= 3) { taps.current = 0; setShowAccess(true); }
+  };
+  const unlock = () => {
+    if (password !== 'JAIGURU@321') { setAccessError('Incorrect password. Please try again.'); return; }
+    closeAccess();
+    onUnlock?.();
+  };
   const pulse = useSharedValue(1);
   const float = useSharedValue(0);
 
@@ -71,7 +87,9 @@ const MaintenanceScreen: React.FC<Props> = ({
         <View style={styles.content}>
 
           {/* Logo */}
-          <Image source={appLogo} style={styles.logo} resizeMode="contain" />
+          <Pressable accessibilityRole="button" accessibilityLabel="Company logo" onPress={tapLogo}>
+            <Image source={appLogo} style={styles.logo} resizeMode="contain" />
+          </Pressable>
 
           {/* Animated wrench icon */}
           <Animated.View style={[styles.iconWrap, iconStyle]}>
@@ -114,11 +132,31 @@ const MaintenanceScreen: React.FC<Props> = ({
           </Text>
         </View>
       </SafeAreaView>
+      <Modal visible={showAccess} transparent animationType="fade" onRequestClose={closeAccess}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.accessBackdrop}>
+          <View style={styles.accessCard} accessibilityViewIsModal>
+            <Text style={styles.accessTitle}>Member Access</Text>
+            <TextInput value={password} onChangeText={value => { setPassword(value); setAccessError(''); }} secureTextEntry autoCapitalize="none" autoCorrect={false} autoFocus placeholder="Enter access password" placeholderTextColor={COLORS.contentMuted} style={styles.accessInput} accessibilityLabel="Maintenance access password" onSubmitEditing={unlock} returnKeyType="done" />
+            {!!accessError && <Text style={styles.accessError}>{accessError}</Text>}
+            <Pressable accessibilityRole="button" onPress={unlock} style={styles.accessButton}><Text style={styles.accessButtonText}>Verify Password</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={closeAccess} style={styles.accessCancel}><Text style={styles.accessCancelText}>Cancel</Text></Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  accessBackdrop: { flex: 1, justifyContent: 'center', padding: SIZES.space.lg, backgroundColor: 'rgba(0,0,0,0.6)' },
+  accessCard: { alignSelf: 'center', width: '100%', maxWidth: 380, padding: SIZES.space.lg, borderRadius: SIZES.radius.card, backgroundColor: COLORS.accentTint },
+  accessTitle: { ...FONTS.heading, color: COLORS.brand, textAlign: 'center', marginBottom: SIZES.space.lg },
+  accessInput: { fontFamily: FONTS.family.regular, color: COLORS.contentPrimary, borderWidth: 1, borderColor: COLORS.brandAlpha32, borderRadius: SIZES.radius.md, padding: SIZES.space.md },
+  accessError: { ...FONTS.bodySm, color: COLORS.dangerText, marginTop: SIZES.space.sm },
+  accessButton: { backgroundColor: COLORS.brand, padding: SIZES.space.md, borderRadius: SIZES.radius.md, alignItems: 'center', marginTop: SIZES.space.lg },
+  accessButtonText: { ...FONTS.action, color: COLORS.contentOnBrand },
+  accessCancel: { padding: SIZES.space.md, alignItems: 'center' },
+  accessCancelText: { ...FONTS.body, color: COLORS.contentSecondary },
   root: { flex: 1 },
   safe: { flex: 1 },
   content: {

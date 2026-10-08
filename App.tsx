@@ -24,6 +24,7 @@ import { API_BASE_URL } from './Src/Config/BaseUrl';
 export default function App() {
   const [appReady, setAppReady] = useState(false);
   const [isMaintenance, setIsMaintenance] = useState(false);
+  const [maintenanceBypassed, setMaintenanceBypassed] = useState(false);
   const [maintenanceMsg, setMaintenanceMsg] = useState<string | undefined>();
   const [forceUpdate, setForceUpdate] = useState<ForceUpdateInfo | null>(null);
 
@@ -79,9 +80,9 @@ export default function App() {
     };
   }, []);
 
-  // if (isMaintenance) {
-  //   return <MaintenanceScreen message={maintenanceMsg} />;
-  // }
+  if (isMaintenance && !maintenanceBypassed) {
+    return <MaintenanceScreen message={maintenanceMsg} onUnlock={() => setMaintenanceBypassed(true)} />;
+  }
 
   if (forceUpdate && fontsLoaded && appReady) {
     return (

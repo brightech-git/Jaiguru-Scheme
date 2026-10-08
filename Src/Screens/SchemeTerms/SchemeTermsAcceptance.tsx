@@ -83,8 +83,8 @@ const SchemeTermsAcceptance = () => {
             </View>
             <Text style={{ ...FONTS.bodyStrong, color: COLORS.contentSecondary, flex: 1 }}>
               {language === 'ta'
-                ? 'திட்டத்தின் விதிமுறைகள் மற்றும் நிபந்தனைகளைப் படித்து ஏற்றுக்கொள்கிறேன்.'
-                : 'I Have Read And Accept The Plan Terms And Conditions.'}
+                ? 'எனக்கு 18 வயது அல்லது அதற்கு மேற்பட்ட வயது உள்ளது என்பதை உறுதிப்படுத்துகிறேன்.திட்டத்தின் விதிமுறைகள் மற்றும் நிபந்தனைகளை நான் படித்து ஏற்றுக்கொண்டுள்ளேன்.'
+                : 'I confirm that I am 18 years of age or above, and I have read and accept the Plan Terms and Conditions.'}
             </Text>
           </TouchableOpacity>
           <AppButton label={language === 'ta' ? 'திட்டத்தில் சேரவும்' : 'Join Scheme'} onPress={joinScheme} loading={isJoining} disabled={!accepted || isJoining} />
