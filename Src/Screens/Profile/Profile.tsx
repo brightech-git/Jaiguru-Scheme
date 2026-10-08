@@ -348,7 +348,7 @@ const ProfileScreen = () => {
                 </View>
               </TouchableOpacity>
               <TouchableOpacity onPress={handlePhotoPress} disabled={photoLoading} style={styles.photoAction}>
-                <AppText variant="captionBold" color={COLORS.brand}>{photoLoading ? 'Updating photo...' : user.picture ? 'Change photo' : 'Add photo'}</AppText>
+                {/* <AppText variant="captionBold" color={COLORS.brand}>{photoLoading ? 'Updating photo...' : user.picture ? 'Change photo' : 'Add photo'}</AppText> */}
               </TouchableOpacity>
 
               <View style={styles.nameRowCenter}>

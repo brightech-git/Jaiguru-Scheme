@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
@@ -33,13 +33,15 @@ export default function MyProfileScreen() {
     <View style={styles.root}>
       <PremiumBackground />
       <CommonHeader title="My Profile" showBack transparent borderBottom={false} shadow={false} />
+      <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <SafeAreaView edges={['bottom']} style={styles.body}>
         {loading ? <ActivityIndicator color={COLORS.brand} style={styles.loading} /> : (
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-            <ProfileDetailsSection key={String(userId)} userId={userId} />
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+            <ProfileDetailsSection key={String(userId)} userId={userId} allowEdit />
           </ScrollView>
         )}
       </SafeAreaView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
