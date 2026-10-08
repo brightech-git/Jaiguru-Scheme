@@ -1,7 +1,8 @@
+import ApiImage from '../../ApiImage';
 import { Text } from '../../Typography/FontText';
 // Src/Components/ui/appcomponents/AppAvatar.tsx
 import React from 'react';
-import { View, Image, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleProp, ViewStyle } from 'react-native';
 import theme from '../../../Utills/AppTheme';
 
 const { COLORS, FONTS } = theme;
@@ -42,7 +43,7 @@ export default function AppAvatar({ uri, initials, size = 'medium', style }: App
   };
 
   if (uri) {
-    return <Image source={{ uri }} style={[containerStyle, style] as any} />;
+    return <ApiImage source={{ uri }} style={[containerStyle, style] as any} />;
   }
 
   return (

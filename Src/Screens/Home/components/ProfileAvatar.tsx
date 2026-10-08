@@ -1,3 +1,4 @@
+import ApiImage from '../../../Components/ApiImage';
 import { Text } from '../../../Components/Typography/FontText';
 // Src/Screens/Home/components/ProfileAvatar.tsx
 // -----------------------------------------------------------------------------
@@ -6,7 +7,7 @@ import { Text } from '../../../Components/Typography/FontText';
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
@@ -50,7 +51,7 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({ name, imageUrl, size = 52
       >
         <LinearGradient colors={RING} style={[styles.ring, { width: size, height: size, borderRadius: size / 2 }]}>
           {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={{ width: inner, height: inner, borderRadius: inner / 2 }} />
+            <ApiImage source={{ uri: imageUrl }} style={{ width: inner, height: inner, borderRadius: inner / 2 }} />
           ) : (
             <View style={[styles.initialsWrap, { width: inner, height: inner, borderRadius: inner / 2 }]}>
               <Text style={styles.initials}>{getInitials(name)}</Text>

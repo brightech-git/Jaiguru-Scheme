@@ -1,3 +1,4 @@
+import ApiImage from '../../Components/ApiImage';
 // Src/Screens/Profile/Profile.tsx
 //
 // "Profile" tab — redesigned UI structure.
@@ -19,7 +20,7 @@ import Constants from 'expo-constants';
 import * as ImagePicker from 'expo-image-picker';
 import { userService } from '../../api/services/userService';
 import { IMAGE_BASE_URL } from '../../Config/BaseUrl';
-import { View, ScrollView, Image, ActivityIndicator, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Alert, StyleSheet, TouchableOpacity, Modal, Pressable, Linking } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
@@ -172,6 +173,7 @@ const ProfileScreen = () => {
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const photoBusy = useRef(false);
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
 
   const loadUser = useCallback(async () => {
     try {
@@ -225,12 +227,24 @@ const ProfileScreen = () => {
     if (!saved.success) Alert.alert('Photo saved', 'Your photo was updated on the server, but could not be saved on this device.');
   };
 
-  const choosePhoto = async () => {
+  const choosePhoto = async (source: 'gallery' | 'camera' = 'gallery') => {
+    setPhotoMenuOpen(false);
     if (photoBusy.current || user.id === null) return;
     photoBusy.current = true;
     setPhotoLoading(true);
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
+      if (source === 'camera') {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert('Camera permission required', 'Allow camera access to take your profile photo.', [
+            { text: 'Cancel', style: 'cancel' },
+            ...(!permission.canAskAgain ? [{ text: 'Open Settings', onPress: () => { void Linking.openSettings(); } }] : []),
+          ]);
+          return;
+        }
+      }
+      const picker = source === 'camera' ? ImagePicker.launchCameraAsync : ImagePicker.launchImageLibraryAsync;
+      const result = await picker({
         mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
@@ -281,11 +295,7 @@ const ProfileScreen = () => {
       Alert.alert('Profile unavailable', 'Please sign in again to update your profile photo.');
       return;
     }
-    Alert.alert('Profile Photo', 'Choose an option', [
-      { text: 'Choose Photo', onPress: choosePhoto },
-      ...(user.picture ? [{ text: 'Remove Photo', style: 'destructive' as const, onPress: removePhoto }] : []),
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+    setPhotoMenuOpen(true);
   };
 
   const handleLogout = () => {
@@ -333,7 +343,7 @@ const ProfileScreen = () => {
                 >
                   <View style={styles.avatarInner}>
                     {user.picture && !photoFailed ? (
-                      <Image source={{ uri: user.picture }} style={styles.avatarImage} onError={() => setPhotoFailed(true)} />
+                      <ApiImage source={{ uri: user.picture }} style={styles.avatarImage} onError={() => setPhotoFailed(true)} />
                     ) : (
                       <View style={[styles.avatarFallback, { backgroundColor: getAvatarColor(user.name) }]}>
                         <AppText variant="h2" color={COLORS.contentOnBrand}>
@@ -457,6 +467,19 @@ const ProfileScreen = () => {
         <View style={{ height: 20 }} />
       </ScrollView>
       <BottomTab activeScreen="PROFILE" />
+      <Modal visible={photoMenuOpen} transparent animationType="fade" onRequestClose={() => setPhotoMenuOpen(false)}>
+        <View style={styles.photoMenuOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setPhotoMenuOpen(false)} accessibilityLabel="Close photo options" accessibilityRole="button" />
+          <View style={styles.photoMenu} accessibilityViewIsModal>
+            <AppText variant="h3">Profile photo</AppText>
+            <AppText variant="bodySmall" color={COLORS.contentSecondary}>Choose how to add your photo</AppText>
+            <TouchableOpacity style={styles.photoMenuRow} onPress={() => choosePhoto('camera')} accessibilityRole="button"><MaterialIcons name="photo-camera" size={24} color={COLORS.brand} /><AppText variant="bodyBold">Take Photo</AppText></TouchableOpacity>
+            <TouchableOpacity style={styles.photoMenuRow} onPress={() => choosePhoto('gallery')} accessibilityRole="button"><MaterialIcons name="photo-library" size={24} color={COLORS.brand} /><AppText variant="bodyBold">Choose from Gallery</AppText></TouchableOpacity>
+            {!!user.picture && <TouchableOpacity style={styles.photoMenuRow} onPress={() => { setPhotoMenuOpen(false); removePhoto(); }} accessibilityRole="button"><MaterialIcons name="delete-outline" size={24} color={COLORS.danger} /><AppText variant="bodyBold" color={COLORS.danger}>Remove Photo</AppText></TouchableOpacity>}
+            <TouchableOpacity style={styles.photoMenuRow} onPress={() => setPhotoMenuOpen(false)} accessibilityRole="button"><AppText variant="bodyBold" color={COLORS.contentSecondary}>Cancel</AppText></TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -464,6 +487,9 @@ const ProfileScreen = () => {
 export default ProfileScreen;
 
 const styles = StyleSheet.create({
+  photoMenuOverlay: { flex: 1, justifyContent: 'center', padding: SIZES.space.lg, backgroundColor: 'rgba(0,0,0,0.45)' },
+  photoMenu: { padding: SIZES.space.lg, backgroundColor: COLORS.surface, borderRadius: SIZES.radius.card, gap: SIZES.space.sm },
+  photoMenuRow: { flexDirection: 'row', alignItems: 'center', gap: SIZES.space.md, minHeight: 52, paddingVertical: SIZES.space.sm },
   container: {
     flex: 1,
     backgroundColor: COLORS.surfacePage,

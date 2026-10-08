@@ -1,7 +1,7 @@
 import { Text } from '../Typography/FontText';
 // Floating capsule navigation with the existing stack destinations.
 import React, { useEffect, useRef } from 'react';
-import { View, Pressable, Animated, Platform } from 'react-native';
+import { View, Pressable, Animated, Platform, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
@@ -79,6 +79,7 @@ interface AnimatedTabProps {
 }
 
 const AnimatedTab = ({ tab, isActive, onPress, badgeCount = 0 }: AnimatedTabProps) => {
+  const { fontScale } = useWindowDimensions();
   const progress = useRef(new Animated.Value(isActive ? 1 : 0)).current;
   const press = useRef(new Animated.Value(0)).current;
 
@@ -107,7 +108,7 @@ const AnimatedTab = ({ tab, isActive, onPress, badgeCount = 0 }: AnimatedTabProp
       accessibilityLabel={badgeCount > 0 ? `${tab.label}, ${badgeCount} unread notifications` : tab.label}
       hitSlop={6}
     >
-      <Animated.View style={{ transform: [{ scale }], alignItems: 'center' }}>
+      <Animated.View style={{ transform: [{ scale }], alignItems: 'center', width: '100%' }}>
         <View style={styles.iconSlot}>
           <Animated.View style={[styles.activePill, { opacity: progress, transform: [{ scale: pillScale }] }]} />
           <IconComponent name={iconName as any} size={SIZES.icon.md} color={isActive ? COLORS.contentBrand : COLORS.accentTint} />
@@ -117,7 +118,9 @@ const AnimatedTab = ({ tab, isActive, onPress, badgeCount = 0 }: AnimatedTabProp
             </View>
           )}
         </View>
-        <Text numberOfLines={1} style={[styles.label, isActive ? styles.activeText : styles.inactiveText]}>{tab.label}</Text>
+        <View style={[styles.labelSlot, { minHeight: 28 * fontScale }]}>
+          <Text style={[styles.label, isActive ? styles.activeText : styles.inactiveText]}>{tab.label.replace(' ', '\n')}</Text>
+        </View>
       </Animated.View>
     </Pressable>
   );

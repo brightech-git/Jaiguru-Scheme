@@ -29,7 +29,8 @@ export default StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 60,
+    minWidth: 0,
+    paddingHorizontal: 2,
   },
   iconSlot: {
     alignItems: 'center',
@@ -48,7 +49,10 @@ export default StyleSheet.create({
     marginTop: 3,
     letterSpacing: 0.2,
     textAlign: 'center',
+    lineHeight: 14,
+    width: '100%',
   },
+  labelSlot: { width: '100%', justifyContent: 'center' },
   activeText: { color: COLORS.accentTint, fontFamily: FONTS.family.semiBold },
   inactiveText: { color: COLORS.whiteAlpha80, fontFamily: FONTS.family.regular },
   tabBadge: {

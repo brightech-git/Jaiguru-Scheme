@@ -80,19 +80,19 @@ export default function App() {
     };
   }, []);
 
-  if (isMaintenance && !maintenanceBypassed) {
-    return <MaintenanceScreen message={maintenanceMsg} onUnlock={() => setMaintenanceBypassed(true)} />;
-  }
-
-  // if (forceUpdate && fontsLoaded && appReady) {
-  //   return (
-  //     <ForceUpdateScreen
-  //       currentVersion={forceUpdate.currentVersion}
-  //       latestVersion={forceUpdate.latestVersion}
-  //       storeUrl={forceUpdate.storeUrl}
-  //     />
-  //   );
+  // if (isMaintenance && !maintenanceBypassed) {
+  //   return <MaintenanceScreen message={maintenanceMsg} onUnlock={() => setMaintenanceBypassed(true)} />;
   // }
+
+  if (forceUpdate && fontsLoaded && appReady) {
+    return (
+      <ForceUpdateScreen
+        currentVersion={forceUpdate.currentVersion}
+        latestVersion={forceUpdate.latestVersion}
+        storeUrl={forceUpdate.storeUrl}
+      />
+    );
+  }
 
   // Show loading until fonts are loaded and app is ready
   if (!fontsLoaded || !appReady) {

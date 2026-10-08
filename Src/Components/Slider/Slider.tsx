@@ -1,12 +1,13 @@
 import { Text } from '../Typography/FontText';
 // Src/Components/Slider/Slider.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Image, ActivityIndicator, Animated, StyleSheet, FlatList, Dimensions, TouchableOpacity, ViewToken } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, FlatList, Dimensions, TouchableOpacity, ViewToken } from 'react-native';
+import ApiImage from '../ApiImage';
+import { imageUrl } from '../../Utills/imageUrl';
 import { useNavigation } from '@react-navigation/native';
 import { useSchemeSliders } from '../../api/hooks/HomeBanner/useSchemeSliders';
 import { useSchemeCatalog } from '../../api/hooks/Schemes/useSchemeCatalog';
 import { SchemeSlider } from '../../types/HomeBanner/HomeBanner';
-import { IMAGE_BASE_URL } from '../../Config/BaseUrl';
 import { COLORS, SIZES, FONTS, ELEVATION, moderateScale } from '../../Utills/AppTheme';
 
 // index 0 → MemberCreation, rest → WebView URLs in order
@@ -20,16 +21,14 @@ const SLIDE_LINKS: Array<{ type: 'screen'; screen: string } | { type: 'web'; url
 const { width } = Dimensions.get('window');
 
 const SlideItem = React.memo(({ item, index, onPress }: { item: SchemeSlider; index: number; onPress: (i: number) => void }) => {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const onLoad = () => Animated.timing(opacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
   return (
     <TouchableOpacity style={styles.slide} activeOpacity={0.9} onPress={() => onPress(index)}>
       <View style={[styles.image, { backgroundColor: COLORS.surfaceMuted, overflow: 'hidden' }]}>
-        <Animated.Image
-          source={{ uri: `${IMAGE_BASE_URL}${item.image_path}` }}
-          style={[styles.image, { opacity }]}
-          resizeMode="cover"
-          onLoad={onLoad}
+        <ApiImage
+          loadingPlaceholder="skeleton"
+          source={{ uri: imageUrl(item.image_path) }}
+          style={styles.image}
+          contentFit="cover"
         />
       </View>
     </TouchableOpacity>

@@ -1,6 +1,7 @@
+import ApiImage from '../ApiImage';
 import { Text } from '../Typography/FontText';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Image, StyleSheet, Animated, TouchableOpacity, Platform, StatusBar } from 'react-native';
+import { View, StyleSheet, Animated, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { EventEmitter } from 'eventemitter3';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import theme from '../../Utills/AppTheme';
@@ -66,7 +67,7 @@ const BannerContent = ({ data, onHide }: { data: BannerData; onHide: () => void 
             <Text style={styles.body} numberOfLines={2}>{data.body}</Text>
           </View>
           {data.imageUrl ? (
-            <Image source={{ uri: data.imageUrl }} style={styles.image} resizeMode="cover" />
+            <ApiImage source={{ uri: data.imageUrl }} style={styles.image} contentFit="cover" />
           ) : (
             <View style={styles.iconFallback}>
               <MaterialCommunityIcons name="bell" size={26} color={COLORS.contentBrand} />

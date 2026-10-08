@@ -1,6 +1,7 @@
+import ApiImage from '../ApiImage';
 import { Text } from '../Typography/FontText';
 import React, { useState, useMemo, useCallback, memo, useEffect, useRef } from "react";
-import { View, StyleSheet, TouchableOpacity, Dimensions, StatusBar, ScrollView, Animated, Platform, ActivityIndicator, Image, Easing } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Dimensions, StatusBar, ScrollView, Animated, Platform, ActivityIndicator, Easing } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -200,10 +201,10 @@ interface SidebarUser {
 const UserAvatar = memo(({ user, size = 60 }: { user: SidebarUser; size?: number }) => {
   if (user.picture && user.picture !== "") {
     return (
-      <Image
+      <ApiImage
         source={{ uri: user.picture }}
         style={[styles.avatarImage, { width: size, height: size }]}
-        resizeMode="cover"
+        contentFit="cover"
         defaultSource={require("../../Assets/Icons/avatar.jpg")}
       />
     );

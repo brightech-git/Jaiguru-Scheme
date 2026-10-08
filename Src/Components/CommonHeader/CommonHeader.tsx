@@ -130,7 +130,7 @@ const Header = ({
       ]}
     >
       {/* Left */}
-      <View style={styles.side}>
+      <View style={[styles.side, !leftComponent && !showBack && styles.emptySide]}>
         {leftComponent ? (
           leftComponent
         ) : showBack ? (
@@ -158,12 +158,12 @@ const Header = ({
         ) : (
           <>
             {!!title && (
-              <Text numberOfLines={1} style={[styles.title, { color: titleColor }]}>
+              <Text style={[styles.title, { color: titleColor, textAlign: centerTitle ? 'center' : 'left' }]}>
                 {title}
               </Text>
             )}
             {!!subtitle && (
-              <Text numberOfLines={1} style={[styles.subtitle, gradient && { color: COLORS.contentOnAccent }]}>
+              <Text style={[styles.subtitle, { textAlign: centerTitle ? 'center' : 'left' }, gradient && { color: COLORS.contentOnAccent }]}>
                 {subtitle}
               </Text>
             )}
@@ -172,7 +172,7 @@ const Header = ({
       </View>
 
       {/* Right */}
-      <View style={styles.side}>
+      <View style={[styles.side, !rightComponent && !rightIconName && styles.emptySide]}>
         {rightComponent ? (
           rightComponent
         ) : rightIconName ? (
@@ -231,9 +231,12 @@ const styles = StyleSheet.create({
     minWidth: moderateScale(52),
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
+  emptySide: { minWidth: 0, width: 0, overflow: 'hidden' },
   center: {
     flex: 1,
+    minWidth: 0,
     alignItems: 'center',
     paddingHorizontal: SIZES.space.sm,
   },
@@ -241,11 +244,15 @@ const styles = StyleSheet.create({
     ...FONTS.heading,
     fontSize: SIZES.text.xl,
     textAlign: 'center',
+    width: '100%',
+    flexShrink: 1,
   },
   subtitle: {
     ...FONTS.bodySm,
     color: COLORS.contentSecondary,
     marginTop: verticalScale(2),
+    width: '100%',
+    flexShrink: 1,
   },
   iconButton: {
     width: moderateScale(44),

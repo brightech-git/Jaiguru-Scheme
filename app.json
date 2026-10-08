@@ -2,7 +2,7 @@
   "expo": {
     "name": "Jaiguru DigiGold",
     "slug": "jaiguruscheme",
-    "version": "1.4.6",
+    "version": "1.4.7",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -83,7 +83,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow Jaiguru to select your profile photo.",
-          "cameraPermission": false,
+          "cameraPermission": "Allow Jaiguru to take your profile photo.",
           "microphonePermission": false
         }
       ]

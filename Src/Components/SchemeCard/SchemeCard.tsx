@@ -1,7 +1,9 @@
 import { Text } from '../Typography/FontText';
 // Src/Components/SchemeCard/SchemeCard.tsx
 import React, { useCallback, useRef, useState, useMemo } from 'react';
-import { View, FlatList, StyleSheet, ImageBackground, Dimensions } from 'react-native';
+import { View, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
+import ApiImage from '../ApiImage';
+import { imageUrl } from '../../Utills/imageUrl';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -22,16 +24,16 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import placeholderImage from '../../Assets/Company/logo.png';
 import { COLORS, SIZES, FONTS, moderateScale, ELEVATION } from '../../Utills/AppTheme';
-import { IMAGE_BASE_URL } from '../../Config/BaseUrl';
 
 const FontAnimatedText = Animated.createAnimatedComponent(Text);
 
 const THUMB_SIZE = moderateScale(44);
 
 function SlideToJoin({ onSlideComplete }: { onSlideComplete: () => void }) {
+  const { fontScale } = useWindowDimensions();
   const translateX = useSharedValue(0);
   const [trackWidth, setTrackWidth] = React.useState(0);
-  const maxSlide = Math.max(0, trackWidth - THUMB_SIZE - 4);
+  const maxSlide = Math.max(0, trackWidth - THUMB_SIZE - 10);
 
   const gesture = Gesture.Pan()
     .enabled(maxSlide > 0)
@@ -73,12 +75,12 @@ function SlideToJoin({ onSlideComplete }: { onSlideComplete: () => void }) {
 
   return (
     <View
-      style={styles.slideTrack}
+      style={[styles.slideTrack, { minHeight: Math.max(THUMB_SIZE + 12, 40 * fontScale + 16) }]}
       onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
     >
       <Animated.View style={[styles.slideFill, fillStyle]} />
-      <FontAnimatedText style={[styles.slideLabel, labelStyle]}>
-        Slide To View Terms & Join Now →
+      <FontAnimatedText style={[styles.slideLabel, labelStyle]} numberOfLines={2}>
+        Slide to view terms & join now →
       </FontAnimatedText>
       <GestureDetector gesture={gesture}>
         <Animated.View style={[styles.slideThumb, thumbStyle]}>
@@ -110,7 +112,7 @@ export default function SchemeCardSlider() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-  const screenWidth = Dimensions.get('window').width;
+  const { width: screenWidth } = useWindowDimensions();
   const HORIZONTAL_PAD = SIZES.space.lg;
   const CARD_WIDTH = screenWidth - HORIZONTAL_PAD * 3.5;
   const SNAP_INTERVAL = screenWidth;
@@ -122,7 +124,7 @@ export default function SchemeCardSlider() {
   }, [navigation]);
 
   const renderItem = ({ item }: { item: Scheme & { image_path?: string } }) => {
-    const imageUri = item.image_path ? `${IMAGE_BASE_URL}${item.image_path}` : placeholderImage;
+    const imageUri = item.image_path ? imageUrl(item.image_path) : placeholderImage;
 
     return (
       <View style={{ width: screenWidth, paddingHorizontal: HORIZONTAL_PAD }}>
@@ -138,10 +140,11 @@ export default function SchemeCardSlider() {
           </Animated.View>
         )}
         <View style={styles.cardContainer}>
-          <ImageBackground
+          <ApiImage
+            loadingPlaceholder="skeleton"
             source={typeof imageUri === 'string' ? { uri: imageUri } : imageUri}
             style={[styles.imageBackground, { height: IMAGE_HEIGHT }]}
-            resizeMode="cover"
+            contentFit="cover"
           />
           <View style={styles.buttonRow}>
             <SlideToJoin onSlideComplete={() => handleJoinScheme(item)} />
@@ -201,7 +204,7 @@ const styles = StyleSheet.create({
   },
   // Slide to join
   slideTrack: {
-    height: THUMB_SIZE,
+    minHeight: THUMB_SIZE + 12,
     borderRadius: SIZES.radius.pill,
     backgroundColor: COLORS.brandTint,
     borderWidth: 1,
@@ -217,14 +220,19 @@ const styles = StyleSheet.create({
     borderRadius: SIZES.radius.pill,
   },
   slideLabel: {
-    position: 'absolute',
-    alignSelf: 'center',
+    marginLeft: THUMB_SIZE + 12,
+    marginRight: 12,
+    paddingVertical: 8,
+    textAlign: 'center',
     fontFamily: FONTS.family.bold,
     fontSize: SIZES.text.sm,
     color: COLORS.contentBrand,
-    letterSpacing: 0.5,
+    lineHeight: 20,
+    letterSpacing: 0,
   },
   slideThumb: {
+    position: 'absolute',
+    left: 4,
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: SIZES.radius.pill,
