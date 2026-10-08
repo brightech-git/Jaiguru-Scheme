@@ -60,8 +60,18 @@ export const useRazorpayPayment = () => {
   const [razorpayOptions, setRazorpayOptions] = useState<Record<string, any> | null>(null);
   const resolveRef = useRef<((result: PaymentResult) => void) | null>(null);
   const currentOrderIdRef = useRef<string | null>(null);
+  const verifyingRef = useRef(false);
+
+  const finishPayment = useCallback((result: PaymentResult) => {
+    const resolve = resolveRef.current;
+    resolveRef.current = null;
+    currentOrderIdRef.current = null;
+    verifyingRef.current = false;
+    resolve?.(result);
+  }, []);
 
   const resetState = useCallback(() => {
+    if (resolveRef.current) return;
     setLoading(false);
     setPaymentStep(PAYMENT_STEPS.IDLE);
     setError(null);
@@ -70,6 +80,8 @@ export const useRazorpayPayment = () => {
   }, []);
 
   const handlePaymentSuccess = useCallback(async (paymentData: any) => {
+    if (!resolveRef.current || verifyingRef.current) return;
+    verifyingRef.current = true;
     setWebViewVisible(false);
 
     if (paymentData?.failed) {
@@ -78,42 +90,39 @@ export const useRazorpayPayment = () => {
       const errMsg = paymentData.error?.description || 'Payment failed';
       setError(errMsg);
       setLoading(false);
-      if (currentOrderIdRef.current) {
-        razorpayService.markFailed(currentOrderIdRef.current).catch(() => {});
-      }
-      resolveRef.current?.({ success: false, message: errMsg });
+      // A checkout error is not authoritative server payment status.
+      finishPayment({ success: false, message: errMsg });
       return;
     }
 
-    console.log('[SCHEME JOIN] STEP 5 — Payment SUCCESS from Razorpay checkout', { payment_id: paymentData.razorpay_payment_id, order_id: paymentData.razorpay_order_id });
     setPaymentStep(PAYMENT_STEPS.VERIFYING);
 
     try {
+      if (!paymentData ||
+          typeof paymentData.razorpay_payment_id !== 'string' || !paymentData.razorpay_payment_id ||
+          typeof paymentData.razorpay_signature !== 'string' || !paymentData.razorpay_signature ||
+          paymentData.razorpay_order_id !== currentOrderIdRef.current) {
+        throw new Error('Invalid payment response. Check your payment status before paying again.');
+      }
       const verifyPayload = {
-        razorpay_order_id: paymentData.razorpay_order_id,
+        razorpay_order_id: currentOrderIdRef.current!,
         razorpay_payment_id: paymentData.razorpay_payment_id,
         razorpay_signature: paymentData.razorpay_signature,
       };
-      console.log('[SCHEME JOIN] STEP 6 — Verifying payment with backend | PARAMS:', verifyPayload);
       const verifyResponse: any = await razorpayService.verifyPayment(verifyPayload);
-      console.log('[SCHEME JOIN] STEP 6 — verify-payment RESPONSE:', verifyResponse);
 
-      // Razorpay itself already confirmed the capture in STEP 5 (we have a
-      // real payment_id from checkout). If our backend's verify-payment
-      // comes back saying the payment was "already captured/processed" —
-      // whatever the exact success flag/code it uses for that case — it
-      // means the webhook (or a previous verify call) beat us to recording
-      // it, NOT that anything failed. Treat all of these as success so a
-      // real payment never surfaces as "FLOW FAILED" to the user.
+      // Only explicit backend results can confirm payment. Checkout alone
+      // does not prove capture; never infer success from message text.
       const alreadyHandledElsewhere =
         verifyResponse?.code === 'ALREADY_PAID' ||
-        verifyResponse?.code === 'ALREADY_PROCESSED' ||
-        /already\s*(captured|processed|paid)/i.test(verifyResponse?.message || '');
+        verifyResponse?.code === 'ALREADY_PROCESSED';
 
       const isVerifySuccess =
-        verifyResponse?.success === true ||
-        verifyResponse?.code === 'PAYMENT_SUCCESS' ||
-        alreadyHandledElsewhere;
+        verifyResponse?.success !== false && (
+          verifyResponse?.success === true ||
+          verifyResponse?.code === 'PAYMENT_SUCCESS' ||
+          alreadyHandledElsewhere
+        );
 
       if (!isVerifySuccess) throw new Error(verifyResponse?.message || 'Payment verification failed');
 
@@ -127,26 +136,26 @@ export const useRazorpayPayment = () => {
         processResult: verifyResponse?.data?.processResult,
         data: verifyResponse,
       };
-      resolveRef.current?.(successResult);
+      finishPayment(successResult);
     } catch (err: any) {
       console.log('[SCHEME JOIN] STEP 6 ERROR — Payment verification failed', err?.message);
       setPaymentStep(PAYMENT_STEPS.FAILED);
-      setError(err?.message);
+      const message = `Payment confirmation could not be completed. Check your payment history before paying again. ${err?.message || ''}`.trim();
+      setError(message);
       setLoading(false);
-      resolveRef.current?.({ success: false, message: err?.message, error: err });
+      finishPayment({ success: false, message, paymentId: paymentData?.razorpay_payment_id, error: err });
     }
-  }, []);
+  }, [finishPayment]);
 
   const handlePaymentDismiss = useCallback(() => {
-    console.log('[SCHEME JOIN] STEP 5 — User dismissed Razorpay checkout. Marking order as failed.');
+    if (!resolveRef.current || verifyingRef.current) return;
     setWebViewVisible(false);
     setPaymentStep(PAYMENT_STEPS.IDLE);
     setLoading(false);
-    if (currentOrderIdRef.current) {
-      razorpayService.markFailed(currentOrderIdRef.current).catch(() => {});
-    }
-    resolveRef.current?.({ success: false, message: 'Payment cancelled by user' });
-  }, []);
+    // Closing checkout cannot cancel a payment already submitted to a bank.
+    // Leave reconciliation to the backend and Razorpay webhooks.
+    finishPayment({ success: false, message: 'Payment cancelled by user' });
+  }, [finishPayment]);
 
   const startPayment = useCallback(
     (
@@ -156,7 +165,10 @@ export const useRazorpayPayment = () => {
       groupCode: string,
       orderExtras: OrderExtras
     ): Promise<PaymentResult> => {
-      if (!amount || amount <= 0) {
+      if (resolveRef.current) {
+        return Promise.resolve({ success: false, message: 'A payment is already in progress' });
+      }
+      if (!Number.isFinite(amount) || amount <= 0) {
         console.warn('[SCHEME JOIN] Invalid payment amount', { amount, regNo, groupCode });
         return Promise.resolve({ success: false, message: 'Invalid amount' });
       }
@@ -171,14 +183,14 @@ export const useRazorpayPayment = () => {
 
       return new Promise((resolve) => {
         resolveRef.current = resolve;
+        currentOrderIdRef.current = null;
+        verifyingRef.current = false;
         setLoading(true);
         setPaymentStep(PAYMENT_STEPS.CREATING_ORDER);
         setError(null);
 
         (async () => {
           try {
-            const createOrderParams = { amount, regNo, groupCode, newJoin: orderExtras.newJoin, nmData: orderExtras.nmData, schemeDetails: orderExtras.schemeDetails };
-            console.log('[SCHEME JOIN] STEP 3 — Creating Razorpay order | PARAMS:', createOrderParams);
             const orderResponse: any = await razorpayService.createOrder({
               amount,
               regNo,
@@ -187,11 +199,14 @@ export const useRazorpayPayment = () => {
               nmData: orderExtras.nmData,
               schemeDetails: orderExtras.schemeDetails,
             });
-            console.log('[SCHEME JOIN] STEP 3 — create-order RESPONSE:', orderResponse);
             if (!orderResponse?.success) throw new Error(orderResponse?.message || 'Order creation failed');
 
             const backendOrder = orderResponse.data;
-            if (!backendOrder?.order_id) throw new Error('Invalid order response from backend');
+            if (typeof backendOrder?.order_id !== 'string' || !backendOrder.order_id ||
+                typeof backendOrder.key !== 'string' || !backendOrder.key ||
+                !Number.isSafeInteger(Number(backendOrder.amount)) || Number(backendOrder.amount) <= 0) {
+              throw new Error('Invalid order response from backend');
+            }
 
             console.log('[SCHEME JOIN] STEP 4 — Order created, launching Razorpay checkout', { order_id: backendOrder.order_id, amount: backendOrder.amount });
             currentOrderIdRef.current = backendOrder.order_id;
@@ -224,17 +239,19 @@ export const useRazorpayPayment = () => {
             setRazorpayOptions(options);
             // iOS cannot present a new modal while another is still dismissing.
             // A short delay lets the PaymentModal fully unmount first.
-            setTimeout(() => setWebViewVisible(true), Platform.OS === 'ios' ? 400 : 0);
+            setTimeout(() => {
+              if (resolveRef.current && currentOrderIdRef.current === backendOrder.order_id) setWebViewVisible(true);
+            }, Platform.OS === 'ios' ? 400 : 0);
           } catch (err: any) {
             setPaymentStep(PAYMENT_STEPS.FAILED);
             setError(err?.message);
             setLoading(false);
-            resolve({ success: false, message: err?.message, error: err });
+            finishPayment({ success: false, message: err?.message, error: err });
           }
         })();
       });
     },
-    []
+    [finishPayment]
   );
 
   return {

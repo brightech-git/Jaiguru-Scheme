@@ -83,6 +83,7 @@ const buildHtml = (options: RazorpayOptions): string => {
     return window;
   };
 
+  try {
   var rzp = new Razorpay({
     key:         "${safeStr(o.key)}",
     amount:      ${parseInt(String(o.amount)) || 0},
@@ -96,6 +97,7 @@ const buildHtml = (options: RazorpayOptions): string => {
       contact: "${safeStr(o.prefill?.contact)}"
     },
     theme: { color: "${safeStr(o.theme?.color || COLORS.accent)}" },
+    retry: { enabled: false },
     handler: function (response) {
       if (paymentDone) return;
       paymentDone = true;
@@ -121,6 +123,12 @@ const buildHtml = (options: RazorpayOptions): string => {
   // Open once. Reopening on UPI return creates a second checkout while
   // the original checkout is still receiving the payment result.
   rzp.open();
+  } catch (error) {
+    if (!paymentDone) {
+      paymentDone = true;
+      post({ type: 'failed', data: { description: 'Unable to load secure checkout. Please check your connection.' } });
+    }
+  }
 })();
 </script>
 </body>
@@ -243,7 +251,10 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
         break;
       }
       case "newwindow": {
-        if (msg.url) setBankUrl(msg.url);
+        if (typeof msg.url === 'string' && /^https?:\/\//i.test(msg.url)) setBankUrl(msg.url);
+        else if (isUpiDeepLink(msg.url)) Linking.openURL(msg.url).catch(() => {
+          console.warn('[RazorpayWebView] Unable to open payment app');
+        });
         break;
       }
       default:
@@ -255,6 +266,7 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
   // ── UPI deep-link guard ──
   const shouldStartLoad = useCallback((req: { url: string }): boolean => {
     if (isUpiDeepLink(req.url)) {
+      if (paymentDone.current || dismissed.current) return false;
       Linking.openURL(req.url).catch(() => {});
       return false;
     }
@@ -318,6 +330,7 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
               ref={bankWebViewRef}
               source={{ uri: bankUrl }}
               onNavigationStateChange={handleBankNav}
+              onShouldStartLoadWithRequest={shouldStartLoad}
               onRenderProcessGone={handleRenderProcessGone}
               onContentProcessDidTerminate={handleContentProcessDidTerminate}
               startInLoadingState
