@@ -1,6 +1,6 @@
 import { Text } from './Typography/FontText';
-import React, { useRef, useState, useEffect, useCallback } from "react";
-import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, AppState, StatusBar, Platform } from "react-native";
+import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
+import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, StatusBar, Platform } from "react-native";
 import { WebView, WebViewNavigation } from "react-native-webview";
 import { COLORS, SIZES, FONTS } from "../Utills/AppTheme";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -97,6 +97,7 @@ const buildHtml = (options: RazorpayOptions): string => {
     },
     theme: { color: "${safeStr(o.theme?.color || COLORS.accent)}" },
     handler: function (response) {
+      if (paymentDone) return;
       paymentDone = true;
       post({ type: 'success', data: response });
     },
@@ -104,21 +105,21 @@ const buildHtml = (options: RazorpayOptions): string => {
       escape:        false,
       backdropclose: false,
       ondismiss: function () {
-        post({ type: 'dismiss', paymentDone: paymentDone });
+        if (paymentDone) return;
+        paymentDone = true;
+        post({ type: 'dismiss' });
       }
     }
   });
 
   rzp.on('payment.failed', function (response) {
+    if (paymentDone) return;
     paymentDone = true;
     post({ type: 'failed', data: response.error });
   });
 
-  // Expose status-check hook for UPI return
-  window.rzpCheckStatus = function () {
-    rzp.open();
-  };
-
+  // Open once. Reopening on UPI return creates a second checkout while
+  // the original checkout is still receiving the payment result.
   rzp.open();
 })();
 </script>
@@ -185,7 +186,6 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
 
   // Refs (no re-render needed)
   const paymentDone  = useRef(false);
-  const upiLaunched  = useRef(false);
   const dismissed    = useRef(false);
 
   // Keep latest callbacks in refs so handleMessage/shouldStartLoad never
@@ -198,36 +198,27 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
   const [bankUrl,       setBankUrl]       = useState<string | null>(null);
   const [bankTitle,     setBankTitle]     = useState("Bank Authentication");
   const [mainLoading,   setMainLoading]   = useState(true);
+  const checkoutSource = useMemo(() => options ? ({
+    html: buildHtml(options),
+    baseUrl: 'https://checkout.razorpay.com',
+  }) : null, [options]);
 
   // Reset all state when modal opens
   useEffect(() => {
     if (visible) {
       paymentDone.current = false;
-      upiLaunched.current = false;
       dismissed.current   = false;
       setBankUrl(null);
       setMainLoading(true);
     }
   }, [visible]);
 
-  // UPI app return — trigger Razorpay status check
-  useEffect(() => {
-    const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active" && upiLaunched.current && !paymentDone.current) {
-        upiLaunched.current = false;
-        mainWebViewRef.current?.injectJavaScript(
-          "if (window.rzpCheckStatus) window.rzpCheckStatus(); true;"
-        );
-      }
-    });
-    return () => sub.remove();
-  }, []);
-
   // ── Message handler ──
   const handleMessage = useCallback((event: any) => {
     let msg: any;
     try { msg = JSON.parse(event.nativeEvent.data); }
     catch { return; }
+    if (paymentDone.current || dismissed.current) return;
 
     switch (msg.type) {
       case "success": {
@@ -264,7 +255,6 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
   // ── UPI deep-link guard ──
   const shouldStartLoad = useCallback((req: { url: string }): boolean => {
     if (isUpiDeepLink(req.url)) {
-      upiLaunched.current = true;
       Linking.openURL(req.url).catch(() => {});
       return false;
     }
@@ -303,9 +293,7 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
   const closeBankView = useCallback(() => setBankUrl(null), []);
 
   // ── Guard: no options ──
-  if (!options) return null;
-
-  const htmlContent = buildHtml(options);
+  if (!visible || !checkoutSource) return null;
 
   return (
     <Modal
@@ -323,8 +311,8 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
       <SafeAreaView edges={['bottom']} style={styles.container}>
 
         {/* Bank WebView (3DS / NetBanking) */}
-        {bankUrl ? (
-          <View style={StyleSheet.absoluteFill}>
+        {bankUrl && (
+          <View style={[StyleSheet.absoluteFill, { zIndex: 1, backgroundColor: THEME.bg }]}>
             <WebViewHeader title={bankTitle} onBack={closeBankView} />
             <WebView
               ref={bankWebViewRef}
@@ -341,12 +329,12 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
               style={styles.flex}
             />
           </View>
-        ) : (
-          /* Main Razorpay WebView */
+        )}
+        {/* Main Razorpay WebView stays mounted underneath bank authentication. */}
           <View style={styles.flex}>
             <WebView
               ref={mainWebViewRef}
-              source={{ html: htmlContent, baseUrl: 'https://checkout.razorpay.com' }}
+              source={checkoutSource}
               onMessage={handleMessage}
               onShouldStartLoadWithRequest={shouldStartLoad}
               onRenderProcessGone={handleRenderProcessGone}
@@ -363,7 +351,6 @@ const RazorpayWebView = ({ visible, options, onSuccess, onDismiss }: RazorpayWeb
             />
             {mainLoading && <LoadingOverlay />}
           </View>
-        )}
       </SafeAreaView>
     </Modal>
   );
