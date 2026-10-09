@@ -119,7 +119,19 @@ export function useLogin(): UseLogin {
   const toggleRemember = useCallback(() => setRemember((r) => !r), []);
 
   // ---- Post-auth routing ----------------------------------------------------
-  const routeAfterAuth = useCallback(async (mpinSet?: string) => {
+  const routeAfterAuth = useCallback(async (mpinSet?: string, userId?: string | number) => {
+    // If username is not set, go to RegisterInfo first.
+    if (userId) {
+      try {
+        const { userService } = await import('../../../../api/services/userService');
+        const res: any = await userService.getDetails(userId);
+        const name = String(res?.username || '').trim();
+        if (!name) {
+          navigation.replace('RegisterInfo', { userId, contactNumber: res?.contactNumber });
+          return;
+        }
+      } catch { /* fall through to mpin routing */ }
+    }
     // Prefer the live API value ("Y"/"N") over the stored flag.
     const fromApi = mpinSet === 'Y';
     const fromStorage = await getMpinStatus();
@@ -154,7 +166,7 @@ export function useLogin(): UseLogin {
         if (res.mpinSet === 'Y') await AsyncStorage.setItem('hasMpin', 'true');
         else await AsyncStorage.setItem('hasMpin', 'false');
         showToast({ message: 'Login successful!', type: 'success' });
-        setTimeout(() => routeAfterAuth(res.mpinSet), 1200);
+        setTimeout(() => routeAfterAuth(res.mpinSet, res.id || res.userId), 1200);
       } else if (res?.message?.toLowerCase().includes('not registered')) {
         showToast({ message: 'You are not registered. Redirecting to Register...', type: 'warning' });
         setTimeout(() => navigation.navigate('Register'), 1500);

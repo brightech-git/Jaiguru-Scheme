@@ -1,14 +1,16 @@
 import { Text } from '../../../Components/Typography/FontText';
-import React, { useState } from "react";
-import { Keyboard, KeyboardAvoidingView, Platform, Pressable, StatusBar, StyleSheet, useWindowDimensions, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, StatusBar, StyleSheet, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import theme from "../../../Utills/AppTheme";
 import { useToast } from "../../../Components/Toast/Toast";
 import { authService } from "../../../api/services/authService";
+import { userService } from "../../../api/services/userService";
 import LuxuryInput from "../Login/components/LuxuryInput";
 import RegisterButton from "../Register/components/RegisterButton";
 import { updateUserData } from "../../../Utills/AsynchStorageHelper";
@@ -23,7 +25,9 @@ const GLOW_GRADIENT = [COLORS.accentSubtle, COLORS.whiteAlpha10] as [
 const RegisterInfoScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { userId, contactNumber } = route.params ?? {};
+  const { userId: paramUserId, contactNumber } = route.params ?? {};
+  const [resolvedUserId, setResolvedUserId] = useState<string | number | null>(paramUserId ?? null);
+  const [resolvedContact, setResolvedContact] = useState<string>(contactNumber ?? '');
   const { showToast, Toast } = useToast();
   const { width } = useWindowDimensions();
   const [availableHeight, setAvailableHeight] = useState(0);
@@ -35,6 +39,46 @@ const RegisterInfoScreen: React.FC = () => {
   const [usernameError, setUsernameError] = useState("");
   const [termsError, setTermsError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  // Resolve userId from AsyncStorage if not passed via params, then check API.
+  useEffect(() => {
+    const init = async () => {
+      let uid: string | number | null = paramUserId ?? null;
+      let contact = contactNumber ?? '';
+      if (!uid) {
+        const userData = await AsyncStorage.getItem('userData').catch(() => null);
+        const parsed = userData ? JSON.parse(userData) : null;
+        uid = parsed?.userId || parsed?.userid || null;
+        if (!contact) {
+          contact = String(parsed?.contactNumber || parsed?.mobile || '');
+        }
+      }
+      setResolvedUserId(uid);
+      setResolvedContact(contact);
+      if (!uid) { setChecking(false); return; }
+      try {
+        const res: any = await userService.getDetails(uid);
+        const name = String(res?.username || '').trim();
+        if (name) {
+          navigation.replace('RegistrationWelcome', { username: name });
+        } else {
+          setChecking(false);
+        }
+      } catch {
+        setChecking(false);
+      }
+    };
+    init();
+  }, []);
+
+  if (checking) {
+    return (
+      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.brand} />
+      </View>
+    );
+  }
 
   const validate = () => {
     if (!username.trim() || username.trim().length < 3) {
@@ -57,24 +101,28 @@ const RegisterInfoScreen: React.FC = () => {
   const submit = async () => {
     if (loading) return;
     if (!validate()) return;
+    if (!resolvedUserId) {
+      showToast({ message: 'Unable to identify your account. Please log in again.', type: 'error' });
+      return;
+    }
     console.log(
       "=== SUBMITTING UPDATE ===",
       JSON.stringify(
-        { userId, username: username.trim(), termsAccepted: true },
+        { userId: resolvedUserId, username: username.trim(), termsAccepted: true },
         null,
         2,
       ),
     );
     try {
       setLoading(true);
-      const res: any = await authService.updateUserInfo(userId, {
+      const res: any = await authService.updateUserInfo(resolvedUserId, {
         username: username.trim(),
         termsAccepted: true,
       });
       console.log(
         "=== UPDATE PAYLOAD ===",
         JSON.stringify(
-          { userId, username: username.trim(), termsAccepted: true },
+          { userId: resolvedUserId, username: username.trim(), termsAccepted: true },
           null,
           2,
         ),
@@ -239,7 +287,7 @@ const RegisterInfoScreen: React.FC = () => {
                     onSubmitEditing={Keyboard.dismiss}
                   />
 
-                  {contactNumber && !keyboardLayout ? (
+                  {resolvedContact && !keyboardLayout ? (
                     <View style={styles.verifiedPanel}>
                       <View style={styles.phoneIcon}>
                         <MaterialCommunityIcons
@@ -253,7 +301,7 @@ const RegisterInfoScreen: React.FC = () => {
                           Verified mobile number
                         </Text>
                         <Text selectable style={styles.phoneNumber}>
-                          {String(contactNumber)}
+                          {String(resolvedContact)}
                         </Text>
                       </View>
                       <MaterialCommunityIcons

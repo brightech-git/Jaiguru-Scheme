@@ -262,13 +262,13 @@ export default function SchemePassbook() {
   );
   const remaining = Math.max(0, total - paid) * amount;
   const address = [
-    personal?.doorNo,
-    personal?.address1,
+    kycDetails?.address1 || personal?.doorNo,
+    kycDetails?.address2 || personal?.address1,
     personal?.address2,
     personal?.area,
-    personal?.city,
-    personal?.state,
-    personal?.pinCode,
+    kycDetails?.city || personal?.city,
+    kycDetails?.state || personal?.state,
+    kycDetails?.pincode || personal?.pinCode,
   ]
     .filter(Boolean)
     .join(", ");

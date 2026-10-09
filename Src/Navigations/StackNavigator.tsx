@@ -51,6 +51,7 @@ const Stack = createNativeStackNavigator();
 
 export default function StackNavigator() {
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
+  const [initialParams, setInitialParams] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,6 +61,10 @@ export default function StackNavigator() {
         const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
         const token = await AsyncStorage.getItem('authToken');
         const hasMpin = await AsyncStorage.getItem('hasMpin');
+        const userId = await AsyncStorage.getItem('userId');
+        const userData = await AsyncStorage.getItem('userData');
+        const parsedUser = userData ? JSON.parse(userData) : null;
+        const hasUsername = !!String(parsedUser?.username || '').trim();
 
         /**
          * 🔀 FINAL FLOW
@@ -75,12 +80,18 @@ export default function StackNavigator() {
           setInitialRoute('Login');
         }
 
-        // 3️⃣ Logged in, MPIN not created → Create MPIN
+        // 3️⃣ Logged in, username not set → RegisterInfo (compulsory)
+        else if (!hasUsername) {
+          setInitialRoute('RegisterInfo');
+          setInitialParams({ userId, contactNumber: parsedUser?.contactNumber });
+        }
+
+        // 4️⃣ Logged in, username set, MPIN not created → Create MPIN
         else if (hasMpin !== 'true') {
           setInitialRoute('MpinCreate');
         }
 
-        // 4️⃣ Logged in + MPIN exists → ALWAYS Verify MPIN
+        // 5️⃣ Logged in + MPIN exists → ALWAYS Verify MPIN
         else {
           setInitialRoute('MpinVerify');
         }
@@ -137,7 +148,7 @@ export default function StackNavigator() {
         <Stack.Screen name="RedemptionOtp" component={RedemptionOtp} />
         <Stack.Screen name="MyProfile" component={MyProfileScreen} />
         <Stack.Screen name="RedemptionHistory" component={RedemptionHistory} />
-        <Stack.Screen name="RegisterInfo" component={RegisterInfoScreen} />
+        <Stack.Screen name="RegisterInfo" component={RegisterInfoScreen} initialParams={initialRoute === 'RegisterInfo' ? initialParams : undefined} />
         <Stack.Screen name="RegistrationWelcome" component={RegistrationWelcomeScreen} />
         <Stack.Screen name="WastageCard" component={WastageCardScreen} />
         <Stack.Screen name="Rates" component={RatesScreen} />
