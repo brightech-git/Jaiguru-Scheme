@@ -283,7 +283,7 @@ const MemberCreation = () => {
           mobile: loginMobile,
           userId: '999',
           appVer: 'Web',
-          sName: String(formData.nickname || '').trim(),
+          nomeni: String(formData.nickname || '').trim(),
         },
         createSchemeSummary: {
           schemeId: formData.schemeId || 0,

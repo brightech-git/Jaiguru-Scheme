@@ -7,6 +7,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { companyService } from '../../api/services/companyService';
+import { branchService, Branch } from '../../api/services/branchService';
 import { Company } from '../../types/Company/Company';
 import { API_BASE_URL, IMAGE_BASE_URL } from '../../Config/BaseUrl';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
@@ -90,7 +91,7 @@ const InfoRow = ({ icon, label, value, onPress, isLink, multiline }: InfoRowProp
       </View>
       <View style={[styles.infoContent, multiline ? { paddingVertical: 2 } : undefined]}>
         <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={[styles.infoValue, isLink && styles.linkText]} numberOfLines={multiline ? 3 : 1} ellipsizeMode="tail">
+        <Text style={[styles.infoValue, isLink && styles.linkText]} numberOfLines={multiline ? undefined : 1} ellipsizeMode="tail">
           {value}
         </Text>
       </View>
@@ -155,6 +156,8 @@ const SectionWrapper = ({
 
 const HelpCentreScreen = () => {
   const [company, setCompany] = useState<Company | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [branchError, setBranchError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +170,25 @@ const HelpCentreScreen = () => {
 
   const fetchCompanyDetails = useCallback(async () => {
     try {
-      const data = await companyService.getAll();
+      const [companyResult, branchResult] = await Promise.allSettled([
+        companyService.getAll(),
+        branchService.getAll(),
+      ]);
+      if (branchResult.status === 'fulfilled' && Array.isArray(branchResult.value)) {
+        const cleanedBranches = branchResult.value.map(branch =>
+          Object.fromEntries(Object.entries(branch).map(([key, value]) =>
+            [key, typeof value === 'string' ? value.trim() : value]
+          )) as unknown as Branch
+        );
+        setBranches(cleanedBranches
+          .filter(branch => branch.active?.toUpperCase() !== 'N')
+          .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)));
+        setBranchError(null);
+      } else {
+        setBranchError('Unable to load branches. Tap to retry.');
+      }
+      if (companyResult.status === 'rejected') throw companyResult.reason;
+      const data = companyResult.value;
       if (!Array.isArray(data) || data.length === 0) throw new Error('No company data found');
 
       const cleaned = trimObject(data[0]);
@@ -201,7 +222,7 @@ const HelpCentreScreen = () => {
   }
 
   // ── Error ──
-  if (error || !company) {
+  if (!company) {
     return (
       <View style={styles.center}>
         <Icon name="error-outline" size={52} color={COLORS.danger} />
@@ -249,6 +270,11 @@ const HelpCentreScreen = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.contentBrand} />}
       >
+        {!!error && (
+          <TouchableOpacity onPress={onRefresh} style={styles.infoRow} accessibilityRole="button">
+            <Text style={styles.errorMsg}>Unable to refresh company details. Tap to retry.</Text>
+          </TouchableOpacity>
+        )}
         {/* ── Hero Banner ── */}
         <LinearGradient
           colors={[COLORS.brand, COLORS.brandStrong]}
@@ -293,6 +319,32 @@ const HelpCentreScreen = () => {
             isLink
             multiline
           />
+        </SectionWrapper>
+
+        <SectionWrapper title="Our Branches" delay={140} visible>
+          {branchError && (
+            <TouchableOpacity onPress={onRefresh} style={styles.infoRow} accessibilityRole="button">
+              <Text style={styles.errorMsg}>{branchError}</Text>
+            </TouchableOpacity>
+          )}
+          {!branchError && branches.length === 0 && (
+            <Text style={[styles.infoValue, { padding: SIZES.space.lg }]}>No branch addresses available.</Text>
+          )}
+          {branches.map((branch, index) => {
+            const address = [branch.address1, branch.address2, branch.address3, branch.address4, branch.areaCode]
+              .filter(Boolean).join('\n');
+            return (
+              <View key={`${branch.companyId}-${index}`}>
+                <Text style={[styles.sectionTitle, { fontSize: 14 }]}>
+                  {branch.address2 || `Branch ${index + 1}`}
+                </Text>
+                <InfoRow icon="location-on" label="Address" value={address || 'Address unavailable'}
+                  onPress={address ? () => openMaps(address.replace(/\n/g, ', ')) : undefined} isLink={!!address} multiline />
+                <InfoRow icon="phone" label="Phone" value={branch.phone} onPress={branch.phone ? () => openPhone(branch.phone!) : undefined} isLink />
+                <InfoRow icon="email" label="Email" value={branch.email} onPress={branch.email ? () => openEmail(branch.email!) : undefined} isLink multiline />
+              </View>
+            );
+          })}
         </SectionWrapper>
 
         {/* ── Tax ── */}

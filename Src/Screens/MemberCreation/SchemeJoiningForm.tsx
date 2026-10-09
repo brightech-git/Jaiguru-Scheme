@@ -455,11 +455,11 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
         )}
 
         <AppCard style={styles.card}>
-          <AppText variant="label" style={styles.fieldLabel}>SchemeName (like father, mother, children Names)</AppText>
+          <AppText variant="label" style={styles.fieldLabel}>SchemeName (Family Members)</AppText>
           <TextInput
             value={nickname}
             onChangeText={setNickname}
-            placeholder="Enter Scheme UserName"
+            placeholder="Enter Scheme Nominee Name"
             placeholderTextColor={COLORS.contentPlaceholder}
             selectionColor={COLORS.brand}
             autoCapitalize="words"

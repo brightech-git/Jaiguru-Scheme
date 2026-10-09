@@ -309,9 +309,10 @@ const formatDate = useCallback((dateString?: string) => {
               {/* Name + Scheme */}
               <View style={styles.nameSection}>
                 <Text style={styles.nameText}>{pName}</Text>
-                <Text style={styles.schemeText} numberOfLines={2}>
-                  {schemeName}
+                <Text style={styles.schemeText}>
+                  {`${schemeName}${account.personalInfo?.nomeni?.trim() ? ` - ${account.personalInfo.nomeni.trim()}` : ''}`}
                 </Text>
+                
               </View>
 
               {/* 3 stat boxes */}
@@ -698,8 +699,14 @@ const styles = StyleSheet.create({
   schemeText: {
     ...FONTS.body,
     color: COLORS.contentSecondary,
-    fontSize: SIZES.text.sm,
+    fontSize: SIZES.text.md,
     fontFamily: FONTS.family.bold,
+    textTransform: 'capitalize',
+  },
+  memberIdText: {
+    ...FONTS.bodyEmphasis,
+    color: COLORS.contentBrand,
+    marginTop: SIZES.space.xs,
   },
   amountSection: {
     flexDirection: 'row',

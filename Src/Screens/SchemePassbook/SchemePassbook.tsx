@@ -218,6 +218,7 @@ export default function SchemePassbook() {
     );
   const scheme = data.schemeSummary;
   const personal = data.personalInfo;
+  const nomineeName = personal?.nomeni?.trim();
   const paid = toNumber(scheme?.schemaSummaryTransBalance?.insPaid);
   const total = toNumber(scheme?.instalment);
   const invested = toNumber(scheme?.schemaSummaryTransBalance?.amtrecd);
@@ -461,30 +462,36 @@ export default function SchemePassbook() {
               <PassbookStatusBadge status={status} />
             </View>
           </View>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: SIZES.space.sm,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: SIZES.space.sm,
-                flex: 1,
-              }}
+          <View style={styles.memberInfo}>
+            <AppText
+              variant="h4"
+              color={COLORS.black}
+              style={styles.memberName}
             >
-              <AppText variant="h4" color={COLORS.black}>
-                {data.pName}
+              {data.pName}
+            </AppText>
+            
+            <View style={styles.memberRegistrationRow}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: SIZES.space.sm }}>
+              {!!nomineeName && (
+              <AppText
+                variant="h4"
+                color={COLORS.contentOnAccent}
+                style={styles.memberName}
+              >
+                {nomineeName}
               </AppText>
-              <AppText variant="h4" color={COLORS.contentOnAccent}>
+            )}
+              <AppText
+                variant="h4"
+                color={COLORS.contentOnAccent}
+                style={styles.memberRegistration}
+              >
                 ({data.groupCode} - {data.regNo})
               </AppText>
+              </View>
+              {hasWeight && <GoldBadge />}
             </View>
-            {hasWeight && <GoldBadge />}
           </View>
 
           {flexible ? (
@@ -612,6 +619,24 @@ export default function SchemePassbook() {
   );
 }
 const styles = StyleSheet.create({
+  memberInfo: {
+    gap: SIZES.space.xs,
+  },
+  memberName: {
+    alignSelf: "stretch",
+    minWidth: 0,
+  },
+  memberRegistrationRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: SIZES.space.sm,
+  },
+  memberRegistration: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
   schemeTitle: {
     flex: 1,
     flexShrink: 1,
@@ -656,6 +681,7 @@ const styles = StyleSheet.create({
     paddingVertical: SIZES.space.xs,
   },
   goldBadge: {
+    flexShrink: 0,
     alignSelf: "flex-start",
     backgroundColor: COLORS.black,
     borderRadius: SIZES.radius.pill,

@@ -78,6 +78,10 @@ export const COMPANY = {
   ALL: '/company/all',
 };
 
+export const BRANCHES = {
+  ALL: '/branches',
+};
+
 export const APP_CONTENT = {
   BY_ID: (contentId: string) => `/app-content/${encodeURIComponent(contentId)}`,
 };

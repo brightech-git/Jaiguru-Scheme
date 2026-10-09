@@ -27,6 +27,7 @@ export interface SchemeSummary {
 export interface PersonalInfo {
   maskedAadhaar?: string;
   personalId?: number;
+  nomeni?: string;
   doorNo?: string;
   address1?: string;
   address2?: string;

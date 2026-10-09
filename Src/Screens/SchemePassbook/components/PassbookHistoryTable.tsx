@@ -1,5 +1,5 @@
 ﻿import React, { useState } from "react";
-import { View, ScrollView, Pressable, StyleSheet } from "react-native";
+import { View, ScrollView, Pressable, StyleSheet, useWindowDimensions } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {
   AppCard,
@@ -19,6 +19,17 @@ export default function PassbookHistoryTable({
   onReceipt: (payment: PaymentHistoryItem) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { fontScale } = useWindowDimensions();
+  const textScale = Math.max(1, fontScale);
+  // Use the same non-shrinking widths for headers and values, including
+  // devices with larger accessibility text. Extra columns remain scrollable.
+  const styles = {
+    ...baseStyles,
+    action: { ...baseStyles.action, width: 48 * textScale },
+    date: { ...baseStyles.date, width: 100 * textScale },
+    inst: { ...baseStyles.inst, width: 40 * textScale },
+    number: { ...baseStyles.number, width: 100 * textScale },
+  };
   const ordered = payments
     .map((payment, index) => ({ payment, index }))
     .sort(
@@ -43,7 +54,7 @@ export default function PassbookHistoryTable({
         columns.
       </AppText>
       <AppCard variant="flat" padded={false} style={{ overflow: "hidden" }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator>
+        <ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator>
           <View>
             <View style={[styles.row, styles.header]}>
               <View style={styles.action}>
@@ -144,7 +155,7 @@ export default function PassbookHistoryTable({
     </View>
   );
 }
-const styles = StyleSheet.create({
+const baseStyles = StyleSheet.create({
   container: { gap: theme.SIZES.space.md },
   row: {
     flexDirection: "row",
@@ -153,15 +164,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.COLORS.divider,
     minHeight: 52,
+    paddingVertical: theme.SIZES.space.sm,
     gap: theme.SIZES.space.sm,
   },
   header: { backgroundColor: theme.COLORS.surfaceMuted },
-  date: { width: 85 },
-  inst: { width: 25 },
-  number: { width: 70 },
+  date: { flexShrink: 0 },
+  inst: { flexShrink: 0 },
+  number: { flexShrink: 0 },
   action: {
-    width: 48,
-    height: 48,
+    flexShrink: 0,
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
   },
