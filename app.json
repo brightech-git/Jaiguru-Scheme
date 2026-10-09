@@ -2,7 +2,7 @@
   "expo": {
     "name": "Jaiguru DigiGold",
     "slug": "jaiguruscheme",
-    "version": "1.4.7",
+    "version": "1.4.8",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -46,7 +46,7 @@
     },
     "android": {
       "package": "com.brightechsoftware.jaiguruscheme2",
-      "versionCode": 46,
+      "versionCode": 48,
       "edgeToEdgeEnabled": true,
       "googleServicesFile": "./google-services.json",
       "permissions": [

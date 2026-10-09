@@ -4,7 +4,7 @@
 //   1. createOrder() — sends NEWJOIN + NMDATA (new member) or SCHEMEDETAILS
 //      (installment) up front. The backend "parks" that payload against the
 //      Razorpay order id and does NOT touch the real DB yet.
-//   2. WebView checkout runs.
+//   2. Native Razorpay SDK checkout runs.
 //   3. On success we call verify-payment. Whichever finishes first — this
 //      call or Razorpay's own server-to-server webhook — is the one that
 //      actually creates the member / inserts the installment (idempotent,
@@ -12,6 +12,7 @@
 //      responds, the member/installment has been committed.
 import { useState, useCallback, useRef } from 'react';
 import { Platform } from 'react-native';
+import { getNativeRazorpay, parseCheckoutError } from '../../services/nativeRazorpay';
 import { razorpayService } from '../../services/razorpayService';
 import { COLORS } from '../../../Utills/AppTheme';
 import { CreateMemberPayload } from '../../../types/Member/Member';
@@ -43,6 +44,7 @@ export interface OrderExtras {
 
 export interface PaymentResult {
   success: boolean;
+  pending?: boolean;
   message?: string;
   paymentId?: string;
   orderId?: string;
@@ -56,8 +58,6 @@ export const useRazorpayPayment = () => {
   const [loading, setLoading] = useState(false);
   const [paymentStep, setPaymentStep] = useState<PaymentStep>(PAYMENT_STEPS.IDLE);
   const [error, setError] = useState<string | null>(null);
-  const [webViewVisible, setWebViewVisible] = useState(false);
-  const [razorpayOptions, setRazorpayOptions] = useState<Record<string, any> | null>(null);
   const resolveRef = useRef<((result: PaymentResult) => void) | null>(null);
   const currentOrderIdRef = useRef<string | null>(null);
   const verifyingRef = useRef(false);
@@ -75,14 +75,11 @@ export const useRazorpayPayment = () => {
     setLoading(false);
     setPaymentStep(PAYMENT_STEPS.IDLE);
     setError(null);
-    setWebViewVisible(false);
-    setRazorpayOptions(null);
   }, []);
 
   const handlePaymentSuccess = useCallback(async (paymentData: any) => {
     if (!resolveRef.current || verifyingRef.current) return;
     verifyingRef.current = true;
-    setWebViewVisible(false);
 
     if (paymentData?.failed) {
       console.log('[SCHEME JOIN] STEP 5 — Payment FAILED in checkout', paymentData.error);
@@ -91,7 +88,7 @@ export const useRazorpayPayment = () => {
       setError(errMsg);
       setLoading(false);
       // A checkout error is not authoritative server payment status.
-      finishPayment({ success: false, message: errMsg });
+      finishPayment({ success: false, message: errMsg, pending: paymentData.error?.uncertain === true });
       return;
     }
 
@@ -149,7 +146,6 @@ export const useRazorpayPayment = () => {
 
   const handlePaymentDismiss = useCallback(() => {
     if (!resolveRef.current || verifyingRef.current) return;
-    setWebViewVisible(false);
     setPaymentStep(PAYMENT_STEPS.IDLE);
     setLoading(false);
     // Closing checkout cannot cancel a payment already submitted to a bank.
@@ -191,6 +187,7 @@ export const useRazorpayPayment = () => {
 
         (async () => {
           try {
+            const checkout = getNativeRazorpay();
             const orderResponse: any = await razorpayService.createOrder({
               amount,
               regNo,
@@ -227,21 +224,19 @@ export const useRazorpayPayment = () => {
               theme: { color: COLORS.contentBrand },
             };
 
-            // Checkout is opened from inline WebView HTML, so Razorpay does
-            // not return a redirect/short URL. Log the real script URL and
-            // order used by that WebView for debugging.
-            console.log('[RAZORPAY] WebView checkout launch', {
-              checkoutScriptUrl: 'https://checkout.razorpay.com/v1/checkout.js',
-              orderId: options.order_id,
-              amount: options.amount,
-              currency: options.currency,
-            });
-            setRazorpayOptions(options);
-            // iOS cannot present a new modal while another is still dismissing.
-            // A short delay lets the PaymentModal fully unmount first.
-            setTimeout(() => {
-              if (resolveRef.current && currentOrderIdRef.current === backendOrder.order_id) setWebViewVisible(true);
-            }, Platform.OS === 'ios' ? 400 : 0);
+            // Allow the order creation modal to dismiss before presenting native checkout.
+            await new Promise<void>(done => setTimeout(done, Platform.OS === 'ios' ? 400 : 100));
+            try {
+              const paymentData = await checkout.open(options);
+              await handlePaymentSuccess(paymentData);
+            } catch (checkoutError: any) {
+              const parsedError = parseCheckoutError(checkoutError);
+              if (parsedError.cancelled) {
+                handlePaymentDismiss();
+              } else {
+                await handlePaymentSuccess({ failed: true, error: parsedError });
+              }
+            }
           } catch (err: any) {
             setPaymentStep(PAYMENT_STEPS.FAILED);
             setError(err?.message);
@@ -251,7 +246,7 @@ export const useRazorpayPayment = () => {
         })();
       });
     },
-    [finishPayment]
+    [finishPayment, handlePaymentSuccess, handlePaymentDismiss]
   );
 
   return {
@@ -261,9 +256,5 @@ export const useRazorpayPayment = () => {
     startPayment,
     resetState,
     PAYMENT_STEPS,
-    webViewVisible,
-    razorpayOptions,
-    handlePaymentSuccess,
-    handlePaymentDismiss,
   };
 };

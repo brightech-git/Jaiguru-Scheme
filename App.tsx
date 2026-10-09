@@ -80,9 +80,9 @@ export default function App() {
     };
   }, []);
 
-  // if (isMaintenance && !maintenanceBypassed) {
-  //   return <MaintenanceScreen message={maintenanceMsg} onUnlock={() => setMaintenanceBypassed(true)} />;
-  // }
+  if (isMaintenance && !maintenanceBypassed) {
+    return <MaintenanceScreen message={maintenanceMsg} onUnlock={() => setMaintenanceBypassed(true)} />;
+  }
 
   if (forceUpdate && fontsLoaded && appReady) {
     return (

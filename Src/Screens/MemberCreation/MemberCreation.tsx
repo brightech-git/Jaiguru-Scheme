@@ -10,7 +10,6 @@ import { useRazorpayPayment } from '../../api/hooks/Razorpay/useRazorpay';
 import PaymentModal from './PaymentModal';
 import { buildSchemeJoinSuccess } from './schemeJoinSuccess';
 import { DEFAULT_EMPLOYEE_ID } from './EmployeePickerModal';
-import RazorpayWebView from '../../Components/RazorpayWebView';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
 import PremiumBackground from '../../Components/PremiumBackground/PremiumBackground';
 import { getUserData, getUserId, getUserField } from '../../Utills/AsynchStorageHelper';
@@ -67,10 +66,6 @@ const MemberCreation = () => {
     error: paymentError,
     resetState: resetPayment,
     PAYMENT_STEPS,
-    webViewVisible,
-    razorpayOptions,
-    handlePaymentSuccess,
-    handlePaymentDismiss,
   } = useRazorpayPayment();
 
   // Reset state on screen focus — but ONLY when not mid-payment.
@@ -79,10 +74,10 @@ const MemberCreation = () => {
   // still open, killing the in-flight payment.
   useFocusEffect(
     useCallback(() => {
-      if (!webViewVisible && paymentStep === PAYMENT_STEPS.IDLE) {
+      if (!paymentLoading && paymentStep === PAYMENT_STEPS.IDLE) {
         resetForm();
       }
-    }, [webViewVisible, paymentStep, requiresKyc])
+    }, [paymentLoading, paymentStep, requiresKyc])
   );
 
   // Load the logged-in user's details once for the KYC-skipped payload.
@@ -363,7 +358,7 @@ const MemberCreation = () => {
       navigation.replace('SchemeJoinSuccess', { details, processResult: result.processResult ?? result.data });
     } else if (result.message !== 'Payment cancelled by user') {
       console.log('[SCHEME JOIN] FLOW FAILED —', result.message);
-      Alert.alert('Payment Failed', result.message || 'Payment failed');
+      Alert.alert(result.pending ? 'Payment status' : 'Payment Failed', result.message || 'Payment failed');
     }
   }, [currentStep, userRegistrationData, startPayment, createMemberPayload, createKycSkippedPayload, loggedInUser, requiresKyc, navigation, paymentLoading]);
 
@@ -406,8 +401,6 @@ const MemberCreation = () => {
       </View>
 
       {/* Razorpay Checkout WebView */}
-      <RazorpayWebView visible={webViewVisible} options={razorpayOptions} onSuccess={handlePaymentSuccess} onDismiss={handlePaymentDismiss} />
-
       {/* Payment Status Modal */}
       <PaymentModal
         visible={paymentStep === PAYMENT_STEPS.CREATING_ORDER || paymentStep === PAYMENT_STEPS.VERIFYING}

@@ -4,7 +4,6 @@ import { View, StyleSheet, Platform, ActivityIndicator, Modal, Alert } from 'rea
 import { useRoute, useNavigation, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { useRazorpayPayment } from '../../api/hooks/Razorpay/useRazorpay';
 import { useTransactionTypes } from '../../api/hooks/Account/useTransactionTypes';
-import RazorpayWebView from '../../Components/RazorpayWebView';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
 import PremiumBackground from '../../Components/PremiumBackground/PremiumBackground';
 import { AppCard, AppText, AppButton, AppBadge, AppDivider, ScreenWrapper } from '../../Components/ui/appcomponents';
@@ -58,6 +57,7 @@ const PayNow = () => {
 
   const [status, setStatus] = useState<Status>(STATUS.IDLE);
   const [statusMsg, setStatusMsg] = useState('');
+  const [confirmationPending, setConfirmationPending] = useState(false);
   const [paymentId, setPaymentId] = useState('');
   const [kycCheckState, setKycCheckState] = useState<KycCheckState>('loading');
   const [kycError, setKycError] = useState('');
@@ -71,10 +71,6 @@ const PayNow = () => {
     loading: paymentLoading,
     startPayment,
     resetState: resetPayment,
-    webViewVisible,
-    razorpayOptions,
-    handlePaymentSuccess,
-    handlePaymentDismiss,
   } = useRazorpayPayment();
 
   const formatCurrency = useCallback((value: unknown) => {
@@ -129,9 +125,9 @@ const PayNow = () => {
   }, []);
 
   useFocusEffect(useCallback(() => {
-    if (!paymentLoading && !webViewVisible && status === STATUS.IDLE) void checkKycStatus();
+    if (!paymentLoading && status === STATUS.IDLE) void checkKycStatus();
     return () => { kycRequest.current += 1; };
-  }, [checkKycStatus, paymentLoading, webViewVisible, status]));
+  }, [checkKycStatus, paymentLoading, status]));
 
   const openKycForm = (section: 'address' | 'aadhaar') => {
     setKycModalVisible(false);
@@ -202,6 +198,7 @@ const PayNow = () => {
       resetPayment();
     } else if (result.message !== 'Payment cancelled by user') {
       setStatusMsg(result.message || 'Payment failed. Please try again.');
+      setConfirmationPending(result.pending === true);
       setStatus(STATUS.FAILED);
       resetPayment();
     }
@@ -274,7 +271,7 @@ const PayNow = () => {
         <View style={styles.statusContainer}>
           <AppText style={styles.statusIcon}>❌</AppText>
           <AppText variant="h2" align="center" style={styles.statusSpacing}>
-            Payment Failed
+            {confirmationPending ? 'Payment status' : 'Payment Failed'}
           </AppText>
           <AppText variant="body" color={COLORS.contentSecondary} align="center" style={styles.statusSpacing}>
             {statusMsg || 'Something went wrong. Please try again.'}
@@ -387,9 +384,6 @@ const PayNow = () => {
 
         <View style={{ height: 100 }} />
       {/* </ScreenWrapper> */}
-
-      <RazorpayWebView visible={webViewVisible} options={razorpayOptions} onSuccess={handlePaymentSuccess} onDismiss={handlePaymentDismiss} />
-
       <Modal visible={kycModalVisible} transparent animationType="slide" onRequestClose={() => setKycModalVisible(false)}>
         <View style={styles.kycModalOverlay}>
           <View style={styles.kycModalCard}>
