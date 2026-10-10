@@ -313,7 +313,7 @@ export function useLogin(): UseLogin {
       const { identityToken, fullName, email } = credential;
       console.log('=== APPLE CREDENTIAL ===');
       console.log('identityToken length:', identityToken?.length);
-      console.log('identityToken (first 100):', identityToken?.substring(0, 100));
+      console.log('identityToken (first 100):', identityToken);
       console.log('email:', email);
       console.log('fullName:', JSON.stringify(fullName));
       console.log('user (sub):', credential.user);

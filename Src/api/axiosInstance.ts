@@ -7,10 +7,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../Config/BaseUrl';
-// getAuthToken already knows the 'authToken' storage key and is used by the
-// rest of the app (Services/MpinService.js, etc.) — reuse it here instead
-// of duplicating the key name.
 import { getAuthToken } from '../Utills/AsynchStorageHelper';
+import { navigate } from '../Navigations/navigationRef';
 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -30,13 +28,13 @@ axiosInstance.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Response interceptor — on 401, clear stored auth so the app falls back to
-// the login flow instead of silently failing every subsequent call.
+// Response interceptor — on 401, clear stored auth and redirect to Login.
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error?.response?.status === 401) {
-      await AsyncStorage.multiRemove(['authToken', 'userData', 'hasMpin']);
+      await AsyncStorage.multiRemove(['authToken', 'userData', 'hasMpin', 'isLoggedIn']);
+      navigate('Login');
     }
     return Promise.reject(error);
   }

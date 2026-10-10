@@ -101,12 +101,12 @@ const RegisterScreen: React.FC = () => {
 
                 <SocialActions
                   onCreateAccount={reg.goToLogin}
-                  onGoogle={() => {}}
-                  onApple={() => {}}
+                  onGoogle={reg.signInWithGoogle}
+                  onApple={reg.signInWithApple}
                   onGuest={() => {}}
-                  googleLoading={false}
-                  appleLoading={false}
-                  disabled={reg.loading}
+                  googleLoading={reg.googleLoading}
+                  appleLoading={reg.appleLoading}
+                  disabled={reg.loading || reg.googleLoading || reg.appleLoading}
                   accountLabel="Already have an account? "
                   accountLinkLabel="Login"
                 />
