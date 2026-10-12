@@ -128,7 +128,7 @@ export default function SchemeCardSlider() {
 
     return (
       <View style={{ width: screenWidth, paddingHorizontal: HORIZONTAL_PAD }}>
-        {item.SchemeId === 23 && (
+        {item.SchemeId === 27 && (
           <Animated.View style={[styles.badgeOverlay, blinkStyle]}>
             <View style={styles.popularBadge}>
               <Ionicons name="flame" size={moderateScale(13)} color={COLORS.white} />

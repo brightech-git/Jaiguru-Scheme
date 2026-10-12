@@ -1,7 +1,7 @@
 import { Text } from '../Typography/FontText';
 // Floating capsule navigation with the existing stack destinations.
 import React, { useEffect, useRef } from 'react';
-import { View, Pressable, Animated, Platform, useWindowDimensions } from 'react-native';
+import { View, Pressable, Animated, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
@@ -42,14 +42,7 @@ const TABS: TabDef[] = [
     iconLib: 'MaterialIcons',
     iconName: 'savings',
   },
-  {
-    key: 'WastageCard',
-    label: 'Wastage Card',
-    screen: 'WastageCard',
-    iconLib: 'MaterialCommunityIcons',
-    iconName: 'card-account-details-outline',
-    activeIconName: 'card-account-details',
-  },
+
   
   {
     key: 'ALERTS',
@@ -106,15 +99,14 @@ const AnimatedTab = ({ tab, isActive, onPress, badgeCount = 0 }: AnimatedTabProp
       accessibilityRole="tab"
       accessibilityState={{ selected: isActive }}
       accessibilityLabel={badgeCount > 0 ? `${tab.label}, ${badgeCount} unread notifications` : tab.label}
-      hitSlop={6}
     >
       <Animated.View style={{ transform: [{ scale }], alignItems: 'center', width: '100%' }}>
         <View style={styles.iconSlot}>
           <Animated.View style={[styles.activePill, { opacity: progress, transform: [{ scale: pillScale }] }]} />
-          <IconComponent name={iconName as any} size={SIZES.icon.md} color={isActive ? COLORS.contentBrand : COLORS.accentTint} />
+          <IconComponent name={iconName as any} size={SIZES.icon.md} color={isActive ? COLORS.contentBrand : COLORS.contentOnBrand} />
           {badgeCount > 0 && (
             <View style={styles.tabBadge}>
-              <Text style={styles.tabBadgeText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
+              <Text maxFontSizeMultiplier={1.3} style={styles.tabBadgeText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
             </View>
           )}
         </View>
@@ -152,7 +144,7 @@ function BottomTab({ activeScreen }: BottomTabProps) {
   };
 
   return (
-    <View pointerEvents="box-none" style={[styles.host, { paddingBottom: insets.bottom + (Platform.OS === 'ios' ? 0 : 10) }]}>
+    <View pointerEvents="box-none" style={[styles.host, { paddingBottom: Math.max(insets.bottom, SIZES.space.sm), paddingLeft: Math.max(insets.left, SIZES.space.md), paddingRight: Math.max(insets.right, SIZES.space.md) }]}>
       <View style={styles.shadowWrap}>
         <View style={styles.capsule}>
           <LinearGradient
@@ -167,7 +159,7 @@ function BottomTab({ activeScreen }: BottomTabProps) {
                 key={tab.key}
                 tab={tab}
                 isActive={activeScreen === tab.key}
-                onPress={() => handlePress(tab.screen)}
+                onPress={() => { if (activeScreen !== tab.key) handlePress(tab.screen); }}
                 badgeCount={tab.key === 'ALERTS' ? unreadCount : 0}
               />
             ))}
