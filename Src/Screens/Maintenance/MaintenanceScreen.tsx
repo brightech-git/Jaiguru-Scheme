@@ -1,7 +1,7 @@
 import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/Maintenance/MaintenanceScreen.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, StatusBar, StyleSheet, TextInput, View } from 'react-native';
+import { Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StatusBar, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -84,7 +84,7 @@ const MaintenanceScreen: React.FC<Props> = ({
       <View style={[styles.glow, styles.glowBottom]} pointerEvents="none" />
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={styles.content}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
           {/* Logo */}
           <Pressable accessibilityRole="button" accessibilityLabel="Company logo" onPress={tapLogo}>
@@ -130,7 +130,7 @@ const MaintenanceScreen: React.FC<Props> = ({
           <Text style={styles.footer}>
             We'll be back shortly. Thank you for your patience!
           </Text>
-        </View>
+        </ScrollView>
       </SafeAreaView>
       <Modal visible={showAccess} transparent animationType="fade" onRequestClose={closeAccess}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.accessBackdrop}>
@@ -160,7 +160,8 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
   content: {
-    flex: 1,
+    flexGrow: 1,
+    paddingVertical: SIZES.space.xl,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: SIZES.space.gutter,
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: SIZES.text.lg * 1.6,
     marginBottom: SIZES.space.xxxl,
-    maxWidth: width * 0.82,
+    maxWidth: '100%',
   },
   chipsRow: {
     flexDirection: 'row',

@@ -87,7 +87,7 @@ export default function AppButton({
         style={[
           styles.btn,
           {
-            height: heights[size],
+            minHeight: heights[size],
             backgroundColor: isDisabled ? COLORS.border : vc.bg,
             borderColor: isDisabled ? COLORS.border : vc.border,
             borderWidth: variant === 'outline' ? 1.5 : 0,
@@ -140,8 +140,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: SIZES.radius.control,
     paddingHorizontal: SIZES.space.xl,
+    paddingVertical: SIZES.space.sm,
   },
   label: {
     letterSpacing: 0.3,
+    flexShrink: 1,
+    textAlign: 'center',
   },
 });

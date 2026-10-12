@@ -169,7 +169,7 @@ const PayNow = () => {
 
   if (status === STATUS.SUCCESS) {
     return (
-      <ScreenWrapper header={<CommonHeader title="Payment" />}>
+      <ScreenWrapper scroll edges={['bottom']} header={<CommonHeader title="Payment" />}>
         <View style={styles.statusContainer}>
           <AppText style={styles.statusIcon}>✅</AppText>
           <AppText variant="h2" align="center" style={styles.statusSpacing}>
@@ -200,7 +200,7 @@ const PayNow = () => {
 
   if (status === STATUS.FAILED) {
     return (
-      <ScreenWrapper header={<CommonHeader title="Payment" />}>
+      <ScreenWrapper scroll edges={['bottom']} header={<CommonHeader title="Payment" />}>
         <View style={styles.statusContainer}>
           <AppText style={styles.statusIcon}>❌</AppText>
           <AppText variant="h2" align="center" style={styles.statusSpacing}>
@@ -262,8 +262,8 @@ const PayNow = () => {
           </AppText>
 
           <View style={styles.nextBadge}>
-            <AppText variant="bodyMedium" color={COLORS.contentBrand}>
-              Next Installment: #{nextInstallment}
+            <AppText variant="bodyBold" color={COLORS.contentBrand}>
+              Installment No: {nextInstallment}
             </AppText>
           </View>
 
@@ -317,7 +317,7 @@ const PayNow = () => {
                   <AppText variant="bodyBold">{formatCurrency(goldRate)} / g</AppText>
                 </View>
                 <View style={styles.row}>
-                  <AppText variant="captionBold" color={COLORS.contentSecondary}>Estimated gold weight</AppText>
+                  <AppText variant="captionBold" color={COLORS.contentSecondary}>Accumulated gold weight</AppText>
                   <AppText variant="h4" color={COLORS.contentBrand}>{estimatedWeight === null ? '—' : `${estimatedWeight.toFixed(4)} g`}</AppText>
                 </View>
                 {rates?.GOLDRATEDATE && <AppText variant="caption" color={COLORS.contentSecondary}>Rate date: {formatDate(rates.GOLDRATEDATE)}</AppText>}
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   },
 
   statusContainer: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SIZES.space.xxxl,

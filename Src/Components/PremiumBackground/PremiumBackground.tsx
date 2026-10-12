@@ -6,14 +6,13 @@
 // -----------------------------------------------------------------------------
 
 import React from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { useWindowDimensions, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import theme from '../../Utills/AppTheme';
 import GoldParticles from '../../Screens/Auth/Login/components/GoldParticles';
 
 const { COLORS } = theme;
-const { width, height } = Dimensions.get('window');
 const BG_GRADIENT = COLORS.gradient.accentWash as [string, string, string];
 
 export interface PremiumBackgroundProps {
@@ -21,11 +20,14 @@ export interface PremiumBackgroundProps {
   particles?: boolean;
 }
 
-const PremiumBackground: React.FC<PremiumBackgroundProps> = ({ particles = true }) => (
+const PremiumBackground: React.FC<PremiumBackgroundProps> = ({ particles = true }) => {
+  const { width, height } = useWindowDimensions();
+  return (
   <View style={StyleSheet.absoluteFill} pointerEvents="none">
     <LinearGradient colors={BG_GRADIENT} style={StyleSheet.absoluteFill} />
     {particles && <GoldParticles width={width} height={height} />}
   </View>
 );
+};
 
 export default React.memo(PremiumBackground);

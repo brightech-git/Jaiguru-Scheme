@@ -1,7 +1,7 @@
 import { Text } from '../Typography/FontText';
 // Src/Components/SchemeDetailsCard/SchemeDetailsCard.tsx
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, TouchableOpacity, FlatList, RefreshControl, Dimensions } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, TouchableOpacity, FlatList, RefreshControl, useWindowDimensions } from 'react-native';
 import { useMySchemes } from '../../api/hooks/Account/useMySchemes';
 import { getUserId } from '../../Utills/AsynchStorageHelper';
 import { userService, UserKycDetails } from '../../api/services/userService';
@@ -11,8 +11,6 @@ import { Account } from '../../types/Account/Account';
 import { COLORS, SIZES, FONTS, ELEVATION } from '../../Utills/AppTheme';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH * 0.9;
 const CARD_SPACING = SIZES.space.lg;
 
 function hasReachedMaturity(maturityDate?: string): boolean {
@@ -93,6 +91,9 @@ export interface SchemeDetailsCardProps {
 export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all' }: SchemeDetailsCardProps) {
   const { accounts, loading, error, refetch } = useMySchemes();
   const [refreshing, setRefreshing] = useState(false);
+  const { width, fontScale } = useWindowDimensions();
+  const stackDetails = width < 360 || fontScale > 1.3;
+  const cardWidth = Math.min(width * 0.9, 600);
   const navigation = useNavigation<any>();
   const [userKyc, setUserKyc] = useState<UserKycDetails | null>(null);
   const [redemptionStatus, setRedemptionStatus] = useState<Record<string, 'redeemed' | 'available' | 'error'>>({});
@@ -187,13 +188,13 @@ export default function SchemeDetailsCard({ layout = 'horizontal', filter = 'all
         contentContainerStyle: styles.listContainer,
         showsHorizontalScrollIndicator: false,
         showsVerticalScrollIndicator: false,
-        snapToInterval: CARD_WIDTH + CARD_SPACING,
+        snapToInterval: cardWidth + CARD_SPACING,
         decelerationRate: 'fast' as const,
         snapToAlignment: 'center' as const,
         keyExtractor: (item: Account) => `${item.regNo}-${item.groupCode}-${item.schemeSummary?.schemeId || '0'}`,
       };
     }
-  }, [layout]);
+  }, [layout, cardWidth]);
 
   // Handlers
   const onRefresh = useCallback(async () => {
@@ -285,7 +286,7 @@ const formatDate = useCallback((dateString?: string) => {
       const isMatured = hasReachedMaturity(maturityDate);
 
       return (
-        <View style={[styles.cardWrapper, layout === 'vertical' && styles.cardWrapperVertical]}>
+        <View style={[styles.cardWrapper, { width: cardWidth }, layout === 'vertical' && styles.cardWrapperVertical]}>
           <View style={[styles.card, layout === 'vertical' && styles.cardVertical]}>
             {/* Header */}
             <View style={styles.cardHeader}>
@@ -316,7 +317,7 @@ const formatDate = useCallback((dateString?: string) => {
               </View>
 
               {/* 3 stat boxes */}
-              <View style={styles.amountSection}>
+              <View style={[styles.amountSection, stackDetails && { flexDirection: 'column' }]}>
                 <View style={[styles.amountCard, styles.amtCard]}>
                   <Text style={styles.amountLabel}>Monthly Amt</Text>
                   <Text style={styles.amountValue}>₹{schemeAmt.toLocaleString('en-IN')}</Text>
@@ -345,7 +346,7 @@ const formatDate = useCallback((dateString?: string) => {
               </View>
 
               {/* Dates */}
-              <View style={styles.dateSection}>
+              <View style={[styles.dateSection, stackDetails && { flexDirection: 'column' }]}>
                 <View style={styles.dateCard}>
                   <Text style={styles.dateLabel}>Last Paid</Text>
                   <Text style={styles.dateValue}>{formatDate(lastPaidDate)}</Text>
@@ -363,7 +364,7 @@ const formatDate = useCallback((dateString?: string) => {
               </View>
 
               {/* Buttons */}
-              <View style={styles.buttonsSection}>
+              <View style={[styles.buttonsSection, stackDetails && { flexDirection: 'column' }]}>
                 <TouchableOpacity style={styles.viewButton} onPress={() => handleViewDetails(account)} activeOpacity={0.7}>
                   <Text style={styles.viewButtonText}>View Details</Text>
                 </TouchableOpacity>
@@ -408,7 +409,7 @@ const formatDate = useCallback((dateString?: string) => {
         </View>
       );
     },
-    [formatDate, handleViewDetails, handlePayNow, layout, userKyc, navigation, redemptionStatus]
+    [cardWidth, stackDetails, formatDate, handleViewDetails, handlePayNow, layout, userKyc, navigation, redemptionStatus]
   );
 
   // Header Component
@@ -594,7 +595,6 @@ const styles = StyleSheet.create({
     paddingBottom: SIZES.space.xl,
   },
   cardWrapper: {
-    width: CARD_WIDTH,
     marginRight: CARD_SPACING,
   },
   cardWrapperVertical: {
@@ -735,6 +735,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family.bold,
   },
   amountValue: {
+    flexShrink: 1,
+    textAlign: 'center',
     ...FONTS.heading,
     color: COLORS.contentBrand,
     fontSize: SIZES.text.md,
@@ -746,6 +748,8 @@ const styles = StyleSheet.create({
   },
   progressLabelRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SIZES.space.sm,
     justifyContent: 'space-between',
     marginBottom: SIZES.space.xs,
   },
@@ -791,6 +795,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family.bold,
   },
   dateValue: {
+    flexShrink: 1,
+    textAlign: 'center',
     ...FONTS.bodyEmphasis,
     color: COLORS.contentSecondary,
     fontFamily: FONTS.family.bold,
@@ -828,6 +834,8 @@ const styles = StyleSheet.create({
     ...ELEVATION.raised,
   },
   viewButtonText: {
+    flexShrink: 1,
+    textAlign: 'center',
     // ...FONTS.bodyEmphasis,
     color: COLORS.contentBrand,
     fontSize: SIZES.text.md,
@@ -876,6 +884,8 @@ const styles = StyleSheet.create({
     color: COLORS.dangerText,
   },
   payButtonText: {
+    flexShrink: 1,
+    textAlign: 'center',
     ...FONTS.bodyEmphasis,
     color: COLORS.contentOnBrand,
     fontSize: SIZES.text.md,

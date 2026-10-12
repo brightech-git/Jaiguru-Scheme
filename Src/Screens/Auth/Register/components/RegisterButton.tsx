@@ -107,7 +107,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   gradient: {
-    height: SIZES.control.heightLg,
+    minHeight: SIZES.control.heightLg,
+    paddingHorizontal: SIZES.space.lg,
+    paddingVertical: SIZES.space.md,
     borderRadius: SIZES.radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
@@ -121,6 +123,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   label: {
+    flexShrink: 1,
+    textAlign: 'center',
     fontFamily: FONTS.family.bold,
     fontSize: SIZES.text.lg,
     letterSpacing: 0.4,

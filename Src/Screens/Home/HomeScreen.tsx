@@ -21,6 +21,7 @@ import MainPageWithYouTube from "../../Components/Youtube/Youtube";
 import { ScreenWrapper } from "../../Components/ui/appcomponents";
 import HomeHeader from "./components/HomeHeader";
 import HomeQuickActions from "./components/HomeQuickActions";
+import StayConnectedSection from "./components/StayConnectedSection";
 import { useCompany } from "../../api/hooks/Company/useCompany";
 
 const { COLORS, FONTS, SIZES, moderateScale } = theme;
@@ -229,18 +230,19 @@ const HomeScreen = () => {
 
 
         <SectionHeader eyebrow="THE JAIGURU EDIT" title="Stories & collections" subtitle="Discover what is new in our world of jewellery." />
-        <View style={styles.youtubeWrapper}>
+        {/* <View style={styles.youtubeWrapper}>
           <MainPageWithYouTube />
-        </View>
+        </View> */}
 
       
+        <StayConnectedSection />
         <SectionHeader eyebrow="ALWAYS BY YOUR SIDE" title="A personal touch" />
         <NeedHelpCard />
-        <View style={styles.brandFooter}>
+        {/* <View style={styles.brandFooter}>
           <MaterialCommunityIcons name="star-four-points" size={15} color={COLORS.accentDeep} />
           <Text style={styles.footerBrand}>JAIGURU JEWELLERS</Text>
           <Text style={styles.footerTagline}>Celebrate every golden moment.</Text>
-        </View>
+        </View> */}
 
         <View style={{ height: moderateScale(8) }} />
       </ScreenWrapper>

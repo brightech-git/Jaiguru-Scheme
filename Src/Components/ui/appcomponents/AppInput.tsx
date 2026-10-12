@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   },
   leftIcon: { marginRight: 10 },
   rightIcon: { marginLeft: 8, padding: 4 },
-  input: { flex: 1, paddingVertical: 0 },
+  input: { flex: 1, minWidth: 0, paddingVertical: 8 },
   helperRow: { flexDirection: 'row', alignItems: 'center', marginTop: 5 },
-  helperText: {},
+  helperText: { flexShrink: 1 },
 });

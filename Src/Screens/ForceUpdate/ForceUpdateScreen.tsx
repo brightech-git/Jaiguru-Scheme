@@ -1,7 +1,7 @@
 import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/ForceUpdate/ForceUpdateScreen.tsx
 import React, { useEffect } from 'react';
-import { Dimensions, Image, Linking, Platform, StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, Linking, Platform, ScrollView, StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -75,7 +75,7 @@ const ForceUpdateScreen: React.FC<Props> = ({ currentVersion, latestVersion, sto
       <View style={[styles.glow, styles.glowBottom]} pointerEvents="none" />
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={styles.content}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Image source={appLogo} style={styles.logo} resizeMode="contain" />
 
           <Animated.View style={[styles.iconWrap, iconStyle]}>
@@ -117,7 +117,7 @@ const ForceUpdateScreen: React.FC<Props> = ({ currentVersion, latestVersion, sto
           <Text style={styles.footer}>
             You won't be able to use the app until it's updated.
           </Text>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -127,7 +127,8 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
   content: {
-    flex: 1,
+    flexGrow: 1,
+    paddingVertical: SIZES.space.xl,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: SIZES.space.gutter,
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: SIZES.text.lg * 1.6,
     marginBottom: SIZES.space.lg,
-    maxWidth: width * 0.82,
+    maxWidth: '100%',
   },
   versionText: {
     fontFamily: FONTS.family.medium,

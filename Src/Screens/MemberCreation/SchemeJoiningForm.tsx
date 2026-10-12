@@ -123,14 +123,14 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
     const [employeePickerVisible, setEmployeePickerVisible] = useState(false);
     const [employeeFieldVisible, setEmployeeFieldVisible] = useState(false);
     const [nickname, setNickname] = useState('');
-    const nameTapCount = useRef(0);
+    const summaryTapCount = useRef(0);
 
-    const handleSchemeTitlePress = () => {
-      nameTapCount.current += 1;
-      if (nameTapCount.current === 3) {
-        setEmployeeFieldVisible((visible) => !visible);
-        setEmployeePickerVisible(false);
-        nameTapCount.current = 0;
+    const handleSummaryPress = () => {
+      summaryTapCount.current += 1;
+      if (summaryTapCount.current === 3) {
+        setEmployeeFieldVisible(true);
+        setEmployeePickerVisible(true);
+        summaryTapCount.current = 0;
       }
     };
 
@@ -243,11 +243,11 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
           <AppText variant="labelUppercase" color={COLORS.whiteAlpha80}>
             You're joining Jaiguru
           </AppText>
-          <Pressable onPress={handleSchemeTitlePress} accessibilityRole="button" accessibilityLabel="Scheme details">
+          <View>
           <AppText variant="h4" color={COLORS.contentOnBrand} numberOfLines={2} style={styles.heroTitle}>
             {scheme?.schemeName || 'Scheme'}
           </AppText>
-          </Pressable>
+          </View>
           <View style={styles.heroPills}>
             {scheme?.SchemeSName ? (
               <View style={styles.heroPill}>
@@ -414,7 +414,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
           />
         </AppCard>
 
-        {/* Employee selector is revealed by three taps on the scheme title. */}
+        {/* Employee selector opens after three taps on the Summary header. */}
         {employeeFieldVisible && (
         <AppCard style={styles.card}>
           <AppText variant="label" style={styles.fieldLabel}>
@@ -447,7 +447,9 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
         {/* Order summary */}
         {selectedScheme && selectedPayment && effectiveAmount ? (
           <AppCard style={[styles.card, styles.summaryCard]}>
-            <SectionTitle icon="receipt-outline" title="Summary" />
+            <Pressable onPress={handleSummaryPress} accessibilityRole="button" accessibilityLabel="Summary" accessibilityHint="Tap three times to select an employee">
+              <SectionTitle icon="receipt-outline" title="Summary" />
+            </Pressable>
             <SummaryRow label="Scheme" value={scheme?.schemeName} />
             <SummaryRow label="Group Code" value={selectedScheme} />
             <SummaryRow label="Metal" value={getMetalTypeName(scheme?.MetalType)} />

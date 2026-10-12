@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: SIZES.space.lg,
   },
-  pinRow: { alignItems: 'center' },
+  pinRow: { alignItems: 'center', width: '100%' },
   eyeBtn: { marginTop: SIZES.space.lg, padding: SIZES.space.xs },
   rules: {
     flexDirection: 'row',

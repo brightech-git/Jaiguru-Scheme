@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SIZES.space.sm,
     paddingHorizontal: SIZES.space.md,
-    height: SIZES.field.height,
+    minHeight: SIZES.field.height,
     borderRadius: SIZES.radius.field,
     borderWidth: 1,
     borderColor: COLORS.fieldBorder,
@@ -225,7 +225,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family.regular,
     fontSize: SIZES.text.md,
     color: COLORS.contentPrimary,
-    paddingVertical: 0,
+    paddingVertical: SIZES.space.sm,
+    minWidth: 0,
   },
   list: {
     flex: 1,

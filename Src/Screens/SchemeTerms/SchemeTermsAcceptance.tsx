@@ -1,6 +1,6 @@
 import { Text } from '../../Components/Typography/FontText';
 import React, { useState } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View, ScrollView } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppContentScreen from '../../Components/AppContent/AppContentScreen';
@@ -43,8 +43,9 @@ const SchemeTermsAcceptance = () => {
       title="Plan Terms & Conditions"
       navigation={navigation}
       footer={(language, contentState) => (
-        <View
-          style={{
+        <ScrollView
+          style={{ maxHeight: '45%', flexGrow: 0 }}
+          contentContainerStyle={{
             paddingHorizontal: SIZES.space.gutter,
             paddingTop: SIZES.space.md,
             paddingBottom: SIZES.space.lg,
@@ -84,7 +85,7 @@ const SchemeTermsAcceptance = () => {
             </Text>
           </TouchableOpacity>
           <AppButton label={language === 'ta' ? 'திட்டத்தில் சேரவும்' : 'Join Scheme'} onPress={joinScheme} loading={isJoining} disabled={!accepted || isJoining || contentState === 'loading'} />
-        </View>
+        </ScrollView>
       )}
     />
   );

@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: SIZES.field.height,
+    minHeight: SIZES.field.height,
     borderRadius: SIZES.radius.lg,
     borderWidth: 1.5,
     paddingHorizontal: SIZES.space.lg,
@@ -123,7 +123,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family.medium,
     fontSize: SIZES.text.lg,
     color: COLORS.contentPrimary,
-    paddingVertical: 0,
+    paddingVertical: SIZES.space.sm,
+    minWidth: 0,
   },
   trailingBtn: {
     paddingLeft: SIZES.space.sm,
@@ -135,6 +136,7 @@ const styles = StyleSheet.create({
     marginLeft: SIZES.space.xs,
   },
   errorText: {
+    flexShrink: 1,
     fontFamily: FONTS.family.regular,
     fontSize: SIZES.text.sm,
     color: COLORS.danger,

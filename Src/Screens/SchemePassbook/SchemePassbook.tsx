@@ -233,6 +233,14 @@ export default function SchemePassbook() {
     !!data.schemeClosedSummary?.doClose &&
     !data.schemeClosedSummary.doClose.startsWith("1900-01-01");
   const completed = !flexible && total > 0 && paid >= total;
+  const isMatured = (() => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(data.maturityDate || "");
+    if (!match || data.maturityDate?.startsWith("1900-01-01")) return false;
+    const maturity = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return maturity.getTime() <= today.getTime();
+  })();
   const thisMonthPaid = paidThisMonth(data.lastPaidDate);
   const now = new Date();
   const todayDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -360,7 +368,22 @@ export default function SchemePassbook() {
         />
       }
       footer={
-        redemptionStatus === "available" && !closed && !completed ? (
+        (completed || (flexible && paid > 0)) && redemptionStatus === "available" ? (
+          <View style={styles.footer}>
+            <View style={styles.footerInfo}>
+              <AppText variant="captionBold">All installments completed</AppText>
+              <AppText variant="captionBold" color={COLORS.contentSecondary}>
+                Your scheme is ready for redemption
+              </AppText>
+            </View>
+            <AppButton
+              label="Redeem Now"
+              onPress={() => navigation.navigate("Redemption", { accountData: data })}
+              fullWidth={false}
+              style={styles.payButton}
+            />
+          </View>
+        ) : redemptionStatus === "available" && !closed && !completed ? (
           <View style={styles.footer}>
             <View style={styles.footerInfo}>
               <AppText variant="captionBold">
@@ -405,7 +428,6 @@ export default function SchemePassbook() {
         </Pressable>
       )}
       <SchemeNameCarousel
-        matchMemberCardHeight
         memberName={data.pName}
         mobileNumber={personal?.mobile || personal?.mobile2}
         memberKyc={{
@@ -431,7 +453,6 @@ export default function SchemePassbook() {
         <View style={styles.heroShadow}>
         <View style={styles.heroGlass}>
           <BlurView tint="light" intensity={35} pointerEvents="none" style={StyleSheet.absoluteFill} />
-        <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         <LinearGradient
           colors={[
             COLORS.whiteAlpha80,
@@ -532,7 +553,6 @@ export default function SchemePassbook() {
             </AppText>
           )}
         </LinearGradient>
-        </ScrollView>
         </View>
         </View>
       </SchemeNameCarousel>
@@ -645,8 +665,7 @@ const styles = StyleSheet.create({
     gap: SIZES.space.sm,
   },
   nomineeText: {
-    flex: 1,
-    flexShrink: 1,
+    flexShrink: 0,
     minWidth: 0,
   },
   memberRegistration: {
@@ -664,16 +683,17 @@ const styles = StyleSheet.create({
   },
   hero: {
     flexGrow: 1,
+    minHeight: 300,
     padding: SIZES.space.xl,
     borderRadius: SIZES.radius.card,
-    gap: SIZES.space.sm,
+    gap: SIZES.space.md,
   },
   heroShadow: {
     borderRadius: SIZES.radius.card,
     ...theme.ELEVATION.raised,
   },
   heroGlass: {
-    flex: 1,
+    flexGrow: 1,
     borderRadius: SIZES.radius.card,
     overflow: 'hidden',
     backgroundColor: COLORS.whiteAlpha50,
@@ -708,6 +728,8 @@ const styles = StyleSheet.create({
   },
   progressLabels: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: SIZES.space.sm,
     justifyContent: "space-between",
     marginTop: SIZES.space.sm,
   },
@@ -723,11 +745,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 48,
+    paddingVertical: SIZES.space.sm,
+    paddingHorizontal: SIZES.space.xs,
     borderRadius: SIZES.radius.control,
   },
   selected: { backgroundColor: COLORS.surface },
   content: { marginTop: SIZES.space.lg, gap: SIZES.space.lg },
-  metrics: { flexDirection: "row", gap: SIZES.space.md },
+  metrics: { flexDirection: "row", flexWrap: 'wrap', gap: SIZES.space.md },
   footer: {
     flexDirection: "row",
     alignItems: "center",

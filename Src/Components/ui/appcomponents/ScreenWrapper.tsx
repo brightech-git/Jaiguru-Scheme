@@ -35,7 +35,7 @@ export default function ScreenWrapper({
   paddingBottom = 24,
   statusBarStyle = 'dark-content',
   statusBarBg,
-  edges = ['top', 'bottom'],
+  edges,
   header,
   footer,
   style,
@@ -43,9 +43,10 @@ export default function ScreenWrapper({
 }: ScreenWrapperProps) {
   const bg = backgroundColor ?? COLORS.surfacePage;
   const ph = paddingHorizontal ?? SIZES.space.gutter;
+  const safeEdges: Edge[] = edges ?? (header ? ['bottom', 'left', 'right'] : ['top', 'bottom', 'left', 'right']);
 
   return (
-    <SafeAreaView edges={edges} style={[styles.safe, { backgroundColor: bg }, style]}>
+    <SafeAreaView edges={safeEdges} style={[styles.safe, { backgroundColor: bg }, style]}>
       <StatusBar barStyle={statusBarStyle} backgroundColor={statusBarBg ?? bg} />
 
       {header}
@@ -53,7 +54,7 @@ export default function ScreenWrapper({
       {scroll ? (
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={[{ paddingHorizontal: ph, paddingTop, paddingBottom }, contentStyle]}
+          contentContainerStyle={[{ flexGrow: 1, paddingHorizontal: ph, paddingTop, paddingBottom }, contentStyle]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           refreshControl={

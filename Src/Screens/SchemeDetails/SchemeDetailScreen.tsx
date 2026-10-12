@@ -81,6 +81,8 @@ const styles = StyleSheet.create({
   headerRight: { width: 40 },
   filterContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SIZES.space.sm,
     backgroundColor: COLORS.surface,
     paddingHorizontal: SIZES.space.lg,
     paddingVertical: SIZES.space.md,
@@ -89,6 +91,7 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     flex: 1,
+    minWidth: 100,
     paddingVertical: SIZES.space.sm,
     paddingHorizontal: SIZES.space.md,
     marginHorizontal: 4,

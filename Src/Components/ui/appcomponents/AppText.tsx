@@ -65,6 +65,7 @@ export default function AppText({
       numberOfLines={numberOfLines}
       style={[
         variantStyle,
+        { flexShrink: 1 },
         { textAlign: align, color: color ?? (variantStyle as any).color ?? COLORS.contentPrimary ,textTransform: 'capitalize'} ,style,
       ]}
     >

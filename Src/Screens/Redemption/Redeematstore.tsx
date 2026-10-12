@@ -85,10 +85,12 @@ export default function Redeematstore() {
     setSendingOtp(true);
     setSendError("");
     try {
-      const response = await redemptionService.sendOtp({
+      const payload = {
         groupCode: account.groupCode,
         regNo: Number(account.regNo),
-      });
+      };
+      console.log('[Redemption] sendOtp payload:', JSON.stringify(payload, null, 2));
+      const response = await redemptionService.sendOtp(payload);
       if (typeof response.mobile !== "string" || !response.mobile.trim()) {
         throw new Error("OTP response did not include a mobile number. Please contact support.");
       }

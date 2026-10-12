@@ -38,6 +38,8 @@ export default function AppBadge({ label, variant = 'primary', size = 'md', styl
           paddingHorizontal: size === 'sm' ? SIZES.space.sm : SIZES.space.md,
           paddingVertical: size === 'sm' ? 2 : SIZES.space.xs,
           alignSelf: 'flex-start',
+          maxWidth: '100%',
+          flexShrink: 1,
           borderWidth: vc.border ? 1 : 0,
           borderColor: vc.border,
         },

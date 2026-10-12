@@ -64,8 +64,10 @@ const AppOTPInput = forwardRef<AppOTPInputRef, AppOTPInputProps>(
     },
     ref
   ) => {
-    const BOX_SIZE = boxSize ?? Math.min(48, Math.floor(300 / length) - 8);
-    const BOX_GAP = gap ?? 8;
+    const [availableWidth, setAvailableWidth] = useState(0);
+    const BOX_GAP = availableWidth > 0 ? Math.min(gap ?? 8, availableWidth / (length * 5)) : gap ?? 8;
+    const desiredSize = boxSize ?? Math.min(48, Math.floor(300 / length) - 8);
+    const BOX_SIZE = availableWidth > 0 ? Math.max(12, Math.min(desiredSize, (availableWidth - BOX_GAP * (length - 1)) / length)) : desiredSize;
 
     const [otp, setOtp] = useState<string[]>(Array(length).fill(''));
     const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -188,7 +190,7 @@ const AppOTPInput = forwardRef<AppOTPInputRef, AppOTPInputProps>(
     };
 
     return (
-      <View style={[styles.container, containerStyle]}>
+      <View style={[styles.container, containerStyle]} onLayout={({ nativeEvent }) => setAvailableWidth(nativeEvent.layout.width)}>
         {label && <Text style={styles.label}>{label}</Text>}
         {hint && <Text style={styles.hint}>{hint}</Text>}
 
@@ -244,7 +246,7 @@ AppOTPInput.displayName = 'AppOTPInput';
 export default AppOTPInput;
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center' },
+  container: { alignItems: 'center', width: '100%' },
   label: { ...FONTS.label, color: COLORS.contentPrimary, marginBottom: 4 },
   hint: { ...FONTS.bodySm, color: COLORS.contentSecondary, marginBottom: 12 },
   row: { flexDirection: 'row', alignItems: 'center' },

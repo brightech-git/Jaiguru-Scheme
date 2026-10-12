@@ -8,7 +8,7 @@ import { Text } from '../../../Components/Typography/FontText';
 // -----------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
-import { Dimensions, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useWindowDimensions, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,7 +26,6 @@ import CommonHeader from '../../../Components/CommonHeader/CommonHeader';
 import GoldParticles from '../Login/components/GoldParticles';
 
 const { COLORS, SIZES, FONTS, ELEVATION } = theme;
-const { width, height } = Dimensions.get('window');
 
 const BG_GRADIENT = COLORS.gradient.accentWash as [string, string, string];
 const MEDALLION_GRADIENT = COLORS.gradient.brand as [string, string, string];
@@ -57,6 +56,7 @@ const MpinScaffold: React.FC<MpinScaffoldProps> = ({
   contentStyle,
   bottomContent,
 }) => {
+  const { width, height } = useWindowDimensions();
   const enter = useSharedValue(0);
   const insets = useSafeAreaInsets();
   // Header height: status bar + common header (~56dp)

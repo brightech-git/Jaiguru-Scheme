@@ -61,8 +61,10 @@ const AppPinInput = forwardRef<AppPinInputRef, AppPinInputProps>(
     },
     ref
   ) => {
-    const DOT = dotSize ?? (variant === 'dots' ? 18 : 52);
-    const GAP = gap ?? (variant === 'dots' ? 20 : 10);
+    const [availableWidth, setAvailableWidth] = useState(0);
+    const desiredDot = dotSize ?? (variant === 'dots' ? 18 : 52);
+    const GAP = availableWidth > 0 ? Math.min(gap ?? (variant === 'dots' ? 20 : 10), availableWidth / (length * 5)) : gap ?? (variant === 'dots' ? 20 : 10);
+    const DOT = availableWidth > 0 ? Math.max(12, Math.min(desiredDot, (availableWidth - 24 - GAP * (length - 1)) / length)) : desiredDot;
 
     const [pin, setPin] = useState<string[]>(Array(length).fill(''));
     const [focused, setFocused] = useState(false);
@@ -155,7 +157,7 @@ const AppPinInput = forwardRef<AppPinInputRef, AppPinInputProps>(
     };
 
     return (
-      <View style={[styles.container, containerStyle]}>
+      <View style={[styles.container, containerStyle]} onLayout={({ nativeEvent }) => setAvailableWidth(nativeEvent.layout.width)}>
         {label && <Text style={styles.label}>{label}</Text>}
         {hint && <Text style={styles.hint}>{hint}</Text>}
 
@@ -246,7 +248,7 @@ AppPinInput.displayName = 'AppPinInput';
 export default AppPinInput;
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center' },
+  container: { alignItems: 'center', width: '100%' },
   label: { ...FONTS.label, color: COLORS.contentPrimary, marginBottom: 4 },
   hint: { ...FONTS.bodySm, color: COLORS.contentSecondary, marginBottom: 16, textAlign: 'center' },
   row: { flexDirection: 'row', alignItems: 'center' },

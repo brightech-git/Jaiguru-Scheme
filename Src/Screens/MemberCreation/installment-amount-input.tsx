@@ -197,12 +197,13 @@ export default function InstallmentAmountInput({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", gap: SIZES.space.sm },
-  amountColumn: { flex: 3, minWidth: 0 },
-  weightColumn: { flex: 2, minWidth: 0 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: SIZES.space.sm },
+  amountColumn: { flex: 3, minWidth: 150 },
+  weightColumn: { flex: 2, minWidth: 120 },
   label: { marginBottom: SIZES.space.xs },
   field: {
-    height: SIZES.field.height,
+    minHeight: SIZES.field.height,
+    paddingVertical: SIZES.space.sm,
     borderWidth: 1,
     borderColor: COLORS.fieldBorder,
     borderRadius: SIZES.radius.field,

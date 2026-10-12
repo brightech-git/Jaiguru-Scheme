@@ -1,7 +1,7 @@
 import { Text } from '../../Components/Typography/FontText';
 // Src/Screens/Onboard/OnboardingScreen.tsx
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, FlatList, Pressable, StatusBar, StyleSheet, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import { ActivityIndicator, useWindowDimensions, FlatList, Pressable, StatusBar, StyleSheet, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import ApiImage from '../../Components/ApiImage';
 import SplashScreen from '../Splash/SplashScreen';
 import logo from '../../Assets/Company/logo.png';
@@ -16,9 +16,9 @@ import Pagination from './components/Pagination';
 import { useSharedValue } from 'react-native-reanimated';
 import { COLORS, FONTS } from '../../Utills/AppTheme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const OnboardingScreen: React.FC = () => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { banners, loading, error, refresh } = useOnboardBanners();
@@ -72,7 +72,7 @@ const OnboardingScreen: React.FC = () => {
         onLayout={({ nativeEvent }) => setBannerHeight(nativeEvent.layout.height)}
       >
       {banners.length ? <FlatList
-        style={styles.list}
+        style={[styles.list, { width: SCREEN_WIDTH }]}
         data={[...banners].reverse()}
         keyExtractor={(item, index) => String(item.BannerId ?? `${item.image_path}:${index}`)}
         initialNumToRender={1}
@@ -89,7 +89,7 @@ const OnboardingScreen: React.FC = () => {
           <ApiImage
             loadingPlaceholder="skeleton"
             source={{ uri: imageUrl(item.image_path) }}
-            style={[styles.bannerImage, { height: bannerHeight }]}
+            style={[styles.bannerImage, { width: SCREEN_WIDTH, height: bannerHeight }]}
             contentFit="cover"
             priority="high"
             cachePolicy="memory-disk"
@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
     right: 0,
     height: 90,
   },
-  list: { flex: 1, width: SCREEN_WIDTH },
-  bannerImage: { width: SCREEN_WIDTH },
+  list: { flex: 1 },
+  bannerImage: {},
   welcome: { fontSize: 20, fontFamily: FONTS.family.semiBold, color: COLORS.brand, textAlign: 'center', marginVertical: 20 },
   footer: {
     paddingTop: 6,

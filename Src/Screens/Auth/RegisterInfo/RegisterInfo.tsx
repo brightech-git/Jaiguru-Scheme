@@ -1,6 +1,6 @@
 import { Text } from '../../../Components/Typography/FontText';
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, StatusBar, StyleSheet, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StatusBar, StyleSheet, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -191,8 +191,10 @@ const RegisterInfoScreen: React.FC = () => {
           style={styles.flex}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <View
-            style={styles.content}
+          <ScrollView
+            style={styles.flex}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
             onLayout={({ nativeEvent }) =>
               setAvailableHeight(nativeEvent.layout.height)
             }
@@ -279,7 +281,6 @@ const RegisterInfoScreen: React.FC = () => {
                     autoCapitalize="words"
                     autoComplete="name"
                     textContentType="name"
-                    textTransform="capitalize"
                     editable={!loading}
                     error={usernameError}
                     accessibilityLabel="Full name"
@@ -399,7 +400,7 @@ const RegisterInfoScreen: React.FC = () => {
                 </Text>
               </View>
             )} */}
-          </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
 
@@ -418,7 +419,7 @@ const styles = StyleSheet.create({
   },
   glowFill: { flex: 1 },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: SIZES.space.gutter,
     paddingTop: SIZES.space.sm,

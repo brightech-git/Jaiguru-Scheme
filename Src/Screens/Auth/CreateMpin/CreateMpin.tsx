@@ -314,8 +314,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accentSubtle,
   },
   connectorActive: { backgroundColor: COLORS.brand },
-  inputSection: { alignItems: 'center' },
-  pinRow: { alignItems: 'center' },
+  inputSection: { alignItems: 'center', width: '100%' },
+  pinRow: { alignItems: 'center', width: '100%' },
   hidden: { position: 'absolute', opacity: 0, height: 0, overflow: 'hidden' },
   eyeBtn: { marginTop: SIZES.space.lg, padding: SIZES.space.xs },
   errorBox: {

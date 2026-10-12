@@ -1,6 +1,6 @@
 import { Text } from '../../../Components/Typography/FontText';
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import useAuth from '../../../api/hooks/Auth/useAuth';
 import CommonHeader from '../../../Components/CommonHeader/CommonHeader';
 import theme from '../../../Utills/AppTheme';
@@ -46,7 +46,8 @@ const ResetPasswordScreen = ({ route, navigation }: Props) => {
     <View style={styles.container}>
       <CommonHeader title="Reset Password" />
 
-      <View style={styles.content}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Create New Password</Text>
 
         <AppInput
@@ -71,7 +72,8 @@ const ResetPasswordScreen = ({ route, navigation }: Props) => {
         />
 
         <AppButton label="Update Password" onPress={handleReset} loading={loading} variant="primary" size="lg" style={styles.button} />
-      </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
