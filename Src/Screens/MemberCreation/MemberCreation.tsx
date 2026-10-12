@@ -1,10 +1,8 @@
 // Src/Screens/MemberCreation/MemberCreation.tsx
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import UserRegistrationForm, { UserRegistrationFormData, UserRegistrationFormRef } from './UserRegistrationForm';
 import SchemeJoiningForm, { SchemeJoiningFormRef } from './SchemeJoiningForm';
 import { useRazorpayPayment } from '../../api/hooks/Razorpay/useRazorpay';
 import PaymentModal from './PaymentModal';
@@ -12,52 +10,30 @@ import { buildSchemeJoinSuccess } from './schemeJoinSuccess';
 import { DEFAULT_EMPLOYEE_ID } from './EmployeePickerModal';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
 import PremiumBackground from '../../Components/PremiumBackground/PremiumBackground';
-import { getUserData, getUserId, getUserField } from '../../Utills/AsynchStorageHelper';
-import { useTransactionTypes } from '../../api/hooks/Account/useTransactionTypes';
+import { getUserData } from '../../Utills/AsynchStorageHelper';
 import { Scheme } from '../../types/Scheme/Scheme';
 import { CreateMemberPayload } from '../../types/Member/Member';
 import { AppButton, AppText } from '../../Components/ui/appcomponents';
 import theme from '../../Utills/AppTheme';
 import { PAYMENT_CONSTANTS } from '../../constants/paymentConstants';
-import { requiresKycFromControls, softControlService } from '../../api/services/softControlService';
 
 const { COLORS, SIZES, FONTS, ELEVATION } = theme;
 
-// Constants
-const STEPS = {
-  REGISTRATION: 1,
-  SCHEME_JOINING: 2,
-} as const;
-
-type Step = (typeof STEPS)[keyof typeof STEPS];
-
-type MemberCreationRouteParams = { scheme?: Scheme; requiresKyc?: boolean } | undefined;
+type MemberCreationRouteParams = { scheme?: Scheme } | undefined;
 
 const MemberCreation = () => {
   const route = useRoute<RouteProp<Record<string, MemberCreationRouteParams>, string>>();
   const navigation = useNavigation<any>();
-  const { scheme, requiresKyc: routeRequiresKyc } = route.params || {};
-  const hasResolvedKycRoute = typeof routeRequiresKyc === 'boolean';
-
-  // State
-  const [currentStep, setCurrentStep] = useState<Step>(STEPS.REGISTRATION);
-  const [userRegistrationData, setUserRegistrationData] = useState<Partial<UserRegistrationFormData>>({});
+  const { scheme } = route.params || {};
   const [schemeJoiningData] = useState(null);
-  const [currentUserId, setCurrentUserId] = useState<string | number | null>(null);
-  const [currentReferralCode, setCurrentReferralCode] = useState('');
   const [loggedInUser, setLoggedInUser] = useState<Record<string, any>>({});
-  // Until the server control resolves, keep the safer flow that collects KYC.
-  const [requiresKyc, setRequiresKyc] = useState(routeRequiresKyc ?? true);
-  const [kycControlLoading, setKycControlLoading] = useState(!hasResolvedKycRoute);
 
   const [payableAmount, setPayableAmount] = useState<number | null>(null);
 
   // Refs
-  const registrationFormRef = useRef<UserRegistrationFormRef>(null);
   const schemeFormRef = useRef<SchemeJoiningFormRef>(null);
 
   // Hooks
-  const { onlinePayMode } = useTransactionTypes();
 
   const {
     loading: paymentLoading,
@@ -68,207 +44,22 @@ const MemberCreation = () => {
     PAYMENT_STEPS,
   } = useRazorpayPayment();
 
-  // Reset state on screen focus — but ONLY when not mid-payment.
-  // If the user switches to a UPI app and comes back, useFocusEffect fires
-  // again and was resetting the entire payment state while the WebView was
-  // still open, killing the in-flight payment.
-  useFocusEffect(
-    useCallback(() => {
-      if (!paymentLoading && paymentStep === PAYMENT_STEPS.IDLE) {
-        resetForm();
-      }
-    }, [paymentLoading, paymentStep, requiresKyc])
-  );
+  useFocusEffect(useCallback(() => {
+    if (!paymentLoading && paymentStep === PAYMENT_STEPS.IDLE) resetPayment();
+  }, [paymentLoading, paymentStep, resetPayment]));
 
-  // Load the logged-in user's details once for the KYC-skipped payload.
   useEffect(() => {
-    (async () => {
-      try {
-        const [uid, refCode, storedUser] = await Promise.all([
-          getUserId(),
-          getUserField('referralCode'),
-          getUserData(),
-        ]);
-        if (uid) setCurrentUserId(uid);
-        if (refCode) setCurrentReferralCode(refCode);
-        if (storedUser) setLoggedInUser(storedUser);
-      } catch (e) {
-        console.log('Failed to load logged-in user details', e);
-      }
-    })();
-  }, []);
-
-  // ctlText "1" requires the full KYC form. A value of "2" or greater
-  // starts directly on scheme/amount selection and uses the signed-in user.
-  useEffect(() => {
-    if (hasResolvedKycRoute) {
-      setRequiresKyc(routeRequiresKyc);
-      setCurrentStep(routeRequiresKyc ? STEPS.REGISTRATION : STEPS.SCHEME_JOINING);
-      setKycControlLoading(false);
-      return;
-    }
-
     let active = true;
-
-    (async () => {
-      try {
-        const controls = await softControlService.getKycUpdation();
-        const shouldRequireKyc = requiresKycFromControls(controls);
-
-        if (active) {
-          setRequiresKyc(shouldRequireKyc);
-          setCurrentStep(shouldRequireKyc ? STEPS.REGISTRATION : STEPS.SCHEME_JOINING);
-        }
-      } catch (error) {
-        // A failed control fetch must never accidentally bypass KYC.
-        console.log('Failed to load KYC soft control; using KYC flow', error);
-        if (active) setRequiresKyc(true);
-      } finally {
-        if (active) setKycControlLoading(false);
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [hasResolvedKycRoute, routeRequiresKyc]);
-
-  const resetForm = () => {
-    setCurrentStep(requiresKyc ? STEPS.REGISTRATION : STEPS.SCHEME_JOINING);
-    setUserRegistrationData({});
-    resetPayment();
-  };
-
-  const handleRegistrationSubmit = useCallback((formData: UserRegistrationFormData) => {
-    console.log('[SCHEME JOIN] STEP 1 — User registration form submitted', { name: formData.userName, mobile: formData.mobileNumber });
-    setUserRegistrationData(formData);
-    setCurrentStep(STEPS.SCHEME_JOINING);
+    getUserData().then(user => {
+      if (active && user) setLoggedInUser(user);
+    }).catch(error => console.log('Failed to load signed-in user', error));
+    return () => { active = false; };
   }, []);
 
-  const handleBack = useCallback(() => {
-    if (currentStep === STEPS.SCHEME_JOINING && requiresKyc) {
-      setCurrentStep(STEPS.REGISTRATION);
-    } else {
-      navigation.goBack();
-    }
-  }, [currentStep, navigation, requiresKyc]);
+  const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
-  const handleNext = useCallback(() => {
-    if (currentStep === STEPS.REGISTRATION && registrationFormRef.current) {
-      registrationFormRef.current.validateAndSubmit();
-    }
-  }, [currentStep]);
-
-  const formatDate = useCallback((dateStr?: string | null): string | null => {
-    if (!dateStr) return null;
-
-    // If already in YYYY-MM-DD format
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      return dateStr;
-    }
-
-    // If in DD-MM-YYYY format
-    if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
-      const [day, month, year] = dateStr.split('-');
-      return `${year}-${month}-${day}`;
-    }
-
-    // Fallback (handles Date objects or other formats)
-    const date = new Date(dateStr);
-    if (!isNaN(date as any)) {
-      return date.toISOString().split('T')[0];
-    }
-
-    return null;
-  }, []);
-
-  const createMemberPayload = useCallback(
-    (formData: any, regNo: number): CreateMemberPayload => {
-      const user = userRegistrationData;
-      const nickname = String(formData.nickname || '').trim();
-      const aadhaar = user.aadharNumber?.replace(/\s/g, '') || '';
-      const maskedAadhaar = aadhaar.length >= 4 ? `XXXX-XXXX-${aadhaar.slice(-4)}` : '';
-      const nowDateTime = new Date().toISOString().slice(0, 10) + ' 00:00:00';
-
-      return {
-        newMember: {
-          title: PAYMENT_CONSTANTS.TITLE,
-          initial: (user.userName?.[0] || PAYMENT_CONSTANTS.INITIAL_FALLBACK).toUpperCase(),
-          pName: user.userName || 'NA',
-          sName: nickname || user.lastName || 'NA',
-          doorNo: user.doorNo || '',
-          address1: user.street || '',
-          address2: '',
-          area: user.area || '',
-          city: user.city || '',
-          state: (user.state || PAYMENT_CONSTANTS.DEFAULT_STATE).replace(/\s+/g, ' '),
-          country: PAYMENT_CONSTANTS.DEFAULT_COUNTRY,
-          pinCode: user.pincode || '',
-          mobile: user.mobileNumber || '',
-          mobile2: user.nomineeMobile || '',
-          nomeni: user.nomineeName || '',
-          nomineeMobile: user.nomineeMobile || '',
-          nomineeRelationship: user.nomineeRelationship || '',
-          nomAddr1: user.street || '',
-          nomAddr2: '',
-          nomCity: user.city || '',
-          nomState: (user.state || PAYMENT_CONSTANTS.DEFAULT_STATE).replace(/\s+/g, ' '),
-          nomPincode: user.pincode || '',
-          nomCountry: PAYMENT_CONSTANTS.DEFAULT_COUNTRY,
-          idProof: PAYMENT_CONSTANTS.ID_PROOF,
-          idProofNo: aadhaar,
-          aadhaarMasked: maskedAadhaar,
-          // Backend NewMember model calls this field "panno", not "panNumber" —
-          // sending the wrong key throws a Jackson UnrecognizedPropertyException
-          // and silently kills the entire member creation (caught only inside
-          // processPendingPayment's error handling on the backend).
-          panno: user.panNumber || '',
-          dob: formatDate(user.dob),
-          email: user.emailAddress || '',
-          // mobileVerified/aadhaarVerified deliberately omitted — the backend's
-          // NewMember model has no such fields for the primary member (only
-          // nomineeMobileVerified/nomineeAadhaarVerified exist), so sending them
-          // causes the same unrecognized-field failure as panNumber did.
-          nomineeMobileVerified: true,
-          nomineeAadhaarVerified: false,
-          upDateTime: nowDateTime,
-          userId: PAYMENT_CONSTANTS.USER_ID,
-          appVer: PAYMENT_CONSTANTS.APP_VER,
-          anniversaryDate: formatDate(user.anniversaryDate),
-        },
-        createSchemeSummary: {
-          schemeId: formData.schemeId || 0,
-          groupCode: formData.selectedScheme || '',
-          regNo,
-          joinDate: nowDateTime,
-          // Backend CreateSchemeSummary model calls these "updateTime"/"userId",
-          // not "upDateTime2"/"userId2" — same unrecognized-field failure mode.
-          updateTime: nowDateTime,
-          openingDate: nowDateTime,
-          userId: PAYMENT_CONSTANTS.USER_ID,
-          iEmp: formData.employeeId || DEFAULT_EMPLOYEE_ID,
-        },
-        schemeCollectInsert: {
-          amount: formData.amount || 0,
-          modePay: onlinePayMode?.modePay ?? 'R',
-          accCode: onlinePayMode?.accCode ?? '',
-          chqBankCode: onlinePayMode?.chqBankCode ?? 4,
-          // Payment/order id aren't known yet — this payload is built and
-          // parked server-side BEFORE the Razorpay order (and therefore the
-          // payment id) exists.
-          chqCardNo: '',
-          chqBranch: PAYMENT_CONSTANTS.CHQ_BRANCH,
-          chkBank: PAYMENT_CONSTANTS.CHK_BANK,
-          chqRtnReason: '',
-        },
-        ...(currentReferralCode ? { referralCode: currentReferralCode } : {}),
-      };
-    },
-    [userRegistrationData, formatDate, currentReferralCode]
-  );
-
-  /** Minimal NMDATA used when the soft control says KYC has already been collected. */
-  const createKycSkippedPayload = useCallback(
+  /** Minimal joining payload; personal details are maintained in the separate KYC flow. */
+  const createJoiningPayload = useCallback(
     (formData: any): CreateMemberPayload => {
       const loginName = String(loggedInUser?.username || loggedInUser?.name || '').trim();
       const customerName = String(loggedInUser?.customerName || '').trim();
@@ -302,7 +93,7 @@ const MemberCreation = () => {
   const handleSubmit = useCallback(async () => {
     // Guard: prevent double-tap / re-entry while payment is already in flight
     if (paymentLoading) return;
-    if (currentStep !== STEPS.SCHEME_JOINING || !schemeFormRef.current) return;
+    if (!schemeFormRef.current) return;
 
     const isValid = schemeFormRef.current.validateAndSubmit();
     if (!isValid) return;
@@ -316,18 +107,17 @@ const MemberCreation = () => {
     // Built up front and sent as NMDATA on create-order (NEWJOIN=true) —
     // the backend parks it and creates the member automatically once
     // payment is confirmed. There's no more separate member/create call.
-    const nmData = requiresKyc ? createMemberPayload(formData, regNo) : createKycSkippedPayload(formData);
+    const nmData = createJoiningPayload(formData);
     console.log('[SCHEME JOIN] STEP 2 — Member payload built (NMDATA)', { pName: nmData.newMember.pName, schemeId: nmData.createSchemeSummary.schemeId });
 
     console.log('[SCHEME JOIN] STEP 2 — Payment request payload', {
       amount: formData.amount || 0,
       regNo,
       groupCode,
-      requiresKyc,
       userDetails: {
-        name: requiresKyc ? userRegistrationData.userName : (loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name),
-        phone: requiresKyc ? userRegistrationData.mobileNumber : (loggedInUser?.contactNumber || loggedInUser?.mobileNumber || loggedInUser?.mobile || loggedInUser?.phone),
-        email: requiresKyc ? userRegistrationData.emailAddress : loggedInUser?.email,
+        name: (loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name),
+        phone: (loggedInUser?.contactNumber || loggedInUser?.mobileNumber || loggedInUser?.mobile || loggedInUser?.phone),
+        email: loggedInUser?.email,
       },
       nmData,
     });
@@ -335,9 +125,9 @@ const MemberCreation = () => {
     const result = await startPayment(
       formData.amount || 0,
       {
-        name: requiresKyc ? userRegistrationData.userName : (loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name),
-        phone: requiresKyc ? userRegistrationData.mobileNumber : (loggedInUser?.contactNumber || loggedInUser?.mobileNumber || loggedInUser?.mobile || loggedInUser?.phone),
-        email: requiresKyc ? userRegistrationData.emailAddress : loggedInUser?.email,
+        name: (loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name),
+        phone: (loggedInUser?.contactNumber || loggedInUser?.mobileNumber || loggedInUser?.mobile || loggedInUser?.phone),
+        email: loggedInUser?.email,
       },
       regNo,
       groupCode,
@@ -346,9 +136,7 @@ const MemberCreation = () => {
 
     if (result.success) {
       console.log('[SCHEME JOIN] STEP 8 — Flow complete. Opening success screen.', { processResult: result.processResult });
-      const memberName = requiresKyc
-        ? [userRegistrationData.userName, userRegistrationData.lastName].filter(Boolean).join(' ')
-        : String(loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name || 'Member');
+      const memberName = String(loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name || 'Member');
       const details = buildSchemeJoinSuccess(result.processResult ?? result.data, {
         userName: memberName,
         schemeName: formData.schemeName,
@@ -360,7 +148,7 @@ const MemberCreation = () => {
       console.log('[SCHEME JOIN] FLOW FAILED —', result.message);
       Alert.alert(result.pending ? 'Payment status' : 'Payment Failed', result.message || 'Payment failed');
     }
-  }, [currentStep, userRegistrationData, startPayment, createMemberPayload, createKycSkippedPayload, loggedInUser, requiresKyc, navigation, paymentLoading]);
+  }, [startPayment, createJoiningPayload, loggedInUser, navigation, paymentLoading]);
 
   const isLoading = paymentLoading;
 
@@ -372,32 +160,13 @@ const MemberCreation = () => {
       <PremiumBackground />
       <CommonHeader title="Member Creation" showBack onBackPress={handleBack} transparent borderBottom={false} shadow={false} />
 
-      {/* Step Indicator */}
-      {/* <StepIndicator currentStep={currentStep} /> */}
-
-        <View style={styles.scrollView}>
-        {kycControlLoading ? (
-          <View style={styles.controlLoading}>
-            <ActivityIndicator size="large" color={COLORS.contentBrand} />
-            <AppText variant="body" color={COLORS.contentSecondary} style={{ marginTop: SIZES.space.md }}>
-              Preparing your scheme application...
-            </AppText>
-          </View>
-        ) : currentStep === STEPS.REGISTRATION ? (
-          <UserRegistrationForm ref={registrationFormRef} onSubmit={handleRegistrationSubmit} initialData={userRegistrationData} />
-        ) : (
-          <SchemeJoiningForm
-            ref={schemeFormRef}
-            scheme={scheme}
-            initialData={schemeJoiningData}
-            onAmountChange={setPayableAmount}
-            userData={requiresKyc ? userRegistrationData : {
-              userName: loggedInUser?.customerName || loggedInUser?.username || loggedInUser?.name,
-              mobileNumber: loggedInUser?.contactNumber || loggedInUser?.mobileNumber || loggedInUser?.mobile || loggedInUser?.phone,
-              emailAddress: loggedInUser?.email,
-            }}
-          />
-        )}
+      <View style={styles.scrollView}>
+        <SchemeJoiningForm
+          ref={schemeFormRef}
+          scheme={scheme}
+          initialData={schemeJoiningData}
+          onAmountChange={setPayableAmount}
+        />
       </View>
 
       {/* Razorpay Checkout WebView */}
@@ -413,46 +182,10 @@ const MemberCreation = () => {
         <LoadingOverlay message="Processing..." />
       )}
 
-      {/* Navigation Buttons */}
-      {!kycControlLoading && (
-        <NavigationButtons
-          currentStep={currentStep}
-          onBack={handleBack}
-          onNext={handleNext}
-          onSubmit={handleSubmit}
-          isLoading={isLoading}
-          payableAmount={payableAmount}
-        />
-      )}
+      <NavigationButtons onSubmit={handleSubmit} isLoading={isLoading} payableAmount={payableAmount} />
     </KeyboardAvoidingView>
   );
 };
-
-// Sub-components for better organization
-// const StepIndicator = ({ currentStep }: { currentStep: Step }) => (
-//   <View style={styles.stepIndicator}>
-//     <View style={styles.stepRow}>
-//       {[1, 2].map((step) => (
-//         <React.Fragment key={step}>
-//           <View style={[styles.stepCircle, currentStep >= step && styles.activeStep]}>
-//             <AppText variant="bodyBold" color={currentStep >= step ? COLORS.surface : COLORS.contentSecondary}>
-//               {step}
-//             </AppText>
-//           </View>
-//           {step === 1 && <View style={[styles.stepLine, currentStep >= 2 && styles.activeStepLine]} />}
-//         </React.Fragment>
-//       ))}
-//     </View>
-//     <View style={styles.stepLabels}>
-//       <AppText variant="caption" color={currentStep >= 1 ? COLORS.accent : COLORS.contentSecondary} align="center" style={styles.stepLabelFlex}>
-//         Registration
-//       </AppText>
-//       <AppText variant="caption" color={currentStep >= 2 ? COLORS.accent : COLORS.contentSecondary} align="center" style={styles.stepLabelFlex}>
-//         Scheme Joining
-//       </AppText>
-//     </View>
-//   </View>
-// );
 
 const LoadingOverlay = ({ message }: { message: string }) => (
   <View style={styles.loadingOverlay}>
@@ -464,9 +197,6 @@ const LoadingOverlay = ({ message }: { message: string }) => (
 );
 
 interface NavigationButtonsProps {
-  currentStep: Step;
-  onBack: () => void;
-  onNext: () => void;
   onSubmit: () => void;
   isLoading: boolean;
   payableAmount?: number | null;
@@ -480,11 +210,10 @@ const formatINR = (value: number): string => {
   }
 };
 
-const NavigationButtons = ({ currentStep, onBack, onNext, onSubmit, isLoading, payableAmount }: NavigationButtonsProps) => {
+const NavigationButtons = ({ onSubmit, isLoading, payableAmount }: NavigationButtonsProps) => {
   const insets = useSafeAreaInsets();
   const bottomPadding = { paddingBottom: Math.max(insets.bottom, SIZES.space.md) };
 
-  if (currentStep === STEPS.SCHEME_JOINING) {
     return (
       <View style={[styles.navigationContainer, bottomPadding]}>
         <View style={styles.payableBlock}>
@@ -508,28 +237,6 @@ const NavigationButtons = ({ currentStep, onBack, onNext, onSubmit, isLoading, p
         />
       </View>
     );
-  }
-
-  return (
-    <View style={[styles.navigationContainer, bottomPadding]}>
-      <TouchableOpacity onPress={onBack} disabled={isLoading} style={styles.cancelButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <Icon name="close" size={SIZES.icon.sm} color={COLORS.contentSecondary} />
-        <AppText variant="bodyMedium" color={COLORS.contentSecondary}>
-          Cancel
-        </AppText>
-      </TouchableOpacity>
-      <AppButton
-        label="Continue"
-        variant="primary"
-        size="lg"
-        rightIcon="arrow-forward"
-        onPress={onNext}
-        disabled={isLoading}
-        fullWidth={false}
-        style={styles.payButton}
-      />
-    </View>
-  );
 };
 
 const styles = StyleSheet.create({

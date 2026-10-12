@@ -1,11 +1,11 @@
 // Src/Screens/PayNow/PayNow.tsx
-import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTodayRate } from '../../api/hooks/Rates/useTodayRate';
-import { useRoute, useNavigation, useFocusEffect, RouteProp } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useRazorpayPayment } from '../../api/hooks/Razorpay/useRazorpay';
 import { useTransactionTypes } from '../../api/hooks/Account/useTransactionTypes';
 import CommonHeader from '../../Components/CommonHeader/CommonHeader';
@@ -13,14 +13,11 @@ import PremiumBackground from '../../Components/PremiumBackground/PremiumBackgro
 import { AppCard, AppText, AppButton, AppBadge, AppDivider, ScreenWrapper } from '../../Components/ui/appcomponents';
 import theme from '../../Utills/AppTheme';
 import { PAYMENT_CONSTANTS } from '../../constants/paymentConstants';
-import { userService, UserKycDetails } from '../../api/services/userService';
-import { getUserId } from '../../Utills/AsynchStorageHelper';
 
 const { COLORS, SIZES } = theme;
 
 const STATUS = { IDLE: 'idle', SUCCESS: 'success', FAILED: 'failed' } as const;
 type Status = (typeof STATUS)[keyof typeof STATUS];
-type KycCheckState = 'loading' | 'ready' | 'incomplete' | 'error';
 
 export interface PayNowRouteParams {
   accountData?: any;
@@ -65,12 +62,6 @@ const PayNow = () => {
   const [statusMsg, setStatusMsg] = useState('');
   const [confirmationPending, setConfirmationPending] = useState(false);
   const [paymentId, setPaymentId] = useState('');
-  const [kycCheckState, setKycCheckState] = useState<KycCheckState>('loading');
-  const [kycError, setKycError] = useState('');
-  const [kycModalVisible, setKycModalVisible] = useState(false);
-  const [kycDetails, setKycDetails] = useState<UserKycDetails | null>(null);
-  const kycRequest = useRef(0);
-
   const { onlinePayMode } = useTransactionTypes();
 
   const {
@@ -114,50 +105,8 @@ const PayNow = () => {
     return `${y}-${m}-${d} 00:00:00`;
   };
 
-  const checkKycStatus = useCallback(async () => {
-    const request = ++kycRequest.current;
-    setKycCheckState('loading');
-    setKycError('');
-    setKycModalVisible(false);
-    setKycDetails(null);
-    try {
-      const userId = await getUserId();
-      if (!userId) throw new Error('User ID is unavailable. Please sign in again.');
-      const response = await userService.getDetails(userId);
-      if (request !== kycRequest.current) return;
-      const complete = response?.kycVerified === true || response?.aadhaarVerified === true;
-      setKycDetails(response);
-      setKycCheckState(complete ? 'ready' : 'incomplete');
-      setKycModalVisible(!complete);
-    } catch (error: any) {
-      if (request !== kycRequest.current) return;
-      setKycCheckState('error');
-      setKycError(error?.message || 'Unable to verify your KYC status. Please try again.');
-    }
-  }, []);
-
-  useFocusEffect(useCallback(() => {
-    if (!paymentLoading && status === STATUS.IDLE) void checkKycStatus();
-    return () => { kycRequest.current += 1; };
-  }, [checkKycStatus, paymentLoading, status]));
-
-  const openKycForm = (section: 'address' | 'aadhaar') => {
-    setKycModalVisible(false);
-    navigation.navigate('PassbookKyc', {
-      account: accountData || { regNo, groupCode, pName: memberName },
-      section,
-    });
-  };
-
   const handlePayment = useCallback(async () => {
     if (paymentLoading) return;
-    if (kycCheckState !== 'ready') {
-      setKycModalVisible(kycCheckState === 'incomplete');
-      if (kycCheckState === 'error') {
-        Alert.alert('KYC Verification Required', kycError || 'Please verify your KYC status before payment.');
-      }
-      return;
-    }
     setStatus(STATUS.IDLE);
     setStatusMsg('');
     resetPayment();
@@ -214,37 +163,9 @@ const PayNow = () => {
       setStatus(STATUS.FAILED);
       resetPayment();
     }
-  }, [paymentLoading, kycCheckState, kycError, paymentAmount, memberName, accountData, regNo, groupCode, startPayment, nextInstallment, schemeId, resetPayment]);
+  }, [paymentLoading, paymentAmount, memberName, accountData, regNo, groupCode, startPayment, nextInstallment, schemeId, resetPayment]);
 
   const isLoading = paymentLoading;
-
-  if (kycCheckState === 'loading') {
-    return (
-      <ScreenWrapper header={<CommonHeader title="Pay Now" />}>
-        <View style={styles.kycStateContainer}>
-          <ActivityIndicator size="large" color={COLORS.contentBrand} />
-          <AppText variant="body" color={COLORS.contentSecondary} align="center" style={styles.kycStateText}>
-            Verifying your KYC status...
-          </AppText>
-        </View>
-      </ScreenWrapper>
-    );
-  }
-
-  if (kycCheckState === 'error') {
-    return (
-      <ScreenWrapper header={<CommonHeader title="Pay Now" />}>
-        <View style={styles.kycStateContainer}>
-          <AppText variant="h4" align="center">Unable to verify KYC</AppText>
-          <AppText variant="body" color={COLORS.contentSecondary} align="center" style={styles.kycStateText}>
-            {kycError}
-          </AppText>
-          <AppButton label="Try Again" size="lg" onPress={checkKycStatus} />
-          <AppButton label="Go Back" variant="outline" size="lg" style={styles.kycBackButton} onPress={() => navigation.goBack()} />
-        </View>
-      </ScreenWrapper>
-    );
-  }
 
   if (status === STATUS.SUCCESS) {
     return (
@@ -444,28 +365,9 @@ const PayNow = () => {
         </AppCard> */}
 
       </ScrollView>
-      <Modal visible={kycModalVisible} transparent animationType="slide" onRequestClose={() => setKycModalVisible(false)}>
-        <View style={styles.kycModalOverlay}>
-          <ScrollView style={styles.kycModalCard} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, SIZES.space.lg) }}>
-            <AppText variant="h4" align="center">Complete your verification</AppText>
-            <AppText variant="body" color={COLORS.contentSecondary} align="center" style={styles.kycModalMessage}>
-              Complete either address KYC or Aadhaar verification to pay this installment.
-            </AppText>
-            {kycDetails?.kycVerified !== true && (
-              <AppButton label="Complete address KYC" size="lg" onPress={() => openKycForm('address')} />
-            )}
-            {kycDetails?.aadhaarVerified !== true && (
-              <AppButton label="Complete Aadhaar KYC" size="lg" style={styles.kycSecondaryButton} onPress={() => openKycForm('aadhaar')} />
-            )}
-            <AppButton label="Check verification again" variant="outline" size="md" style={styles.kycSecondaryButton} onPress={checkKycStatus} />
-            <AppButton label="Close" variant="ghost" size="md" style={styles.kycSecondaryButton} onPress={() => setKycModalVisible(false)} />
-          </ScrollView>
-        </View>
-      </Modal>
-
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, SIZES.space.md) }]}>
         <AppButton
-          label={kycCheckState === 'incomplete' ? 'Complete KYC to pay' : `${formatCurrency(paymentAmount)}  ·  Pay Now`}
+          label={ `${formatCurrency(paymentAmount)}  ·  Pay Now`}
           size="lg"
           loading={isLoading}
           disabled={paymentAmount <= 0 || !Number.isFinite(paymentAmount)}
@@ -599,38 +501,7 @@ const styles = StyleSheet.create({
   statusDetail: { marginBottom: SIZES.space.xs },
   paymentIdText: { marginBottom: SIZES.space.xxxl },
   actionBtn: { marginBottom: SIZES.space.sm },
-  kycStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SIZES.space.xxxl,
-  },
-  kycStateText: {
-    marginVertical: SIZES.space.lg,
-  },
-  kycBackButton: {
-    marginTop: SIZES.space.sm,
-  },
-  kycModalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-  },
-  kycModalCard: {
-    maxHeight: '88%',
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: SIZES.radius.xl,
-    borderTopRightRadius: SIZES.radius.xl,
-    padding: SIZES.space.lg,
-  },
-  kycModalMessage: {
-    marginTop: SIZES.space.sm,
-    marginBottom: SIZES.space.lg,
-    lineHeight: SIZES.text.md * 1.4,
-  },
-  kycSecondaryButton: {
-    marginTop: SIZES.space.sm,
-  },
+
 });
 
 export default PayNow;

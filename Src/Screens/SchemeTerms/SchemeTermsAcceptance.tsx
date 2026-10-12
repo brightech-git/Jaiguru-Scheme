@@ -7,7 +7,6 @@ import AppContentScreen from '../../Components/AppContent/AppContentScreen';
 import { AppButton } from '../../Components/ui/appcomponents';
 import theme from '../../Utills/AppTheme';
 import { Scheme } from '../../types/Scheme/Scheme';
-import { requiresKycFromControls, softControlService } from '../../api/services/softControlService';
 
 type SchemeTermsRouteParams = { scheme?: Scheme } | undefined;
 
@@ -23,14 +22,8 @@ const SchemeTermsAcceptance = () => {
     if (!accepted || !scheme || isJoining) return;
 
     setIsJoining(true);
-    try {
-      const controls = await softControlService.getKycUpdation();
-      navigation.navigate('MemberCreation', { scheme, requiresKyc: requiresKycFromControls(controls) });
-    } catch (error) {
-      // Do not bypass KYC if the control cannot be checked.
-      console.log('Failed to load KYC soft control; using KYC flow', error);
-      navigation.navigate('MemberCreation', { scheme, requiresKyc: true });
-    }
+    navigation.navigate('MemberCreation', { scheme });
+
   };
 
   if (scheme?.SchemeId == null) {
@@ -49,7 +42,7 @@ const SchemeTermsAcceptance = () => {
       contentId={String(scheme.SchemeId)}
       title="Plan Terms & Conditions"
       navigation={navigation}
-      footer={(language) => (
+      footer={(language, contentState) => (
         <View
           style={{
             paddingHorizontal: SIZES.space.gutter,
@@ -61,6 +54,7 @@ const SchemeTermsAcceptance = () => {
           }}
         >
           <TouchableOpacity
+            disabled={contentState === 'loading'}
             onPress={() => setAccepted((value) => !value)}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: accepted }}
@@ -82,12 +76,14 @@ const SchemeTermsAcceptance = () => {
               {accepted ? <Ionicons name="checkmark" size={18} color={COLORS.contentOnBrand} /> : null}
             </View>
             <Text style={{ ...FONTS.bodyStrong, color: COLORS.contentSecondary, flex: 1 }}>
-              {language === 'ta'
+              {contentState === 'empty' || contentState === 'error'
+                ? 'I confirm that I am 18 years of age or above.'
+                : language === 'ta'
                 ? 'எனக்கு 18 வயது அல்லது அதற்கு மேற்பட்ட வயது உள்ளது என்பதை உறுதிப்படுத்துகிறேன்.திட்டத்தின் விதிமுறைகள் மற்றும் நிபந்தனைகளை நான் படித்து ஏற்றுக்கொண்டுள்ளேன்.'
                 : 'I confirm that I am 18 years of age or above, and I have read and accept the Plan Terms and Conditions.'}
             </Text>
           </TouchableOpacity>
-          <AppButton label={language === 'ta' ? 'திட்டத்தில் சேரவும்' : 'Join Scheme'} onPress={joinScheme} loading={isJoining} disabled={!accepted || isJoining} />
+          <AppButton label={language === 'ta' ? 'திட்டத்தில் சேரவும்' : 'Join Scheme'} onPress={joinScheme} loading={isJoining} disabled={!accepted || isJoining || contentState === 'loading'} />
         </View>
       )}
     />

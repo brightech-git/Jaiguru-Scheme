@@ -9,13 +9,14 @@ import theme from '../../Utills/AppTheme';
 import { getAppContent } from '../../api/services/appContentService';
 
 type ContentLanguage = 'en' | 'ta';
+export type ContentState = 'loading' | 'error' | 'empty' | 'ready';
 
 interface AppContentScreenProps {
   contentId: string;
   title: string;
   navigation: { goBack: () => void };
   /** Optional fixed action area, for flows such as scheme-term acceptance. */
-  footer?: React.ReactNode | ((language: ContentLanguage) => React.ReactNode);
+  footer?: React.ReactNode | ((language: ContentLanguage, state: ContentState) => React.ReactNode);
 }
 
 const buildDocument = (content: string, language: ContentLanguage) => `<!doctype html>
@@ -52,12 +53,15 @@ const AppContentScreen = ({ contentId, title, navigation, footer }: AppContentSc
   const loadContent = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setContent(null);
     try {
       const response = await getAppContent(contentId);
-      if (!response?.data) throw new Error('Content is unavailable.');
-      setContent(response.data);
+      if (!response || (response.data != null && typeof response.data !== 'string')) {
+        throw new Error('Invalid content response');
+      }
+      setContent(response.data?.trim() || '');
     } catch {
-      setError('Unable to load this page. Please check your connection and try again.');
+      setError('This page could not be loaded. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +72,7 @@ const AppContentScreen = ({ contentId, title, navigation, footer }: AppContentSc
   }, [loadContent]);
 
   const html = useMemo(() => (content ? buildDocument(content, language) : ''), [content, language]);
+  const contentState: ContentState = isLoading ? 'loading' : error ? 'error' : content ? 'ready' : 'empty';
 
   return (
     <SafeAreaView style={STYLES.screen}>
@@ -85,6 +90,10 @@ const AppContentScreen = ({ contentId, title, navigation, footer }: AppContentSc
           <TouchableOpacity onPress={loadContent} style={{ ...STYLES.chip.brand, marginTop: SIZES.space.lg }} accessibilityRole="button">
             <Text style={{ ...FONTS.bodyEmphasis, color: COLORS.contentBrand }}>Try again</Text>
           </TouchableOpacity>
+        </View>
+      ) : !content ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: SIZES.space.gutter }}>
+          <Text style={{ ...FONTS.body, color: COLORS.contentSecondary, textAlign: 'center' }}>No content has been provided for this page.</Text>
         </View>
       ) : (
         <View style={{ flex: 1 }}>
@@ -111,9 +120,9 @@ const AppContentScreen = ({ contentId, title, navigation, footer }: AppContentSc
               return request.url === 'about:blank';
             }}
           />
-          {typeof footer === 'function' ? footer(language) : footer}
         </View>
       )}
+      {typeof footer === 'function' ? footer(language, contentState) : footer}
     </SafeAreaView>
   );
 };

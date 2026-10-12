@@ -52,20 +52,10 @@ export interface SchemeJoiningFormRef {
   getFormData: () => SchemeJoiningFormData;
 }
 
-export interface SchemeJoiningUserSummary {
-  userName?: string;
-  lastName?: string;
-  mobileNumber?: string;
-  emailAddress?: string;
-}
-
 export interface SchemeJoiningFormProps {
   scheme?: Scheme;
   onSubmit?: (data: SchemeJoiningFormData) => void;
   initialData?: { selectedScheme?: string } | null;
-  // Registration data collected in Step 1 — shown here so the member can
-  // confirm who they're registering/paying for before submitting payment.
-  userData?: SchemeJoiningUserSummary;
   // Lets the parent show the payable amount next to the pay button.
   onAmountChange?: (amount: number | null) => void;
 }
@@ -85,12 +75,6 @@ const formatINR = (value?: number | null): string => {
   } catch {
     return String(n);
   }
-};
-
-const getInitials = (name?: string): string => {
-  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
 };
 
 const SectionTitle = ({ icon, title, subtitle }: { icon: string; title: string; subtitle?: string }) => (
@@ -121,7 +105,7 @@ const SummaryRow = ({ label, value, highlight }: { label: string; value?: string
 );
 
 const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProps>(
-  ({ scheme, initialData = null, userData, onAmountChange }, ref) => {
+  ({ scheme, initialData = null, onAmountChange }, ref) => {
     const insets = useSafeAreaInsets();
     const { schemes, loading: loadingSchemes, error: errorSchemes, getAmount, getRegNo } = useSchemeGroupOptions(
       scheme?.SchemeId
@@ -141,7 +125,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
     const [nickname, setNickname] = useState('');
     const nameTapCount = useRef(0);
 
-    const handleNamePress = () => {
+    const handleSchemeTitlePress = () => {
       nameTapCount.current += 1;
       if (nameTapCount.current === 3) {
         setEmployeeFieldVisible((visible) => !visible);
@@ -241,9 +225,6 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
       );
     }
 
-    const fullName = [userData?.userName, userData?.lastName].filter(Boolean).join(' ');
-    const hasUserData = !!(userData && (userData.userName || userData.mobileNumber || userData.emailAddress));
-
     return (
       <ScrollView
         style={styles.container}
@@ -262,9 +243,11 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
           <AppText variant="labelUppercase" color={COLORS.whiteAlpha80}>
             You're joining Jaiguru
           </AppText>
+          <Pressable onPress={handleSchemeTitlePress} accessibilityRole="button" accessibilityLabel="Scheme details">
           <AppText variant="h4" color={COLORS.contentOnBrand} numberOfLines={2} style={styles.heroTitle}>
             {scheme?.schemeName || 'Scheme'}
           </AppText>
+          </Pressable>
           <View style={styles.heroPills}>
             {scheme?.SchemeSName ? (
               <View style={styles.heroPill}>
@@ -290,43 +273,6 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
             ) : null}
           </View>
         </LinearGradient>
-
-        {/* Member details (from Step 1 registration or the signed-in user) */}
-        {hasUserData && (
-          <AppCard style={styles.card}>
-            <View style={styles.memberHeader}>
-              <View style={styles.avatar}>
-                <AppText variant="h6" color={COLORS.contentBrand}>
-                  {getInitials(fullName)}
-                </AppText>
-              </View>
-              <Pressable style={styles.flex1} onPress={handleNamePress} accessibilityRole="button" accessibilityLabel={fullName || 'Member name'}>
-                {/* <AppText variant="caption" color={COLORS.contentMuted}>
-                  Member
-                </AppText> */}
-                <AppText variant="h6" numberOfLines={1}>
-                  {fullName || 'N/A'}
-                </AppText>
-              </Pressable>
-              <Icon name="checkmark-circle" size={SIZES.icon.md} color={COLORS.success} />
-            </View>
-            <View style={styles.memberDivider} />
-            <View style={styles.memberInfoRow}>
-              <Icon name="call-outline" size={SIZES.icon.sm} color={COLORS.contentMuted} />
-              <AppText variant="button" style={styles.flex1} numberOfLines={1}>
-                {userData?.mobileNumber || 'N/A'}
-              </AppText>
-            </View>
-            {userData?.emailAddress && (
-            <View style={[styles.memberInfoRow, { marginBottom: 0 }]}>
-              <Icon name="mail-outline" size={SIZES.icon.sm} color={COLORS.contentMuted} />
-              <AppText variant="button" style={styles.flex1} numberOfLines={1}>
-                {userData?.emailAddress || 'N/A'}
-              </AppText>
-            </View>
-            )}
-          </AppCard>
-        )}
 
         {/* Installment amount */}
         <AppCard style={styles.card}>
@@ -468,7 +414,7 @@ const SchemeJoiningForm = forwardRef<SchemeJoiningFormRef, SchemeJoiningFormProp
           />
         </AppCard>
 
-        {/* Employee selector is revealed by three taps on the member name. */}
+        {/* Employee selector is revealed by three taps on the scheme title. */}
         {employeeFieldVisible && (
         <AppCard style={styles.card}>
           <AppText variant="label" style={styles.fieldLabel}>
