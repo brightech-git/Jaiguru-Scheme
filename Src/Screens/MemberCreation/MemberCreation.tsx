@@ -72,7 +72,7 @@ const MemberCreation = () => {
         newMember: {
           pName: customerName || loginName || 'Customer',
           mobile: loginMobile,
-          userId: '999',
+          userId: '998',
           appVer: 'Web',
           nomeni: String(formData.nickname || '').trim(),
         },

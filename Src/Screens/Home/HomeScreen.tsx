@@ -228,7 +228,7 @@ const HomeScreen = () => {
         <View style={styles.accountSection}>
           <SchemeDetailsCard />
         </View>
-        <SectionHeader eyebrow="THE JAIGURU EDIT" title="Discover our collections" subtitle="A little inspiration for your next golden moment." />
+        <SectionHeader eyebrow="THE JAIGURU EDIT" title="Discover Our Collections" subtitle="A Little Inspiration For Your Next Golden Moment." />
         <View style={styles.sliderWrap}>
           <SliderComponent />
         </View>
@@ -245,7 +245,7 @@ const HomeScreen = () => {
         <View style={styles.brandFooter}>
           <View style={styles.brandMark}><View style={styles.brandLine} /><MaterialCommunityIcons name="star-four-points" size={18} color={COLORS.contentBrand} /><View style={styles.brandLine} /></View>
           <Text style={styles.footerBrand}>JAI GURU JEWELLERS</Text>
-          <Text style={styles.footerTagline}>Celebrate every golden moment.</Text>
+          <Text style={styles.footerTagline}>Celebrate Every Golden Moment.</Text>
         </View>
        
 
