@@ -25,10 +25,10 @@ export default function HomeQuickActions({ onNavigate }: { onNavigate: (route: s
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: SIZES.space.sm, marginHorizontal: SIZES.space.gutter, marginTop: SIZES.space.xl },
-  action: { flex: 1, alignItems: 'center', paddingVertical: SIZES.space.md, paddingHorizontal: 4, borderRadius: SIZES.radius.lg, borderWidth: 1, borderColor: COLORS.accentSoft, backgroundColor: COLORS.whiteAlpha90 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: SIZES.space.sm, marginHorizontal: SIZES.space.gutter, marginTop: SIZES.space.xl },
+  action: { flex: 1, minWidth: 86, alignItems: 'center', paddingVertical: SIZES.space.md, paddingHorizontal: 6, borderRadius: SIZES.radius.lg, borderWidth: 1, borderColor: COLORS.borderAccent, backgroundColor: COLORS.surface },
   pressed: { backgroundColor: COLORS.accentSoft },
   icon: { width: 42, height: 42, borderRadius: 14, backgroundColor: COLORS.accentTint, alignItems: 'center', justifyContent: 'center', marginBottom: SIZES.space.sm },
-  label: { fontSize: 10, lineHeight: 16 },
-  detail: { fontSize: 8, lineHeight: 13, marginTop: 2 },
+  label: { fontSize: 12, lineHeight: 18 },
+  detail: { fontSize: 10, lineHeight: 16, marginTop: 2 },
 });

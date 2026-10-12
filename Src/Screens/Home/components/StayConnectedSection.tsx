@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useCompany } from '../../../api/hooks/Company/useCompany';
 import { getUserData } from '../../../Utills/AsynchStorageHelper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -62,7 +62,11 @@ export default function StayConnectedSection() {
         {SOCIAL_CHANNELS.map(channel => (
           <Pressable key={channel.field} onPress={() => channel.field === 'WHATSAPPLINK' ? openCompanyWhatsApp() : channel.field === 'GOOGLEBUSINESSLINK' ? setReviewVisible(true) : openLink(channel.url)} accessibilityRole="button" accessibilityLabel={`Open ${channel.label}`} style={({ pressed }) => [styles.tile, pressed && { opacity: 0.7 }]}>
             <View style={styles.tileBody}>
-              {channel.field === 'INSTALINK' ? (
+              {channel.field === 'GOOGLEBUSINESSLINK' ? (
+                <View style={styles.icon1}>
+                  <Image source={require('../../../Assets/Icons/google.png')} style={{ width: 26, height: 26 }} resizeMode="cover" />
+                </View>
+              ) : channel.field === 'INSTALINK' ? (
                 <LinearGradient colors={['#833AB4', '#C13584', '#E1306C', '#F77737', '#FCAF45']} start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }} style={styles.icon}>
                   <MaterialCommunityIcons name="instagram" size={19} color="white" />
                 </LinearGradient>
@@ -111,6 +115,7 @@ const styles = StyleSheet.create({
   tile: { width: 154, borderRadius: 12, overflow: 'hidden', backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.borderSubtle },
   tileBody: { flexGrow: 1, padding: 12, gap: 4 },
   icon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  icon1: { width: 40, height: 40, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   platform: { fontSize: 12, textTransform: 'none' },
   subtitle: { fontSize: 10, textTransform: 'none' },
   tileFooter: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10, minHeight: 44 },

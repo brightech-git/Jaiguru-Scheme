@@ -1,7 +1,7 @@
 import { Text } from '../../Components/Typography/FontText';
 // screens/HomeScreen.tsx
-import React, { useRef, useEffect, useState, useCallback } from "react";
-import { View, ScrollView, StyleSheet, Linking } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import { View, StyleSheet, Linking, Alert, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -17,7 +17,6 @@ import SchemesList from "../../Components/SchemeCard/SchemeCard";
 import { deviceService } from "../../api/services/deviceService";
 import { getFCMToken } from "../../Helpers/NotificationHelper";
 import BottomTab from "../../Components/BottomTab/BottomTab";
-import MainPageWithYouTube from "../../Components/Youtube/Youtube";
 import { ScreenWrapper } from "../../Components/ui/appcomponents";
 import HomeHeader from "./components/HomeHeader";
 import HomeQuickActions from "./components/HomeQuickActions";
@@ -41,12 +40,17 @@ const SectionHeader = ({ title, subtitle, eyebrow }: { title: string; subtitle?:
 );
 
 const NeedHelpCard = () => {
+  const navigation = useNavigation<any>();
   const { company } = useCompany();
   const phone = company?.PHONE || "";
   const email = company?.EMAIL || "";
 
-  const callPhone = () => phone && Linking.openURL(`tel:${phone}`);
-  const openEmail = () => email && Linking.openURL(`mailto:${email}`);
+  const openContact = async (url: string) => {
+    try { await Linking.openURL(url); }
+    catch { Alert.alert('Unable to open', 'Please try again or contact us through the Help Center.'); }
+  };
+  const callPhone = () => phone && openContact(`tel:${phone}`);
+  const openEmail = () => email && openContact(`mailto:${email}`);
 
   return (
     <View style={styles.helpCard}>
@@ -55,13 +59,13 @@ const NeedHelpCard = () => {
           <MaterialCommunityIcons
             name="headset"
             size={moderateScale(22)}
-            color={COLORS.accentDeep}
+            color={COLORS.contentOnBrand}
           />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.helpTitle}>Need Help?</Text>
+          <Text style={styles.helpTitle}>A little guidance, a personal touch.</Text>
           <Text style={styles.helpSubtitle}>
-            We're here to help anytime. Reach us at{" "}
+            {phone || email ? 'Speak with our team. Reach us at ' : 'Our team is here to help with your jewellery and savings journey.'}
             {phone ? (
               <Text onPress={callPhone} style={styles.helpLink}>
                 {phone}
@@ -76,6 +80,10 @@ const NeedHelpCard = () => {
           </Text>
         </View>
       </View>
+      <Pressable onPress={() => navigation.navigate('HelpCenter')} accessibilityRole="button" style={({ pressed }) => [styles.helpAction, pressed && { opacity: 0.75 }]}>
+        <Text style={styles.helpActionText}>Visit Help Center</Text>
+        <MaterialCommunityIcons name="arrow-top-right" size={18} color={COLORS.contentOnAccent} />
+      </Pressable>
     </View>
   );
 };
@@ -89,7 +97,6 @@ type NotificationStatus =
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
-  const scrollViewRef = useRef<ScrollView>(null);
 
   const [notificationStatus, setNotificationStatus] =
     useState<NotificationStatus>("checking");
@@ -191,6 +198,8 @@ const HomeScreen = () => {
         paddingHorizontal={0}
         paddingTop={0}
         paddingBottom={SIZES.space.md}
+        onRefresh={fetchRates}
+        refreshing={ratesLoading}
         edges={[]}
         footer={<BottomTab activeScreen="HOME" />}
       >
@@ -212,15 +221,14 @@ const HomeScreen = () => {
           onScanPress={() => {}}
         />
 
-        {/* {renderNotificationBanner()} */}
-
-        {/* <HomeQuickActions onNavigate={(route) => navigation.navigate(route)} /> */}
+        <HomeQuickActions onNavigate={(route) => navigation.navigate(route)} />
 
         <SectionHeader eyebrow="MADE FOR YOUR TOMORROW" title="Your golden journey" subtitle="Explore a jewellery savings plan that fits you." />
         <SchemesList />
         <View style={styles.accountSection}>
           <SchemeDetailsCard />
         </View>
+        <SectionHeader eyebrow="THE JAIGURU EDIT" title="Discover our collections" subtitle="A little inspiration for your next golden moment." />
         <View style={styles.sliderWrap}>
           <SliderComponent />
         </View>
@@ -229,20 +237,17 @@ const HomeScreen = () => {
 
 
 
-        <SectionHeader eyebrow="THE JAIGURU EDIT" title="Stories & collections" subtitle="Discover what is new in our world of jewellery." />
-        {/* <View style={styles.youtubeWrapper}>
-          <MainPageWithYouTube />
-        </View> */}
 
       
         <StayConnectedSection />
         <SectionHeader eyebrow="ALWAYS BY YOUR SIDE" title="A personal touch" />
         <NeedHelpCard />
-        {/* <View style={styles.brandFooter}>
-          <MaterialCommunityIcons name="star-four-points" size={15} color={COLORS.accentDeep} />
-          <Text style={styles.footerBrand}>JAIGURU JEWELLERS</Text>
+        <View style={styles.brandFooter}>
+          <View style={styles.brandMark}><View style={styles.brandLine} /><MaterialCommunityIcons name="star-four-points" size={18} color={COLORS.contentBrand} /><View style={styles.brandLine} /></View>
+          <Text style={styles.footerBrand}>JAI GURU JEWELLERS</Text>
           <Text style={styles.footerTagline}>Celebrate every golden moment.</Text>
-        </View> */}
+        </View>
+       
 
         <View style={{ height: moderateScale(8) }} />
       </ScreenWrapper>
@@ -276,15 +281,17 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family.semiBold,
   },
 
-  sliderWrap: { marginTop: SIZES.space.lg },
+  sliderWrap: { marginTop: 0 },
 
-  accountSection: { marginTop: SIZES.space.lg },
-  sectionHeader: { paddingHorizontal: SIZES.space.gutter, marginTop: SIZES.space.xxxl, marginBottom: SIZES.space.lg },
-  sectionEyebrow: { fontFamily: FONTS.family.semiBold, fontSize: 9, lineHeight: 15, letterSpacing: 1.5, color: COLORS.contentBrand, marginBottom: 6 },
+  accountSection: { marginTop: SIZES.space.xl, paddingVertical: SIZES.space.lg, backgroundColor: COLORS.accentTint, borderTopWidth: 1, borderBottomWidth: 1, borderColor: COLORS.borderAccent },
+  sectionHeader: { paddingHorizontal: SIZES.space.gutter, marginTop: SIZES.space.xxl, marginBottom: SIZES.space.md },
+  sectionEyebrow: { fontFamily: FONTS.family.semiBold, fontSize: 10, lineHeight: 16, letterSpacing: 1.5, color: COLORS.contentBrand, marginBottom: 6 },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: SIZES.space.sm },
   sectionTitle: { fontFamily: FONTS.family.semiBold, fontSize: 22, lineHeight: 32, color: COLORS.brandDeep, flexShrink: 1 },
   sectionRule: { flex: 1, minWidth: 12, height: 1, backgroundColor: COLORS.accentStrong },
-  sectionSubtitle: { fontFamily: FONTS.family.regular, fontSize: 11, lineHeight: 18, color: COLORS.contentMuted, marginTop: 4 },
+  sectionSubtitle: { fontFamily: FONTS.family.regular, fontSize: 13, lineHeight: 20, color: COLORS.contentSecondary, marginTop: 6 },
+  brandMark: { flexDirection: 'row', gap: SIZES.space.md, alignItems: 'center' },
+  brandLine: { width: 36, height: 1, backgroundColor: COLORS.borderAccent },
   brandFooter: { alignItems: 'center', paddingTop: SIZES.space.xxxl, paddingBottom: SIZES.space.lg, gap: SIZES.space.sm },
   footerBrand: { fontFamily: FONTS.family.semiBold, fontSize: 13, letterSpacing: 2, color: COLORS.brand },
   footerTagline: { fontFamily: FONTS.family.semiBold, fontSize: 12, color: COLORS.contentMuted },
@@ -304,6 +311,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: SIZES.space.sm,
   },
+  helpAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SIZES.space.sm, marginTop: SIZES.space.lg, padding: SIZES.space.md, borderRadius: SIZES.radius.control, backgroundColor: COLORS.accent },
+  helpActionText: { ...FONTS.bodyStrong, color: COLORS.contentOnAccent, flexShrink: 1 },
   helpIconWrap: {
     width: moderateScale(44),
     height: moderateScale(44),

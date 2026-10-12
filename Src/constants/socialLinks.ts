@@ -6,9 +6,9 @@ export const REVIEW_LOCATIONS = [
 ];
 
 export const SOCIAL_CHANNELS = [
-  { label: 'WhatsApp', icon: 'whatsapp', color: '#20B65A', field: 'WHATSAPPLINK', subtitle: 'Our jewellery community', action: 'Get daily offers on Jewellery', url: '' },
-  { label: 'Instagram', icon: 'instagram', color: '#C13584', field: 'INSTALINK', subtitle: 'Collections & inspiration', action: 'Get market updates & deals', url: 'https://www.instagram.com/jaigurujewellers_?srtk=MXkxcDkxbnFhc3JhYg%3D%3D&utm_source=qr' },
-  { label: 'YouTube', icon: 'youtube', color: '#F12828', field: 'YOUTUBELINK', subtitle: 'Stories & collections', action: 'Get your queries answered', url: 'https://www.youtube.com/@jaigurujewellers' },
-  { label: 'Facebook', icon: 'facebook', color: '#1877F2', field: 'FACEBOOKLINK', subtitle: 'News & celebrations', action: 'Stay close to our community', url: 'https://www.facebook.com/share/1FCUh1vaAV/?mibextid=wwXIfr' },
-  { label: 'Google Review', icon: 'google', color: '#B7791F', field: 'GOOGLEBUSINESSLINK', subtitle: 'Your experience matters', action: 'Review your nearest showroom', url: '' },
+  { label: 'WhatsApp', icon: 'whatsapp', color: '#20B65A', field: 'WHATSAPPLINK', subtitle: 'Our Jewellery Community', action: 'Get Daily Offers on Jewellery', url: '' },
+  { label: 'Instagram', icon: 'instagram', color: '#C13584', field: 'INSTALINK', subtitle: 'Collections & Inspiration', action: 'Get Market Updates & Deals', url: 'https://www.instagram.com/jaigurujewellers_?srtk=MXkxcDkxbnFhc3JhYg%3D%3D&utm_source=qr' },
+  { label: 'YouTube', icon: 'youtube', color: '#F12828', field: 'YOUTUBELINK', subtitle: 'Stories & Collections', action: 'Get Your Queries Answered', url: 'https://www.youtube.com/@jaigurujewellers' },
+  { label: 'Facebook', icon: 'facebook', color: '#1877F2', field: 'FACEBOOKLINK', subtitle: 'News & Celebrations', action: 'Stay Close To Our Community', url: 'https://www.facebook.com/share/1FCUh1vaAV/?mibextid=wwXIfr' },
+  { label: 'Google Review', icon: 'google', color: '#B7791F', field: 'GOOGLEBUSINESSLINK', subtitle: 'Your Experience Matters', action: 'Review Your Nearest Showroom', url: '' },
 ] as const;
