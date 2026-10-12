@@ -1,6 +1,10 @@
 // Src/Screens/PayNow/PayNow.tsx
 import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { View, StyleSheet, Platform, ActivityIndicator, Modal, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTodayRate } from '../../api/hooks/Rates/useTodayRate';
 import { useRoute, useNavigation, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { useRazorpayPayment } from '../../api/hooks/Razorpay/useRazorpay';
 import { useTransactionTypes } from '../../api/hooks/Account/useTransactionTypes';
@@ -36,6 +40,8 @@ export interface PayNowRouteParams {
 }
 
 const PayNow = () => {
+  const insets = useSafeAreaInsets();
+  const { rates, loading: rateLoading, error: rateError } = useTodayRate();
   const route = useRoute<RouteProp<Record<string, PayNowRouteParams>, string>>();
   const navigation = useNavigation<any>();
   const {
@@ -80,7 +86,9 @@ const PayNow = () => {
 
   const formatDate = useCallback((d?: string) => {
     if (!d) return 'N/A';
-    return new Date(d).toLocaleDateString('en-IN', {
+    const date = new Date(d);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-IN', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -92,8 +100,12 @@ const PayNow = () => {
   const progress = useMemo(() => {
     const paid = parseInt(String(installmentsPaid), 10) || 0;
     const total = parseInt(String(totalInstallments), 10) || 1;
-    return (paid / total) * 100;
+    return Math.min(100, Math.max(0, (paid / total) * 100));
   }, [installmentsPaid, totalInstallments]);
+  const goldRate = Number(rates?.GOLDRATE);
+  const hasGoldRate = !rateLoading && !rateError && Number.isFinite(goldRate) && goldRate > 0;
+  const estimatedWeight = hasGoldRate && paymentAmount > 0 ? paymentAmount / goldRate : null;
+  const weightScheme = accountData?.schemeSummary?.weightLedger === 'Y';
 
   const formatApiDate = (date: Date = new Date()) => {
     const y = date.getFullYear();
@@ -288,18 +300,35 @@ const PayNow = () => {
       <PremiumBackground />
       <CommonHeader title="Pay Now" transparent borderBottom={false} shadow={false} />
 
-      {/* <ScreenWrapper scroll backgroundColor="transparent" contentStyle={styles.scrollContent}> */}
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <View style={styles.intro}>
+          <AppText variant="labelUppercase" color={COLORS.contentBrand}>YOUR GOLD JOURNEY</AppText>
+          <AppText variant="h3">A step closer to something precious</AppText>
+          <AppText variant="bodySmall" color={COLORS.contentSecondary}>Review your installment before you pay.</AppText>
+        </View>
+        {/* <LinearGradient colors={COLORS.gradient.brandDeep as [string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+          <View style={styles.heroHeading}>
+            <MaterialCommunityIcons name="gold" size={32} color={COLORS.contentOnBrand} />
+            <AppText variant="label" color={COLORS.contentOnBrand}>INSTALLMENT {nextInstallment}</AppText>
+          </View>
+          <AppText variant="bodySmall" color={COLORS.contentOnBrand}>Amount to pay</AppText>
+          <AppText variant="h1" color={COLORS.contentOnBrand} style={styles.heroAmount}>{formatCurrency(paymentAmount)}</AppText>
+          <View style={styles.heroFoot}>
+            <AppText variant="bodySmall" color={COLORS.contentOnBrand}>{schemeShortName || 'Gold savings scheme'}</AppText>
+            <AppText variant="bodySmall" color={COLORS.contentOnBrand}>{nextDueDate ? `Due ${formatDate(nextDueDate)}` : 'Secure online payment'}</AppText>
+          </View>
+        </LinearGradient> */}
         {/* Scheme Card */}
         <AppCard style={styles.card}>
           <View style={styles.badgeRow}>
             <AppBadge label={schemeShortName || 'SCHEME'} variant="primary" />
-            <AppBadge label={`REG: ${regNo}`} variant="neutral" />
+            <AppBadge label={`REG: ${regNo ?? '—'}`} variant="neutral" />
           </View>
           <AppText variant="h3" style={styles.memberName}>
-            {memberName}
+            {memberName || accountData?.pName || 'Scheme member'}
           </AppText>
           <AppText variant="body" color={COLORS.contentSecondary} numberOfLines={2} style={styles.schemeName}>
-            {schemeName}
+            {schemeName || 'Gold savings scheme'}
           </AppText>
 
           <AppDivider />
@@ -308,7 +337,7 @@ const PayNow = () => {
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
           <AppText variant="bodySmall" color={COLORS.contentSecondary} style={styles.progressText}>
-            {installmentsPaid}/{totalInstallments} Installments Paid
+            {installmentsPaid || 0}/{totalInstallments || '—'} Installments Paid
           </AppText>
 
           <View style={styles.nextBadge}>
@@ -317,7 +346,7 @@ const PayNow = () => {
             </AppText>
           </View>
 
-          <View style={styles.dateRow}>
+          {/* <View style={styles.dateRow}>
             <View>
               <AppText variant="caption">Join Date</AppText>
               <AppText variant="bodyBold">{formatDate(joinDate)}</AppText>
@@ -326,15 +355,15 @@ const PayNow = () => {
               <AppText variant="caption">Maturity Date</AppText>
               <AppText variant="bodyBold">{formatDate(maturityDate)}</AppText>
             </View>
-          </View>
+          </View> */}
 
-          {nextDueDate && (
+          {/* {nextDueDate && (
             <View style={styles.dueBadge}>
               <AppText variant="bodyMedium" color={COLORS.contentBrand}>
                 Next Due: {formatDate(nextDueDate)}
               </AppText>
             </View>
-          )}
+          )} */}
         </AppCard>
 
         {/* Summary Card */}
@@ -350,6 +379,38 @@ const PayNow = () => {
             <AppText color={COLORS.contentSecondary}>Total Paid Till Date</AppText>
             <AppText variant="bodyBold">{formatCurrency(totalAmount)}</AppText>
           </View>
+          <View style={styles.ratePanel}>
+            <View style={styles.heroHeading}>
+              <MaterialCommunityIcons name="gold" size={22} color={COLORS.contentBrand} />
+              <AppText variant="bodyBold">Today's gold · 916</AppText>
+            </View>
+            {rateLoading ? (
+              <View style={styles.heroHeading}>
+                <ActivityIndicator size="small" color={COLORS.contentBrand} />
+                <AppText variant="bodySmall">Loading today's gold rate...</AppText>
+              </View>
+            ) : hasGoldRate ? (
+              <>
+                <View style={styles.row}>
+                  <AppText variant="captionBold" color={COLORS.contentSecondary}>Rate per gram</AppText>
+                  <AppText variant="bodyBold">{formatCurrency(goldRate)} / g</AppText>
+                </View>
+                <View style={styles.row}>
+                  <AppText variant="captionBold" color={COLORS.contentSecondary}>Estimated gold weight</AppText>
+                  <AppText variant="h4" color={COLORS.contentBrand}>{estimatedWeight === null ? '—' : `${estimatedWeight.toFixed(4)} g`}</AppText>
+                </View>
+                {rates?.GOLDRATEDATE && <AppText variant="caption" color={COLORS.contentSecondary}>Rate date: {formatDate(rates.GOLDRATEDATE)}</AppText>}
+                <AppText variant="caption" color={COLORS.contentSecondary} style={styles.estimateNote}>
+                  {weightScheme ? 'Estimated from this installment ÷ gold rate. Final credited weight is confirmed in your passbook after payment.' : 'Gold equivalent for reference. This amount-based scheme does not credit this estimated weight.'}
+                </AppText>
+              </>
+            ) : (
+              <>
+                <AppText variant="bodySmall" color={COLORS.contentSecondary}>{rateError ? 'Unable to load the gold rate.' : 'Gold rate is not available yet.'} Weight estimate is unavailable.</AppText>
+                <AppButton label="View gold rates" variant="ghost" size="sm" onPress={() => navigation.navigate('Rates')} />
+              </>
+            )}
+          </View>
           <AppDivider />
           <View style={styles.row}>
             <AppText variant="h6">Due Amount</AppText>
@@ -360,16 +421,16 @@ const PayNow = () => {
         </AppCard>
 
         {/* Payment Method Card */}
-        <AppCard style={styles.card}>
+        {/* <AppCard style={styles.card}>
           <AppText variant="h5" style={styles.sectionTitle}>
             Payment Method
           </AppText>
           <View style={styles.methodRow}>
-            <AppText style={styles.methodIcon}>💰</AppText>
+            <MaterialCommunityIcons name="shield-lock-outline" size={28} color={COLORS.contentBrand} style={styles.methodIcon} />
             <View style={styles.methodInfo}>
               <AppText variant="h6">Razorpay</AppText>
               <AppText variant="bodySmall" color={COLORS.contentSecondary}>
-                UPI, Card, NetBanking, Wallet
+                Available payment options appear at checkout
               </AppText>
             </View>
             <AppBadge label="Selected" variant="primary" />
@@ -380,13 +441,12 @@ const PayNow = () => {
               Secure payment powered by Razorpay
             </AppText>
           </View>
-        </AppCard>
+        </AppCard> */}
 
-        <View style={{ height: 100 }} />
-      {/* </ScreenWrapper> */}
+      </ScrollView>
       <Modal visible={kycModalVisible} transparent animationType="slide" onRequestClose={() => setKycModalVisible(false)}>
         <View style={styles.kycModalOverlay}>
-          <View style={styles.kycModalCard}>
+          <ScrollView style={styles.kycModalCard} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, SIZES.space.lg) }}>
             <AppText variant="h4" align="center">Complete your verification</AppText>
             <AppText variant="body" color={COLORS.contentSecondary} align="center" style={styles.kycModalMessage}>
               Complete either address KYC or Aadhaar verification to pay this installment.
@@ -399,15 +459,16 @@ const PayNow = () => {
             )}
             <AppButton label="Check verification again" variant="outline" size="md" style={styles.kycSecondaryButton} onPress={checkKycStatus} />
             <AppButton label="Close" variant="ghost" size="md" style={styles.kycSecondaryButton} onPress={() => setKycModalVisible(false)} />
-          </View>
+          </ScrollView>
         </View>
       </Modal>
 
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, SIZES.space.md) }]}>
         <AppButton
           label={kycCheckState === 'incomplete' ? 'Complete KYC to pay' : `${formatCurrency(paymentAmount)}  ·  Pay Now`}
           size="lg"
           loading={isLoading}
+          disabled={paymentAmount <= 0 || !Number.isFinite(paymentAmount)}
           onPress={handlePayment}
         />
         <AppText variant="caption" align="center" style={styles.payNote}>
@@ -420,15 +481,26 @@ const PayNow = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surfaceMuted },
-  scrollContent: { paddingBottom: 0 },
+  scroll: { flex: 1 },
+  scrollContent: { padding: SIZES.space.lg, paddingBottom: SIZES.space.xl, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  intro: { gap: SIZES.space.sm, marginBottom: SIZES.space.xl },
+  hero: { borderRadius: SIZES.radius.xl, padding: SIZES.space.xl, marginBottom: SIZES.space.lg, gap: SIZES.space.sm },
+  heroHeading: { flexDirection: 'row', alignItems: 'center', gap: SIZES.space.sm, flexWrap: 'wrap' },
+  heroAmount: { fontVariant: ['tabular-nums'], marginBottom: SIZES.space.sm },
+  heroFoot: { borderTopWidth: 1, borderTopColor: COLORS.brand, paddingTop: SIZES.space.md, gap: SIZES.space.xs },
+  ratePanel: { backgroundColor: COLORS.accentSoft, borderRadius: SIZES.radius.md, padding: SIZES.space.md, marginVertical: SIZES.space.md, gap: SIZES.space.sm },
+  estimateNote: { lineHeight: 18, textTransform: 'none' },
 
   badgeRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: SIZES.space.sm,
     marginBottom: SIZES.space.sm,
   },
   card: {
     marginBottom: SIZES.space.md,
+    borderWidth: 1,
+    borderColor: COLORS.borderAccent,
   },
   memberName: {
     marginBottom: SIZES.space.xs,
@@ -461,6 +533,8 @@ const styles = StyleSheet.create({
   },
   dateRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SIZES.space.md,
     justifyContent: 'space-between',
     marginBottom: SIZES.space.sm,
   },
@@ -476,6 +550,8 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SIZES.space.sm,
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: SIZES.space.sm,
@@ -483,6 +559,8 @@ const styles = StyleSheet.create({
 
   methodRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SIZES.space.sm,
     alignItems: 'center',
     backgroundColor: COLORS.surfaceSunken,
     padding: SIZES.space.lg,
@@ -501,15 +579,10 @@ const styles = StyleSheet.create({
   secureText: { flex: 1 },
 
   bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: COLORS.surface,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     padding: SIZES.space.lg,
-    paddingBottom: Platform.OS === 'ios' ? 34 : SIZES.space.lg,
   },
   payNote: {
     marginTop: SIZES.space.sm,

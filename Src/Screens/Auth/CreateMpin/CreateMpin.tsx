@@ -91,7 +91,7 @@ const MpinCreateScreen = () => {
     setError('');
     setSubmitting(false);
     setStep(1);
-    setTimeout(() => mpinRef.current?.focus(), 150);
+    if (step === 1) mpinRef.current?.focus();
   };
 
   const handleGoBack = () => {
@@ -110,7 +110,7 @@ const MpinCreateScreen = () => {
     setShowMpin(false);
     setShowConfirm(false);
     setStep(1);
-    setTimeout(() => mpinRef.current?.focus(), 150);
+    if (step === 1) mpinRef.current?.focus();
   };
 
   const handleStep1Complete = useCallback((value: string) => {
@@ -122,9 +122,6 @@ const MpinCreateScreen = () => {
     setError('');
     setMpinValue(value);
     setStep(2);
-    setTimeout(() => {
-      if (isMounted.current) confirmRef.current?.focus();
-    }, 200);
   }, []);
 
   const handleConfirmChange = useCallback((value: string) => {
@@ -194,7 +191,7 @@ const MpinCreateScreen = () => {
 
   return (
     <MpinScaffold
-      
+      headerTitle={step === 1 ? 'Create G-PIN' : 'Confirm G-PIN'}
       icon={step === 1 ? 'lock-plus-outline' : 'lock-check-outline'}
       heading={step === 1 ? 'Create Your G-PIN' : 'Confirm Your G-PIN'}
       subtitle={
@@ -217,7 +214,7 @@ const MpinCreateScreen = () => {
 
       {/* PIN inputs — both mounted, only the active one is visible */}
       <View style={styles.inputSection}>
-        <View style={[styles.pinRow, step !== 1 && styles.hidden]}>
+        <View pointerEvents={step === 1 ? 'auto' : 'none'} style={[styles.pinRow, step !== 1 && styles.hidden]}>
           <AppPinInput
             ref={mpinRef}
             variant="boxes"
@@ -227,14 +224,14 @@ const MpinCreateScreen = () => {
             onComplete={handleStep1Complete}
             error={step === 1 && !!displayError}
             disabled={isCreatingMpin || step !== 1}
-            autoFocus
+            autoFocus={step === 1}
           />
           <Pressable style={styles.eyeBtn} onPress={() => setShowMpin((v) => !v)} disabled={isCreatingMpin} hitSlop={8}>
             <MaterialCommunityIcons name={showMpin ? 'eye-off' : 'eye'} size={SIZES.icon.md} color={COLORS.contentBrand} />
           </Pressable>
         </View>
 
-        <View style={[styles.pinRow, step !== 2 && styles.hidden]}>
+        <View pointerEvents={step === 2 ? 'auto' : 'none'} style={[styles.pinRow, step !== 2 && styles.hidden]}>
           <AppPinInput
             ref={confirmRef}
             variant="boxes"
@@ -243,6 +240,7 @@ const MpinCreateScreen = () => {
             onChangeText={handleConfirmChange}
             error={step === 2 && !!displayError}
             disabled={isCreatingMpin || step !== 2}
+            autoFocus={step === 2}
           />
           <Pressable style={styles.eyeBtn} onPress={() => setShowConfirm((v) => !v)} disabled={isCreatingMpin} hitSlop={8}>
             <MaterialCommunityIcons name={showConfirm ? 'eye-off' : 'eye'} size={SIZES.icon.md} color={COLORS.contentBrand} />

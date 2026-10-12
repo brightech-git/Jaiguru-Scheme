@@ -290,11 +290,11 @@ const formatDate = useCallback((dateString?: string) => {
             {/* Header */}
             <View style={styles.cardHeader}>
               <View style={styles.headerLeft}>
-                <View style={styles.regBadge}>
+                {/* <View style={styles.regBadge}>
                   <Text style={styles.regBadgeText}>
                     {groupCode}-{regNo}
                   </Text>
-                </View>
+                </View> */}
                 <View style={styles.schemeBadge}>
                   <Text style={styles.schemeBadgeText}>{schemeSName}</Text>
                 </View>
@@ -310,7 +310,7 @@ const formatDate = useCallback((dateString?: string) => {
               <View style={styles.nameSection}>
                 <Text style={styles.nameText}>{pName}</Text>
                 <Text style={styles.schemeText}>
-                  {`${schemeName}${account.personalInfo?.nomeni?.trim() ? ` - ${account.personalInfo.nomeni.trim()}` : ''}`}
+                  {`${groupCode}-${regNo}${account.personalInfo?.nomeni?.trim() ? ` - ${account.personalInfo.nomeni.trim()}` : ''}`}
                 </Text>
                 
               </View>
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
   schemeBadgeText: {
     ...FONTS.caption,
     color: COLORS.black,
-    fontSize: SIZES.text.xxs,
+    fontSize: SIZES.text.xs,
     fontWeight: 'bold',
   },
   completedBadge: {

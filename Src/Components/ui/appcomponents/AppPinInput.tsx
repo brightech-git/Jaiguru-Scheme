@@ -89,12 +89,20 @@ const AppPinInput = forwardRef<AppPinInputRef, AppPinInputProps>(
       [dotAnims]
     );
 
+    const focusInput = useCallback(() => {
+      if (disabled) return;
+      // Android can retain input focus after the Back button hides the keyboard.
+      // A fresh focus request must first release that retained focus.
+      if (hiddenRef.current?.isFocused()) hiddenRef.current.blur();
+      hiddenRef.current?.focus();
+    }, [disabled]);
+
     useEffect(() => {
-      if (autoFocus) {
-        const t = setTimeout(() => hiddenRef.current?.focus(), 300);
+      if (autoFocus && !disabled) {
+        const t = setTimeout(focusInput, 300);
         return () => clearTimeout(t);
       }
-    }, [autoFocus]);
+    }, [autoFocus, disabled, focusInput]);
 
     const updatePin = useCallback(
       (next: string[]) => {
@@ -121,7 +129,7 @@ const AppPinInput = forwardRef<AppPinInputRef, AppPinInputProps>(
     );
 
     useImperativeHandle(ref, () => ({
-      focus: () => hiddenRef.current?.focus(),
+      focus: focusInput,
       clear: () => {
         const next = Array(length).fill('');
         setPin(next);
@@ -151,7 +159,7 @@ const AppPinInput = forwardRef<AppPinInputRef, AppPinInputProps>(
         {label && <Text style={styles.label}>{label}</Text>}
         {hint && <Text style={styles.hint}>{hint}</Text>}
 
-        <Pressable style={styles.tapArea} onPress={() => hiddenRef.current?.focus()}>
+        <Pressable style={styles.tapArea} onPress={focusInput} disabled={disabled}>
           <Animated.View style={[styles.row, { gap: GAP, transform: [{ translateX: shakeAnim }] }]}>
             {pin.map((digit, i) =>
               variant === 'dots' ? (

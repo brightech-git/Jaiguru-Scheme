@@ -1,9 +1,7 @@
 // Src/api/hooks/Schemes/useSchemeCatalog.ts
 import { useState, useEffect } from 'react';
-import { Image } from 'react-native';
 import { schemeService } from '../../services/schemeService';
 import { Scheme } from '../../../types/Scheme/Scheme';
-import { IMAGE_BASE_URL } from '../../../Config/BaseUrl';
 
 export const useSchemeCatalog = () => {
   const [schemes, setSchemes] = useState<Scheme[]>([]);
@@ -15,11 +13,7 @@ export const useSchemeCatalog = () => {
       try {
         setLoading(true);
         const data: any[] = await schemeService.getAll() || [];
-        await Promise.all(
-          data
-            .filter((s) => s.image_path)
-            .map((s) => Image.prefetch(`${IMAGE_BASE_URL}${s.image_path}`).catch(() => {}))
-        );
+        // Render cards immediately; ApiImage loads and caches each image independently.
         setSchemes(data);
       } catch (err: any) {
         setError(err?.message || 'Something went wrong');

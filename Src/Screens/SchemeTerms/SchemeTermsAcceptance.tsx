@@ -33,7 +33,7 @@ const SchemeTermsAcceptance = () => {
     }
   };
 
-  if (!scheme?.SchemeSName) {
+  if (scheme?.SchemeId == null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SIZES.space.gutter, backgroundColor: COLORS.surfacePage }}>
         <Text style={{ ...FONTS.body, color: COLORS.contentSecondary, textAlign: 'center' }}>
@@ -46,7 +46,7 @@ const SchemeTermsAcceptance = () => {
 
   return (
     <AppContentScreen
-      contentId={scheme.SchemeSName}
+      contentId={String(scheme.SchemeId)}
       title="Plan Terms & Conditions"
       navigation={navigation}
       footer={(language) => (

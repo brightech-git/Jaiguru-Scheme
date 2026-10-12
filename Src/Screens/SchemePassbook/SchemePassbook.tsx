@@ -463,25 +463,27 @@ export default function SchemePassbook() {
             </View>
           </View>
           <View style={styles.memberInfo}>
-            <AppText
-              variant="h4"
-              color={COLORS.black}
-              style={styles.memberName}
-            >
-              {data.pName}
-            </AppText>
-            
-            <View style={styles.memberRegistrationRow}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: SIZES.space.sm }}>
-              {!!nomineeName && (
+            <View style={styles.memberNameRow}>
+              <AppText
+                variant="h4"
+                color={COLORS.black}
+                style={styles.memberName}
+              >
+                {data.pName}
+              </AppText>
+              {hasWeight && <GoldBadge />}
+            </View>
+
+            {!!nomineeName && (
               <AppText
                 variant="h4"
                 color={COLORS.contentOnAccent}
-                style={styles.memberName}
+                style={styles.nomineeText}
               >
-                {nomineeName}
+                {nomineeName} ({data.groupCode} - {data.regNo})
               </AppText>
             )}
+            {!nomineeName && (
               <AppText
                 variant="h4"
                 color={COLORS.contentOnAccent}
@@ -489,9 +491,7 @@ export default function SchemePassbook() {
               >
                 ({data.groupCode} - {data.regNo})
               </AppText>
-              </View>
-              {hasWeight && <GoldBadge />}
-            </View>
+            )}
           </View>
 
           {flexible ? (
@@ -622,8 +622,14 @@ const styles = StyleSheet.create({
   memberInfo: {
     gap: SIZES.space.xs,
   },
+  memberNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SIZES.space.sm,
+  },
   memberName: {
-    alignSelf: "stretch",
+    flex: 1,
+    flexShrink: 1,
     minWidth: 0,
   },
   memberRegistrationRow: {
@@ -632,6 +638,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: SIZES.space.sm,
+  },
+  nomineeRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: SIZES.space.sm,
+  },
+  nomineeText: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
   memberRegistration: {
     flexShrink: 1,
